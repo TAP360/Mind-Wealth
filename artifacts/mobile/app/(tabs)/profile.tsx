@@ -54,9 +54,9 @@ export default function ProfileScreen() {
     {
       title: "Account",
       items: [
-        { icon: "user", label: "Personal Information", arrow: true, onPress: () => {} },
-        { icon: "link", label: "Linked Accounts", arrow: true, onPress: () => {} },
-        { icon: "credit-card", label: "Payment Methods", arrow: true, onPress: () => {} },
+        { icon: "user", label: "Personal Information", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); router.push("/personal-info"); } },
+        { icon: "link", label: "Linked Accounts", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Linked Accounts", "Connect your bank accounts and payment providers for automatic transaction tracking.\n\nComing soon for Egypt & GCC banks.", [{ text: "OK" }]); } },
+        { icon: "credit-card", label: "Payment Methods", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Payment Methods", "Manage saved cards and payment methods.\n\nComing soon.", [{ text: "OK" }]); } },
       ],
     },
     {
@@ -65,23 +65,23 @@ export default function ProfileScreen() {
         { icon: "bell", label: "Notifications", toggle: true, value: notifications, onToggle: setNotifications },
         { icon: "zap", label: "Smart Nudges", toggle: true, value: nudges, onToggle: setNudges },
         { icon: "moon", label: "Dark Mode", toggle: true, value: darkMode, onToggle: setDarkMode },
-        { icon: "globe", label: "Language", value: "English", arrow: true, onPress: () => {} },
+        { icon: "globe", label: "Language", value: "English", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Language", "Additional languages coming soon!\n\n🇪🇬 Arabic\n🇬🇧 English (current)\n🇸🇦 Urdu", [{ text: "OK" }]); } },
       ],
     },
     {
       title: "Security",
       items: [
-        { icon: "lock", label: "Change Passcode", arrow: true, onPress: () => {} },
-        { icon: "shield", label: "Biometric Login", toggle: true, value: true, onToggle: () => {} },
-        { icon: "eye-off", label: "Privacy Settings", arrow: true, onPress: () => {} },
+        { icon: "lock", label: "Change Passcode", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Change Passcode", "Set a 6-digit PIN to secure your MindWealth account.\n\nBiometric authentication is also available.", [{ text: "OK" }]); } },
+        { icon: "shield", label: "Biometric Login", toggle: true, value: true, onToggle: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } },
+        { icon: "eye-off", label: "Privacy Settings", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Privacy Settings", "MindWealth AI only uses your data to personalize your coaching experience. We never sell your data.\n\nData stored locally on your device.", [{ text: "OK" }]); } },
       ],
     },
     {
       title: "Support",
       items: [
-        { icon: "help-circle", label: "Help Center", arrow: true, onPress: () => {} },
-        { icon: "message-square", label: "Contact Support", arrow: true, onPress: () => {} },
-        { icon: "star", label: "Rate MindWealth", arrow: true, onPress: () => {} },
+        { icon: "help-circle", label: "Help Center", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Help Center", "📚 FAQs, tutorials, and guides are available at:\nmindwealthai.com/help\n\nOr contact us directly for personalized support.", [{ text: "OK" }]); } },
+        { icon: "message-square", label: "Contact Support", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Contact Support", "📧 support@mindwealthai.com\n📱 WhatsApp: +20 100 123 4567\n\nResponse within 24 hours.", [{ text: "OK" }]); } },
+        { icon: "star", label: "Rate MindWealth", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); Alert.alert("Rate MindWealth AI ⭐", "Enjoying the app? Your review helps us reach more people!\n\nLeave us a 5-star review on the App Store.", [{ text: "Not Now", style: "cancel" }, { text: "⭐ Rate Now", onPress: () => {} }]); } },
       ],
     },
   ];
@@ -129,7 +129,20 @@ export default function ProfileScreen() {
               <Text style={[styles.personalityLabel, { color: colors.mutedForeground }]}>Money Personality</Text>
               <Text style={[styles.personalityName, { color: pColor }]}>{profile.personalityType}</Text>
             </View>
-            <Pressable style={[styles.viewBtn, { borderColor: colors.border }]}>
+            <Pressable
+              style={[styles.viewBtn, { borderColor: colors.border }]}
+              onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                Alert.alert(
+                  "Retake Assessment",
+                  "This will reset your current Money Personality result and run the assessment again.",
+                  [
+                    { text: "Cancel", style: "cancel" },
+                    { text: "Retake", onPress: () => router.push("/onboarding") },
+                  ]
+                );
+              }}
+            >
               <Text style={[styles.viewBtnText, { color: colors.mutedForeground }]}>Retake</Text>
             </Pressable>
           </View>
@@ -142,7 +155,7 @@ export default function ProfileScreen() {
               <Text style={[styles.subCurrent, { color: subInfo.color }]}>{subInfo.label}</Text>
             </View>
             {profile.subscription === "free" && (
-              <Pressable>
+              <Pressable onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/upgrade"); }}>
                 <LinearGradient
                   colors={["#2E3192", "#92278F", "#F37021"]}
                   start={{ x: 0, y: 0 }}

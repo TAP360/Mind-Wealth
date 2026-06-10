@@ -2,7 +2,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Dimensions,
@@ -20,6 +20,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useApp, PersonalityType } from "@/context/AppContext";
 
 const { width, height } = Dimensions.get("window");
+
+const SLOGAN_WORDS = ["Understand", "your", "money", "by", "understanding", "yourself"];
+
+const PARTICLES = [
+  { top: "12%", left: "8%", size: 4, opacity: 0.35 },
+  { top: "18%", right: "12%", size: 3, opacity: 0.25 },
+  { top: "28%", left: "18%", size: 2, opacity: 0.2 },
+  { top: "72%", left: "10%", size: 3, opacity: 0.3 },
+  { top: "68%", right: "8%", size: 4, opacity: 0.25 },
+  { top: "80%", left: "22%", size: 2, opacity: 0.2 },
+  { top: "60%", right: "20%", size: 3, opacity: 0.2 },
+  { top: "38%", right: "6%", size: 2, opacity: 0.3 },
+];
 
 const SLIDES = [
   {
@@ -152,7 +165,7 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { completeOnboarding } = useApp();
 
-  const [phase, setPhase] = useState<"slides" | "name" | "assessment" | "result">("slides");
+  const [phase, setPhase] = useState<"splash" | "slides" | "name" | "assessment" | "result">("splash");
   const [slideIndex, setSlideIndex] = useState(0);
   const [userName, setUserName] = useState("");
   const [questionIndex, setQuestionIndex] = useState(0);
@@ -160,8 +173,100 @@ export default function OnboardingScreen() {
     worship: 0, vigilance: 0, status: 0, avoidance: 0, obligation: 0,
   });
   const [personality, setPersonality] = useState<PersonalityType>(null);
+  const [visibleWords, setVisibleWords] = useState(0);
   const flatRef = useRef<FlatList>(null);
   const fadeAnim = useRef(new Animated.Value(1)).current;
+
+  const iconScale = useRef(new Animated.Value(0.35)).current;
+  const iconOpacity = useRef(new Animated.Value(0)).current;
+  const ring1Scale = useRef(new Animated.Value(1)).current;
+  const ring1Opacity = useRef(new Animated.Value(0.45)).current;
+  const ring2Scale = useRef(new Animated.Value(1)).current;
+  const ring2Opacity = useRef(new Animated.Value(0.22)).current;
+  const titleOpacity = useRef(new Animated.Value(0)).current;
+  const titleY = useRef(new Animated.Value(20)).current;
+  const sloganOpacity = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    if (phase !== "splash") return;
+
+    iconScale.setValue(0.35);
+    iconOpacity.setValue(0);
+    ring1Scale.setValue(1);
+    ring1Opacity.setValue(0.45);
+    ring2Scale.setValue(1);
+    ring2Opacity.setValue(0.22);
+    titleOpacity.setValue(0);
+    titleY.setValue(20);
+    sloganOpacity.setValue(0);
+    setVisibleWords(0);
+
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(ring1Scale, { toValue: 1.75, duration: 1900, useNativeDriver: false }),
+        Animated.timing(ring1Scale, { toValue: 1, duration: 0, useNativeDriver: false }),
+      ])
+    ).start();
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(ring1Opacity, { toValue: 0, duration: 1900, useNativeDriver: false }),
+        Animated.timing(ring1Opacity, { toValue: 0.4, duration: 0, useNativeDriver: false }),
+      ])
+    ).start();
+
+    const r2 = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(ring2Scale, { toValue: 1.75, duration: 1900, useNativeDriver: false }),
+          Animated.timing(ring2Scale, { toValue: 1, duration: 0, useNativeDriver: false }),
+        ])
+      ).start();
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(ring2Opacity, { toValue: 0, duration: 1900, useNativeDriver: false }),
+          Animated.timing(ring2Opacity, { toValue: 0.2, duration: 0, useNativeDriver: false }),
+        ])
+      ).start();
+    }, 950);
+
+    const iconT = setTimeout(() => {
+      Animated.parallel([
+        Animated.spring(iconScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: false }),
+        Animated.timing(iconOpacity, { toValue: 1, duration: 500, useNativeDriver: false }),
+      ]).start();
+    }, 180);
+
+    const titleT = setTimeout(() => {
+      Animated.parallel([
+        Animated.timing(titleOpacity, { toValue: 1, duration: 600, useNativeDriver: false }),
+        Animated.timing(titleY, { toValue: 0, duration: 600, useNativeDriver: false }),
+      ]).start();
+    }, 720);
+
+    const sloganT = setTimeout(() => {
+      Animated.timing(sloganOpacity, { toValue: 1, duration: 400, useNativeDriver: false }).start();
+    }, 1280);
+
+    const wordTimers: ReturnType<typeof setTimeout>[] = [];
+    SLOGAN_WORDS.forEach((_, i) => {
+      wordTimers.push(setTimeout(() => setVisibleWords(i + 1), 1380 + i * 230));
+    });
+
+    const totalMs = 1380 + SLOGAN_WORDS.length * 230 + 1500;
+    const advanceT = setTimeout(() => {
+      fadeTransition(() => setPhase("slides"));
+    }, totalMs);
+
+    return () => {
+      clearTimeout(r2);
+      clearTimeout(iconT);
+      clearTimeout(titleT);
+      clearTimeout(sloganT);
+      wordTimers.forEach(clearTimeout);
+      clearTimeout(advanceT);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]);
 
   const fadeTransition = (fn: () => void) => {
     Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
@@ -213,6 +318,121 @@ export default function OnboardingScreen() {
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const botPad = Platform.OS === "web" ? 34 : insets.bottom;
+
+  if (phase === "splash") {
+    return (
+      <Pressable
+        style={{ flex: 1 }}
+        onPress={() => {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+          fadeTransition(() => setPhase("slides"));
+        }}
+      >
+        <Animated.View style={[styles.fill, { opacity: fadeAnim }]}>
+          <LinearGradient
+            colors={["#020919", "#0B1026", "#0C0B34"]}
+            style={[styles.fill, styles.splashCenter, { paddingTop: topPad }]}
+          >
+            {PARTICLES.map((p, i) => (
+              <View
+                key={i}
+                style={[
+                  styles.particle,
+                  {
+                    width: p.size,
+                    height: p.size,
+                    borderRadius: p.size / 2,
+                    opacity: p.opacity,
+                    top: p.top as any,
+                    left: (p as any).left,
+                    right: (p as any).right,
+                  },
+                ]}
+              />
+            ))}
+
+            <View style={styles.splashIconWrap}>
+              <Animated.View
+                style={[
+                  styles.splashRing,
+                  { transform: [{ scale: ring1Scale }], opacity: ring1Opacity, borderColor: "#2E3192" },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.splashRing,
+                  styles.splashRingOuter,
+                  { transform: [{ scale: ring2Scale }], opacity: ring2Opacity, borderColor: "#92278F" },
+                ]}
+              />
+
+              <Animated.View
+                style={{
+                  opacity: iconOpacity,
+                  transform: [{ scale: iconScale }],
+                  alignItems: "center",
+                }}
+              >
+                <LinearGradient
+                  colors={["#2E3192", "#6B1FB0", "#92278F"]}
+                  style={styles.splashIconCircle}
+                >
+                  <Image
+                    source={require("@/assets/images/icon.png")}
+                    style={styles.splashIconImg}
+                    resizeMode="cover"
+                  />
+                </LinearGradient>
+              </Animated.View>
+            </View>
+
+            <Animated.View
+              style={{
+                opacity: titleOpacity,
+                transform: [{ translateY: titleY }],
+                alignItems: "center",
+                marginTop: 28,
+              }}
+            >
+              <View style={styles.splashTitleRow}>
+                <Text style={styles.splashBrand}>MindWealth</Text>
+                <LinearGradient
+                  colors={["#2E3192", "#92278F", "#F37021"]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.splashAIBadge}
+                >
+                  <Text style={styles.splashAIText}>AI</Text>
+                </LinearGradient>
+              </View>
+              <Text style={styles.splashTagline}>Smart Financial Advisory</Text>
+            </Animated.View>
+
+            <Animated.View style={[styles.sloganContainer, { opacity: sloganOpacity }]}>
+              <View style={styles.sloganRow}>
+                {SLOGAN_WORDS.map((word, i) => (
+                  <Text
+                    key={i}
+                    style={[
+                      styles.sloganWord,
+                      i < visibleWords ? styles.sloganVisible : styles.sloganHidden,
+                    ]}
+                  >
+                    {word}
+                    {i < SLOGAN_WORDS.length - 1 ? " " : ""}
+                  </Text>
+                ))}
+              </View>
+            </Animated.View>
+
+            {visibleWords >= SLOGAN_WORDS.length && (
+              <Text style={styles.tapHint}>Tap anywhere to continue</Text>
+            )}
+          </LinearGradient>
+        </Animated.View>
+      </Pressable>
+    );
+  }
 
   if (phase === "slides") {
     return (
@@ -527,4 +747,49 @@ const styles = StyleSheet.create({
     color: "rgba(255,255,255,0.75)",
     lineHeight: 20,
   },
+
+  splashCenter: { alignItems: "center", justifyContent: "center" },
+  splashIconWrap: {
+    width: 170, height: 170,
+    alignItems: "center", justifyContent: "center",
+  },
+  splashRing: {
+    position: "absolute",
+    width: 170, height: 170, borderRadius: 85,
+    borderWidth: 1.5,
+  },
+  splashRingOuter: {
+    width: 220, height: 220, borderRadius: 110,
+  },
+  splashIconCircle: {
+    width: 138, height: 138, borderRadius: 69,
+    overflow: "hidden", alignItems: "center", justifyContent: "center",
+  },
+  splashIconImg: { width: 138, height: 138 },
+  splashTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  splashBrand: {
+    fontSize: 34, fontFamily: "Inter_700Bold",
+    color: "#FFFFFF", letterSpacing: -0.5,
+  },
+  splashAIBadge: { borderRadius: 9, paddingHorizontal: 11, paddingVertical: 5 },
+  splashAIText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
+  splashTagline: {
+    fontSize: 13, fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.4)", marginTop: 7, letterSpacing: 0.8,
+    textTransform: "uppercase",
+  },
+  sloganContainer: { marginTop: 36, paddingHorizontal: 28, alignItems: "center" },
+  sloganRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" },
+  sloganWord: {
+    fontSize: 20, fontFamily: "Inter_400Regular",
+    lineHeight: 30, textAlign: "center",
+  },
+  sloganVisible: { color: "rgba(255,255,255,0.88)" },
+  sloganHidden: { color: "transparent" },
+  tapHint: {
+    position: "absolute", bottom: 48,
+    fontSize: 12, fontFamily: "Inter_400Regular",
+    color: "rgba(255,255,255,0.22)", letterSpacing: 0.5,
+  },
+  particle: { position: "absolute", backgroundColor: "#4A90E2" },
 });

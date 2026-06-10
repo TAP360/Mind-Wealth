@@ -2,6 +2,8 @@ import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import React, { useState } from "react";
 import {
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
   Platform,
   Pressable,
@@ -24,6 +26,17 @@ const ACHIEVEMENTS = [
   { id: "4", icon: "star", label: "Discipline", desc: "No impulse buys for 2 weeks", unlocked: false, color: "#92278F" },
   { id: "5", icon: "target", label: "Goal Getter", desc: "Complete your first goal", unlocked: false, color: "#F59E0B" },
   { id: "6", icon: "trending-up", label: "Investor", desc: "Start your investment journey", unlocked: false, color: "#64748B" },
+];
+
+const GOAL_PRESETS = [
+  { icon: "shield", label: "Emergency", color: "#22C55E", emoji: "🛡️" },
+  { icon: "home", label: "Home", color: "#2E3192", emoji: "🏠" },
+  { icon: "briefcase", label: "Investment", color: "#92278F", emoji: "💼" },
+  { icon: "book", label: "Education", color: "#F37021", emoji: "📚" },
+  { icon: "globe", label: "Travel", color: "#0EA5E9", emoji: "✈️" },
+  { icon: "heart", label: "Health", color: "#EF4444", emoji: "❤️" },
+  { icon: "car", label: "Car", color: "#F59E0B", emoji: "🚗" },
+  { icon: "target", label: "Savings", color: "#64748B", emoji: "🎯" },
 ];
 
 const GOAL_ICONS: Record<string, string> = {
@@ -52,10 +65,11 @@ function ProgressBar({ value, total, color }: { value: number; total: number; co
 export default function GoalsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { goals, streak, profile } = useApp();
+  const { goals, streak, profile, addGoal } = useApp();
   const [showAdd, setShowAdd] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState("");
   const [newGoalTarget, setNewGoalTarget] = useState("");
+  const [selectedPreset, setSelectedPreset] = useState(0);
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const botPad = Platform.OS === "web" ? insets.bottom + 34 : insets.bottom;
@@ -212,44 +226,107 @@ export default function GoalsScreen() {
         </LinearGradient>
       </Pressable>
 
-      <Modal visible={showAdd} transparent animationType="slide">
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
-            <Text style={[styles.modalTitle, { color: colors.foreground }]}>New Goal</Text>
-            <TextInput
-              style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
-              placeholder="Goal name (e.g. Emergency Fund)"
-              placeholderTextColor={colors.mutedForeground}
-              value={newGoalTitle}
-              onChangeText={setNewGoalTitle}
-            />
-            <TextInput
-              style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
-              placeholder="Target amount (EGP)"
-              placeholderTextColor={colors.mutedForeground}
-              value={newGoalTarget}
-              onChangeText={setNewGoalTarget}
-              keyboardType="numeric"
-            />
-            <View style={styles.modalActions}>
-              <Pressable style={[styles.modalCancel, { borderColor: colors.border }]} onPress={() => setShowAdd(false)}>
-                <Text style={[styles.modalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
-              </Pressable>
-              <Pressable
-                style={[styles.modalConfirm, { opacity: newGoalTitle && newGoalTarget ? 1 : 0.4 }]}
-                disabled={!newGoalTitle || !newGoalTarget}
-                onPress={() => {
-                  setShowAdd(false);
-                  setNewGoalTitle("");
-                  setNewGoalTarget("");
-                }}
+      <Modal
+        visible={showAdd}
+        transparent
+        animationType="slide"
+        onRequestClose={() => { Keyboard.dismiss(); setShowAdd(false); }}
+      >
+        <View style={{ flex: 1 }}>
+          <Pressable
+            style={[StyleSheet.absoluteFill, { backgroundColor: "rgba(0,0,0,0.55)" }]}
+            onPress={() => { Keyboard.dismiss(); setShowAdd(false); }}
+          />
+          <KeyboardAvoidingView
+            behavior={Platform.OS === "ios" ? "padding" : undefined}
+            style={styles.modalKav}
+          >
+            <View style={[styles.modalSheet, { backgroundColor: colors.card }]}>
+              <View style={[styles.handle, { backgroundColor: colors.border }]} />
+              <Text style={[styles.modalTitle, { color: colors.foreground }]}>New Goal</Text>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                style={styles.presetsScroll}
+                contentContainerStyle={styles.presetsRow}
               >
-                <LinearGradient colors={["#2E3192", "#92278F"]} style={styles.modalConfirmGrad}>
-                  <Text style={styles.modalConfirmText}>Create Goal</Text>
-                </LinearGradient>
-              </Pressable>
+                {GOAL_PRESETS.map((p, i) => (
+                  <Pressable
+                    key={p.icon}
+                    style={[
+                      styles.presetChip,
+                      {
+                        backgroundColor: i === selectedPreset ? p.color + "25" : colors.secondary,
+                        borderColor: i === selectedPreset ? p.color : colors.border,
+                      },
+                    ]}
+                    onPress={() => {
+                      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                      setSelectedPreset(i);
+                    }}
+                  >
+                    <Text style={styles.presetEmoji}>{p.emoji}</Text>
+                    <Text style={[styles.presetLabel, { color: i === selectedPreset ? p.color : colors.mutedForeground }]}>
+                      {p.label}
+                    </Text>
+                  </Pressable>
+                ))}
+              </ScrollView>
+
+              <TextInput
+                style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                placeholder="Goal name (e.g. Emergency Fund)"
+                placeholderTextColor={colors.mutedForeground}
+                value={newGoalTitle}
+                onChangeText={setNewGoalTitle}
+                returnKeyType="next"
+              />
+              <TextInput
+                style={[styles.modalInput, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                placeholder="Target amount (EGP)"
+                placeholderTextColor={colors.mutedForeground}
+                value={newGoalTarget}
+                onChangeText={setNewGoalTarget}
+                keyboardType="numeric"
+                returnKeyType="done"
+                onSubmitEditing={Keyboard.dismiss}
+              />
+              <View style={styles.modalActions}>
+                <Pressable
+                  style={[styles.modalCancel, { borderColor: colors.border }]}
+                  onPress={() => { Keyboard.dismiss(); setShowAdd(false); }}
+                >
+                  <Text style={[styles.modalCancelText, { color: colors.mutedForeground }]}>Cancel</Text>
+                </Pressable>
+                <Pressable
+                  style={[styles.modalConfirm, { opacity: newGoalTitle && newGoalTarget ? 1 : 0.4 }]}
+                  disabled={!newGoalTitle || !newGoalTarget}
+                  onPress={() => {
+                    Keyboard.dismiss();
+                    const preset = GOAL_PRESETS[selectedPreset];
+                    addGoal({
+                      title: newGoalTitle.trim(),
+                      target: Number(newGoalTarget.replace(/,/g, "")),
+                      current: 0,
+                      icon: preset.icon,
+                      deadline: "Dec 2026",
+                      color: preset.color,
+                    });
+                    setShowAdd(false);
+                    setNewGoalTitle("");
+                    setNewGoalTarget("");
+                    setSelectedPreset(0);
+                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  }}
+                >
+                  <LinearGradient colors={["#2E3192", "#92278F"]} style={styles.modalConfirmGrad}>
+                    <Text style={styles.modalConfirmText}>Create Goal</Text>
+                  </LinearGradient>
+                </Pressable>
+              </View>
             </View>
-          </View>
+          </KeyboardAvoidingView>
         </View>
       </Modal>
     </View>
@@ -303,9 +380,20 @@ const styles = StyleSheet.create({
   challengeStepDone: { borderColor: "#22C55E", backgroundColor: "rgba(34,197,94,0.2)" },
   fab: { position: "absolute", right: 20 },
   fabGrad: { width: 60, height: 60, borderRadius: 30, alignItems: "center", justifyContent: "center", shadowColor: "#2E3192", shadowOpacity: 0.4, shadowRadius: 12, elevation: 8 },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "flex-end" },
+  modalKav: { position: "absolute", bottom: 0, left: 0, right: 0 },
+  handle: { width: 36, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 12 },
   modalSheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, paddingBottom: 36, gap: 14 },
   modalTitle: { fontSize: 20, fontFamily: "Inter_700Bold", marginBottom: 4 },
+  presetsScroll: { marginHorizontal: -4 },
+  presetsRow: { gap: 8, paddingHorizontal: 4 },
+  presetChip: {
+    flexDirection: "column", alignItems: "center", gap: 4,
+    paddingHorizontal: 12, paddingVertical: 10,
+    borderRadius: 14, borderWidth: 1,
+    minWidth: 64,
+  },
+  presetEmoji: { fontSize: 20 },
+  presetLabel: { fontSize: 11, fontFamily: "Inter_500Medium" },
   modalInput: { borderRadius: 14, padding: 14, fontSize: 15, fontFamily: "Inter_400Regular", borderWidth: 1 },
   modalActions: { flexDirection: "row", gap: 12, marginTop: 4 },
   modalCancel: { flex: 1, borderRadius: 14, paddingVertical: 14, alignItems: "center", borderWidth: 1 },
