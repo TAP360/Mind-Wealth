@@ -1,0 +1,637 @@
+# MindWealth AI Mobile Application Design Prompt
+
+## Project Overview
+
+Design a world-class mobile application called **MindWealth AI**.
+
+MindWealth AI is an AI-powered Behavioral Finance and Financial Wellness platform designed for Egypt and GCC markets.
+
+Unlike traditional banking or investment apps, MindWealth helps users improve their relationship with money through:
+
+* Financial Personality Profiling
+* Emotional Financial Intelligence (EFI)
+* AI Financial Coaching
+* Smart Behavioral Nudges
+* Adaptive Savings Optimization
+* Financial Planning
+* Investment Guidance
+* Loan Management
+* Financial Wellness Tracking
+
+The platform combines Behavioral Psychology, Artificial Intelligence, Financial Planning, and Emotional Intelligence to help users build healthier financial habits and make better financial decisions.
+
+The experience should feel like:
+
+* Personal Financial Therapist
+* AI Financial Coach
+* Trusted Advisor
+* Wellness Companion
+
+Not a trading app.
+
+---
+
+# Design Style
+
+## Brand Personality
+
+* Trustworthy
+* Intelligent
+* Human-centered
+* Modern
+* Supportive
+* Emotionally aware
+* Premium
+* Aspirational
+
+---
+
+# Brand Colors
+
+## Primary Colors
+
+Primary Indigo:
+#2E3192
+
+Secondary Purple:
+#92278F
+
+Accent Orange:
+#F37021
+
+---
+
+## Primary Gradient
+
+Use extensively for hero sections and AI experiences:
+
+linear-gradient(
+135deg,
+#2E3192 0%,
+#92278F 60%,
+#F37021 100%
+)
+
+---
+
+## Supporting Colors
+
+Success:
+#22C55E
+
+Warning:
+#F59E0B
+
+Error:
+#EF4444
+
+Light Background:
+#F8FAFC
+
+Dark Background:
+#0B1026
+
+Light Cards:
+#FFFFFF
+
+Dark Cards:
+#161B35
+
+Primary Text:
+#111827
+
+Secondary Text:
+#64748B
+
+---
+
+# Visual Direction
+
+Combine:
+
+* Fintech
+* AI
+* Wellness
+* Behavioral Psychology
+
+References:
+
+* Headspace
+* Calm
+* BetterUp
+* Cleo
+* Revolut
+* Monzo
+* Wealthfront
+
+Design Characteristics:
+
+* Rounded corners (20px)
+* Soft shadows
+* Premium glassmorphism
+* Large whitespace
+* Clean typography
+* Friendly illustrations
+* Financial wellness graphics
+* Smooth micro-interactions
+
+---
+
+# Localization
+
+Support:
+
+* English
+* Arabic
+* RTL Layout
+* Egyptian Arabic
+* GCC Arabic
+
+Cultural Considerations:
+
+* Islamic finance awareness
+* Zakat considerations
+* Family financial obligations
+* Local financial behaviors
+
+---
+
+# Mobile App Screens
+
+---
+
+## 1. Splash Screen
+
+Elements:
+
+* MindWealth Logo
+* Animated Gradient Background
+* Brain + Growth visual concept
+
+Tagline:
+
+"Transform Your Relationship With Money"
+
+---
+
+## 2. Onboarding Experience
+
+### Screen 1
+
+Understand Your Money Personality
+
+Discover why you spend, save, and make financial decisions.
+
+### Screen 2
+
+Track Your Emotional Financial Intelligence
+
+Understand emotions behind financial behavior.
+
+### Screen 3
+
+Meet Your AI Financial Coach
+
+Receive personalized coaching and recommendations.
+
+### Screen 4
+
+Build Better Financial Habits
+
+Develop saving habits and long-term financial confidence.
+
+CTA:
+
+* Get Started
+* Login
+
+---
+
+## 3. Financial Personality Assessment
+
+Money Script Profiling Engine
+
+Assessment Flow:
+
+* Multi-step questionnaire
+* Progress indicator
+* Interactive cards
+
+Assessment Output:
+
+* Money Worship
+* Money Vigilance
+* Money Status
+* Money Avoidance
+* Money Obligation
+
+Display:
+
+* Personality Summary
+* Strengths
+* Weaknesses
+* Behavioral Risks
+* Financial Recommendations
+
+---
+
+## 4. Home Dashboard
+
+Top Section:
+
+* User Greeting
+* Avatar
+* Notifications
+* Daily Mood Check
+
+Main Cards:
+
+### Financial Wellness Score
+
+Display:
+
+* Overall Wellness Score
+* Monthly Trend
+
+### Emotional Financial Intelligence Score
+
+Display:
+
+* EFI Score
+* Emotional Trend
+* Emotional Risk Indicator
+
+### Financial Confidence Score
+
+Display:
+
+* Confidence Rating
+* Growth Trend
+
+### Today's Insight
+
+Examples:
+
+* You saved 12% more this week.
+* Impulse spending risk is elevated.
+* Great progress toward your emergency fund.
+
+Quick Actions:
+
+* Talk to Coach
+* Log Expense
+* Scan Receipt
+* Voice Entry
+* View Goals
+
+---
+
+## 5. AI Financial Coach
+
+ChatGPT-style Interface
+
+Features:
+
+### Personalized Recommendations
+
+Examples:
+
+* Savings suggestions
+* Spending behavior recommendations
+* Financial planning advice
+
+### Financial Education
+
+Explain:
+
+* Budgeting
+* Investing
+* Debt
+* Emergency Funds
+
+### Goal Support
+
+Help users achieve:
+
+* House Purchase
+* Education
+* Retirement
+* Emergency Fund
+* Travel
+
+Suggested Prompts:
+
+* Why do I overspend?
+* Help me save for a car.
+* Analyze my spending.
+* How can I reduce debt?
+
+---
+
+## 6. Emotional Financial Intelligence Dashboard
+
+Track:
+
+* Emotional Awareness
+* Financial Confidence
+* Impulse Control
+* Stress Spending
+
+Visual Components:
+
+* Radar Chart
+* Emotional Wheel
+* Trend Graphs
+* Weekly Reports
+
+Indicators:
+
+* Anxiety Index
+* Spending Trigger Index
+* Emotional Stability Score
+
+---
+
+## 7. Transaction Management
+
+Data Sources:
+
+* Bank Integration
+* Wallet Integration
+* Manual Entry
+* Receipt OCR
+* Voice Recording
+
+Features:
+
+### Transaction List
+
+Search
+Filter
+Sort
+
+### Transaction Details
+
+Category
+Amount
+Date
+Emotion Tag
+
+### Manual Tracking
+
+* Add Expense
+* Upload Receipt
+* Voice Input
+
+---
+
+## 8. Forecasting & Predictions
+
+Behavior Forecast Engine
+
+Predict:
+
+* Future Expenses
+* Spending Categories
+* Cash Flow Trends
+* Monthly Savings Potential
+
+Display:
+
+* Prediction Charts
+* Spending Forecast Timeline
+* Expected Expense Categories
+
+---
+
+## 9. Smart Nudging Center
+
+Behavioral Intervention Hub
+
+Notification Types:
+
+### Spending Safety Alerts
+
+Large spending warning.
+
+### Savings Opportunity Alerts
+
+Extra savings opportunity identified.
+
+### Cooling-Off Alerts
+
+Pause before risky spending.
+
+### Savings Progress Alerts
+
+Celebrate progress.
+
+### Behavioral Reminder Alerts
+
+Identify deviations.
+
+Display:
+
+* Timeline
+* History
+* Effectiveness Metrics
+
+---
+
+## 10. Adaptive Savings Optimization
+
+Personalized Saving Engine
+
+Features:
+
+### Saving Plans
+
+Customized monthly plans.
+
+### Goal Allocation
+
+Assign money to:
+
+* Bills
+* Rent
+* Savings
+* Investments
+
+### Savings Opportunities
+
+Examples:
+
+"You spent 1500 EGP on coffee last month. Reducing by 20% could save 300 EGP monthly."
+
+### Habit Breaking
+
+Show long-term benefits of reducing:
+
+* Smoking
+* Impulse Shopping
+* Subscription Waste
+
+---
+
+## 11. Financial Planning Center
+
+Modules:
+
+### Savings Planning
+
+### Investment Suggestions
+
+### Loan Management
+
+Display:
+
+* Action Plans
+* Risk Assessment
+* Goal Alignment
+
+---
+
+## 12. Anomaly Detection Center
+
+Monitor:
+
+* Suspicious Spending
+* Unusual Transactions
+* Risky Behaviors
+
+Features:
+
+* Explainable AI Alerts
+* Confidence Level
+* Risk Score
+* Recommended Actions
+
+---
+
+## 13. Goals & Challenges
+
+Goals:
+
+* Emergency Fund
+* Car
+* House
+* Education
+* Travel
+* Retirement
+
+Gamification:
+
+* Streaks
+* Achievements
+* Milestones
+* Progress Celebrations
+
+---
+
+## 14. Community
+
+Features:
+
+* Success Stories
+* Financial Wellness Challenges
+* Expert Tips
+* Community Discussions
+
+---
+
+## 15. Premium Subscription
+
+### Free
+
+* Money Personality Assessment
+* Manual Tracking
+* Limited AI Coach
+* Basic Insights
+
+### Premium
+
+150 EGP Monthly
+
+Includes:
+
+* Unlimited Coaching
+* Bank Integration
+* Real-time EFI
+* Personalized Saving Plans
+* Investment Suggestions
+
+### Premium Plus
+
+400 EGP Monthly
+
+Includes:
+
+* Advanced Investments
+* Family Sharing
+* Loan Management
+* Tax Assistance
+* Human Advisor Sessions
+
+---
+
+## 16. Profile
+
+Sections:
+
+* Personal Information
+* Financial Personality
+* Linked Accounts
+* Notification Settings
+* Language
+* Security
+* Subscription
+
+---
+
+# Bottom Navigation
+
+1. Home
+2. Coach
+3. Insights
+4. Goals
+5. Profile
+
+---
+
+# Design System Requirements
+
+Create:
+
+* Complete Design System
+* Color Tokens
+* Typography Scale
+* Auto Layout Components
+* Design Tokens
+* Buttons
+* Inputs
+* Cards
+* Charts
+* AI Widgets
+* Financial Widgets
+* Empty States
+* Error States
+* Loading States
+* RTL Components
+* Dark Mode
+* Light Mode
+
+---
+
+# Deliverables
+
+Generate:
+
+* High-Fidelity Mobile UI
+* Complete User Flows
+* Interactive Prototype
+* Design System
+* Component Library
+* Developer Handoff Assets
+* Production-Ready Screens
+
+The final product should feel like a premium AI-powered financial wellness platform that combines behavioral psychology, emotional intelligence, financial coaching, and personal finance management into a single trusted experience for users in Egypt and the GCC.
