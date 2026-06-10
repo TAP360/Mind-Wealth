@@ -1,7 +1,7 @@
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Animated,
   Platform,
@@ -15,6 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 
 import { CircularProgress } from "@/components/CircularProgress";
+import { AddExpenseModal } from "@/components/AddExpenseModal";
+import { AddReceiptModal } from "@/components/AddReceiptModal";
 import { useApp, MoodType } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 
@@ -38,6 +40,8 @@ export default function HomeScreen() {
   const router = useRouter();
   const { profile, mood, setMood, transactions, hasOnboarded } = useApp();
   const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [showAddExpense, setShowAddExpense] = useState(false);
+  const [showAddReceipt, setShowAddReceipt] = useState(false);
 
   useEffect(() => {
     if (!hasOnboarded) {
@@ -54,8 +58,8 @@ export default function HomeScreen() {
 
   const quickActions = [
     { icon: "message-circle", label: "Coach", onPress: () => router.push("/(tabs)/coach") },
-    { icon: "plus-circle", label: "Expense", onPress: () => {} },
-    { icon: "camera", label: "Receipt", onPress: () => {} },
+    { icon: "plus-circle", label: "Expense", onPress: () => setShowAddExpense(true) },
+    { icon: "camera", label: "Receipt", onPress: () => setShowAddReceipt(true) },
     { icon: "target", label: "Goals", onPress: () => router.push("/(tabs)/goals") },
     { icon: "bar-chart-2", label: "Insights", onPress: () => router.push("/(tabs)/insights") },
   ];
@@ -256,6 +260,16 @@ export default function HomeScreen() {
           ))}
         </View>
       </ScrollView>
+
+      <AddExpenseModal
+        visible={showAddExpense}
+        onClose={() => setShowAddExpense(false)}
+        initialType="expense"
+      />
+      <AddReceiptModal
+        visible={showAddReceipt}
+        onClose={() => setShowAddReceipt(false)}
+      />
     </Animated.View>
   );
 }
