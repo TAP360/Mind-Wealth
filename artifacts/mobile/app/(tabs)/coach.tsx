@@ -115,7 +115,7 @@ export default function CoachScreen() {
             <View style={styles.onlineDot} />
           </View>
           <View style={styles.coachInfo}>
-            <Text style={styles.coachName}>MindWealth AI Coach</Text>
+            <Text style={styles.coachName}>Bassera AI Coach</Text>
             <Text style={styles.coachStatus}>Active · Personalized for you</Text>
           </View>
           <Feather name="more-horizontal" size={22} color="rgba(255,255,255,0.6)" />

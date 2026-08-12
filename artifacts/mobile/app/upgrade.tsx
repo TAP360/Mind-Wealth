@@ -126,7 +126,7 @@ export default function UpgradeScreen() {
         >
           <Feather name="zap" size={28} color="#FFFFFF" />
         </LinearGradient>
-        <Text style={styles.headerTitle}>Upgrade MindWealth AI</Text>
+        <Text style={styles.headerTitle}>Upgrade Bassera بصيرة</Text>
         <Text style={styles.headerSub}>
           Unlock the full power of behavioral finance coaching
         </Text>

@@ -71,9 +71,9 @@ export default function ProfileScreen() {
     {
       title: "Security",
       items: [
-        { icon: "lock", label: "Change Passcode", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Change Passcode", "Set a 6-digit PIN to secure your MindWealth account.\n\nBiometric authentication is also available.", [{ text: "OK" }]); } },
+        { icon: "lock", label: "Change Passcode", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Change Passcode", "Set a 6-digit PIN to secure your Bassera account.\n\nBiometric authentication is also available.", [{ text: "OK" }]); } },
         { icon: "shield", label: "Biometric Login", toggle: true, value: true, onToggle: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } },
-        { icon: "eye-off", label: "Privacy Settings", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Privacy Settings", "MindWealth AI only uses your data to personalize your coaching experience. We never sell your data.\n\nData stored locally on your device.", [{ text: "OK" }]); } },
+        { icon: "eye-off", label: "Privacy Settings", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Privacy Settings", "Bassera only uses your data to personalize your coaching experience. We never sell your data.\n\nData stored locally on your device.", [{ text: "OK" }]); } },
       ],
     },
     {
@@ -81,7 +81,7 @@ export default function ProfileScreen() {
       items: [
         { icon: "help-circle", label: "Help Center", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Help Center", "📚 FAQs, tutorials, and guides are available at:\nmindwealthai.com/help\n\nOr contact us directly for personalized support.", [{ text: "OK" }]); } },
         { icon: "message-square", label: "Contact Support", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); Alert.alert("Contact Support", "📧 support@mindwealthai.com\n📱 WhatsApp: +20 100 123 4567\n\nResponse within 24 hours.", [{ text: "OK" }]); } },
-        { icon: "star", label: "Rate MindWealth", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); Alert.alert("Rate MindWealth AI ⭐", "Enjoying the app? Your review helps us reach more people!\n\nLeave us a 5-star review on the App Store.", [{ text: "Not Now", style: "cancel" }, { text: "⭐ Rate Now", onPress: () => {} }]); } },
+        { icon: "star", label: "Rate Bassera", arrow: true, onPress: () => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); Alert.alert("Rate Bassera ⭐", "Enjoying the app? Your review helps us reach more people!\n\nLeave us a 5-star review on the App Store.", [{ text: "Not Now", style: "cancel" }, { text: "⭐ Rate Now", onPress: () => {} }]); } },
       ],
     },
   ];
@@ -250,7 +250,7 @@ export default function ProfileScreen() {
           </View>
         </Pressable>
 
-        <Text style={[styles.version, { color: colors.mutedForeground }]}>MindWealth AI v1.0.0</Text>
+        <Text style={[styles.version, { color: colors.mutedForeground }]}>Bassera بصيرة v1.0.0</Text>
       </View>
     </ScrollView>
   );

@@ -395,7 +395,7 @@ export default function OnboardingScreen() {
               }}
             >
               <View style={styles.splashTitleRow}>
-                <Text style={styles.splashBrand}>MindWealth</Text>
+                <Text style={styles.splashBrand}>Bassera بصيرة</Text>
                 <LinearGradient
                   colors={["#2E3192", "#92278F", "#F37021"]}
                   start={{ x: 0, y: 0 }}
@@ -504,7 +504,7 @@ export default function OnboardingScreen() {
         <Animated.View style={[styles.center, { opacity: fadeAnim }]}>
           <Text style={styles.assessTitle}>What should we call you?</Text>
           <Text style={styles.assessSubtitle}>
-            MindWealth AI will personalize your experience based on your name.
+            Bassera will personalize your experience based on your name.
           </Text>
           <TextInput
             style={styles.nameInput}
