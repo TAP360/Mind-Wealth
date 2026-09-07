@@ -1,8 +1,8 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import * as Haptics from "expo-haptics";
-import { LinearGradient } from "expo-linear-gradient";
-import { useRouter } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as Haptics from 'expo-haptics';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
   Dimensions,
@@ -14,50 +14,61 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useApp, PersonalityType } from "@/context/AppContext";
+import { useApp, PersonalityType } from '@/context/AppContext';
 
-const { width, height } = Dimensions.get("window");
+const { width, height } = Dimensions.get('window');
 
-const SLOGAN_WORDS = ["Understand", "your", "money", "by", "understanding", "yourself"];
+const SLOGAN_WORDS = [
+  'Understand',
+  'your',
+  'money',
+  'by',
+  'understanding',
+  'yourself',
+];
 
 const PARTICLES = [
-  { top: "12%", left: "8%", size: 4, opacity: 0.35 },
-  { top: "18%", right: "12%", size: 3, opacity: 0.25 },
-  { top: "28%", left: "18%", size: 2, opacity: 0.2 },
-  { top: "72%", left: "10%", size: 3, opacity: 0.3 },
-  { top: "68%", right: "8%", size: 4, opacity: 0.25 },
-  { top: "80%", left: "22%", size: 2, opacity: 0.2 },
-  { top: "60%", right: "20%", size: 3, opacity: 0.2 },
-  { top: "38%", right: "6%", size: 2, opacity: 0.3 },
+  { top: '12%', left: '8%', size: 4, opacity: 0.35 },
+  { top: '18%', right: '12%', size: 3, opacity: 0.25 },
+  { top: '28%', left: '18%', size: 2, opacity: 0.2 },
+  { top: '72%', left: '10%', size: 3, opacity: 0.3 },
+  { top: '68%', right: '8%', size: 4, opacity: 0.25 },
+  { top: '80%', left: '22%', size: 2, opacity: 0.2 },
+  { top: '60%', right: '20%', size: 3, opacity: 0.2 },
+  { top: '38%', right: '6%', size: 2, opacity: 0.3 },
 ];
 
 const SLIDES = [
   {
-    id: "1",
-    title: "Understand Your\nMoney Personality",
-    subtitle: "Discover why you spend, save, and make financial decisions the way you do.",
-    image: require("@/assets/images/onboarding1.png"),
+    id: '1',
+    title: 'Understand Your\nMoney Personality',
+    subtitle:
+      'Discover why you spend, save, and make financial decisions the way you do.',
+    image: require('@/assets/images/onboarding1.png'),
   },
   {
-    id: "2",
-    title: "Track Your Emotional\nFinancial Intelligence",
-    subtitle: "Understand the emotions behind your financial behavior and decisions.",
-    image: require("@/assets/images/onboarding2.png"),
+    id: '2',
+    title: 'Track Your Emotional\nFinancial Intelligence',
+    subtitle:
+      'Understand the emotions behind your financial behavior and decisions.',
+    image: require('@/assets/images/onboarding2.png'),
   },
   {
-    id: "3",
-    title: "Meet Your AI\nFinancial Coach",
-    subtitle: "Receive personalized coaching, insights, and recommendations — 24/7.",
-    image: require("@/assets/images/onboarding1.png"),
+    id: '3',
+    title: 'Meet Your AI\nFinancial Coach',
+    subtitle:
+      'Receive personalized coaching, insights, and recommendations — 24/7.',
+    image: require('@/assets/images/onboarding1.png'),
   },
   {
-    id: "4",
-    title: "Build Better\nFinancial Habits",
-    subtitle: "Develop saving habits and long-term financial confidence, one day at a time.",
-    image: require("@/assets/images/onboarding2.png"),
+    id: '4',
+    title: 'Build Better\nFinancial Habits',
+    subtitle:
+      'Develop saving habits and long-term financial confidence, one day at a time.',
+    image: require('@/assets/images/onboarding2.png'),
   },
 ];
 
@@ -67,96 +78,113 @@ const QUESTIONS = [
     text: "When you receive unexpected money, what's your first instinct?",
     options: [
       { text: "Spend it on something I've wanted", scores: { worship: 2 } },
-      { text: "Save it immediately", scores: { vigilance: 2 } },
-      { text: "Buy something to impress others", scores: { status: 2 } },
-      { text: "Feel guilty and donate it", scores: { avoidance: 2 } },
+      { text: 'Save it immediately', scores: { vigilance: 2 } },
+      { text: 'Buy something to impress others', scores: { status: 2 } },
+      { text: 'Feel guilty and donate it', scores: { avoidance: 2 } },
     ],
   },
   {
     id: 2,
-    text: "How do you feel when discussing money with family?",
+    text: 'How do you feel when discussing money with family?',
     options: [
-      { text: "Anxious — I prefer not to talk about it", scores: { avoidance: 2, vigilance: 1 } },
-      { text: "Obligated to help everyone financially", scores: { obligation: 2 } },
-      { text: "Open and comfortable", scores: { vigilance: 1 } },
-      { text: "It shows who has power", scores: { status: 2 } },
+      {
+        text: 'Anxious — I prefer not to talk about it',
+        scores: { avoidance: 2, vigilance: 1 },
+      },
+      {
+        text: 'Obligated to help everyone financially',
+        scores: { obligation: 2 },
+      },
+      { text: 'Open and comfortable', scores: { vigilance: 1 } },
+      { text: 'It shows who has power', scores: { status: 2 } },
     ],
   },
   {
     id: 3,
-    text: "What does financial success mean to you?",
+    text: 'What does financial success mean to you?',
     options: [
-      { text: "Having enough to never worry again", scores: { worship: 2 } },
-      { text: "Living below my means, always saving", scores: { vigilance: 2 } },
-      { text: "Driving a luxury car and nice home", scores: { status: 2 } },
-      { text: "Being free from financial ties", scores: { avoidance: 2 } },
+      { text: 'Having enough to never worry again', scores: { worship: 2 } },
+      {
+        text: 'Living below my means, always saving',
+        scores: { vigilance: 2 },
+      },
+      { text: 'Driving a luxury car and nice home', scores: { status: 2 } },
+      { text: 'Being free from financial ties', scores: { avoidance: 2 } },
     ],
   },
   {
     id: 4,
-    text: "When you see something expensive you want, you:",
+    text: 'When you see something expensive you want, you:',
     options: [
-      { text: "Buy it — I deserve it", scores: { worship: 2 } },
-      { text: "Research, wait, then decide carefully", scores: { vigilance: 2 } },
-      { text: "Buy it so others see my taste", scores: { status: 2 } },
-      { text: "Talk myself out of it, feel relief", scores: { avoidance: 1, obligation: 1 } },
+      { text: 'Buy it — I deserve it', scores: { worship: 2 } },
+      {
+        text: 'Research, wait, then decide carefully',
+        scores: { vigilance: 2 },
+      },
+      { text: 'Buy it so others see my taste', scores: { status: 2 } },
+      {
+        text: 'Talk myself out of it, feel relief',
+        scores: { avoidance: 1, obligation: 1 },
+      },
     ],
   },
 ];
 
-type ScoreKey = "worship" | "vigilance" | "status" | "avoidance" | "obligation";
+type ScoreKey = 'worship' | 'vigilance' | 'status' | 'avoidance' | 'obligation';
 
 function getPersonality(scores: Record<ScoreKey, number>): PersonalityType {
   const max = Math.max(...Object.values(scores));
-  const winner = Object.entries(scores).find(([, v]) => v === max)?.[0] as ScoreKey;
+  const winner = Object.entries(scores).find(
+    ([, v]) => v === max,
+  )?.[0] as ScoreKey;
   const map: Record<ScoreKey, PersonalityType> = {
-    worship: "Money Worship",
-    vigilance: "Money Vigilance",
-    status: "Money Status",
-    avoidance: "Money Avoidance",
-    obligation: "Money Obligation",
+    worship: 'Money Worship',
+    vigilance: 'Money Vigilance',
+    status: 'Money Status',
+    avoidance: 'Money Avoidance',
+    obligation: 'Money Obligation',
   };
-  return map[winner] ?? "Money Vigilance";
+  return map[winner] ?? 'Money Vigilance';
 }
 
 const personalityInfo: Record<
   string,
   { emoji: string; color: string; desc: string; strength: string; risk: string }
 > = {
-  "Money Vigilance": {
-    emoji: "🛡️",
-    color: "#2E3192",
-    desc: "You are careful, responsible, and private about money. You believe in saving and being prepared.",
-    strength: "Excellent at saving and financial security",
-    risk: "May avoid spending even on important needs",
+  'Money Vigilance': {
+    emoji: '🛡️',
+    color: '#2E3192',
+    desc: 'You are careful, responsible, and private about money. You believe in saving and being prepared.',
+    strength: 'Excellent at saving and financial security',
+    risk: 'May avoid spending even on important needs',
   },
-  "Money Worship": {
-    emoji: "✨",
-    color: "#F37021",
-    desc: "You believe money can solve problems and create happiness. You work hard to earn more.",
-    strength: "High financial motivation and ambition",
-    risk: "Prone to overspending or compulsive buying",
+  'Money Worship': {
+    emoji: '✨',
+    color: '#F37021',
+    desc: 'You believe money can solve problems and create happiness. You work hard to earn more.',
+    strength: 'High financial motivation and ambition',
+    risk: 'Prone to overspending or compulsive buying',
   },
-  "Money Status": {
-    emoji: "👑",
-    color: "#92278F",
-    desc: "Money equals success and social status. Your self-worth is tied to financial achievement.",
-    strength: "Driven to achieve financial milestones",
-    risk: "Spending to impress rather than fulfill",
+  'Money Status': {
+    emoji: '👑',
+    color: '#92278F',
+    desc: 'Money equals success and social status. Your self-worth is tied to financial achievement.',
+    strength: 'Driven to achieve financial milestones',
+    risk: 'Spending to impress rather than fulfill',
   },
-  "Money Avoidance": {
-    emoji: "🌿",
-    color: "#22C55E",
-    desc: "You believe money is corrupting or stressful. You prefer to ignore financial matters.",
-    strength: "Less materialistic, values experiences",
-    risk: "May neglect important financial planning",
+  'Money Avoidance': {
+    emoji: '🌿',
+    color: '#22C55E',
+    desc: 'You believe money is corrupting or stressful. You prefer to ignore financial matters.',
+    strength: 'Less materialistic, values experiences',
+    risk: 'May neglect important financial planning',
   },
-  "Money Obligation": {
-    emoji: "🤝",
-    color: "#F59E0B",
-    desc: "You feel a deep sense of responsibility to provide for and support others financially.",
-    strength: "Generous and family-oriented with money",
-    risk: "May sacrifice your own financial wellbeing",
+  'Money Obligation': {
+    emoji: '🤝',
+    color: '#F59E0B',
+    desc: 'You feel a deep sense of responsibility to provide for and support others financially.',
+    strength: 'Generous and family-oriented with money',
+    risk: 'May sacrifice your own financial wellbeing',
   },
 };
 
@@ -165,12 +193,18 @@ export default function OnboardingScreen() {
   const router = useRouter();
   const { completeOnboarding } = useApp();
 
-  const [phase, setPhase] = useState<"splash" | "slides" | "name" | "assessment" | "result">("splash");
+  const [phase, setPhase] = useState<
+    'splash' | 'slides' | 'name' | 'assessment' | 'result'
+  >('splash');
   const [slideIndex, setSlideIndex] = useState(0);
-  const [userName, setUserName] = useState("");
+  const [userName, setUserName] = useState('');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [scores, setScores] = useState<Record<ScoreKey, number>>({
-    worship: 0, vigilance: 0, status: 0, avoidance: 0, obligation: 0,
+    worship: 0,
+    vigilance: 0,
+    status: 0,
+    avoidance: 0,
+    obligation: 0,
   });
   const [personality, setPersonality] = useState<PersonalityType>(null);
   const [visibleWords, setVisibleWords] = useState(0);
@@ -188,7 +222,7 @@ export default function OnboardingScreen() {
   const sloganOpacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (phase !== "splash") return;
+    if (phase !== 'splash') return;
 
     iconScale.setValue(0.35);
     iconOpacity.setValue(0);
@@ -203,48 +237,101 @@ export default function OnboardingScreen() {
 
     Animated.loop(
       Animated.sequence([
-        Animated.timing(ring1Scale, { toValue: 1.75, duration: 1900, useNativeDriver: false }),
-        Animated.timing(ring1Scale, { toValue: 1, duration: 0, useNativeDriver: false }),
-      ])
+        Animated.timing(ring1Scale, {
+          toValue: 1.75,
+          duration: 1900,
+          useNativeDriver: false,
+        }),
+        Animated.timing(ring1Scale, {
+          toValue: 1,
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ]),
     ).start();
     Animated.loop(
       Animated.sequence([
-        Animated.timing(ring1Opacity, { toValue: 0, duration: 1900, useNativeDriver: false }),
-        Animated.timing(ring1Opacity, { toValue: 0.4, duration: 0, useNativeDriver: false }),
-      ])
+        Animated.timing(ring1Opacity, {
+          toValue: 0,
+          duration: 1900,
+          useNativeDriver: false,
+        }),
+        Animated.timing(ring1Opacity, {
+          toValue: 0.4,
+          duration: 0,
+          useNativeDriver: false,
+        }),
+      ]),
     ).start();
 
     const r2 = setTimeout(() => {
       Animated.loop(
         Animated.sequence([
-          Animated.timing(ring2Scale, { toValue: 1.75, duration: 1900, useNativeDriver: false }),
-          Animated.timing(ring2Scale, { toValue: 1, duration: 0, useNativeDriver: false }),
-        ])
+          Animated.timing(ring2Scale, {
+            toValue: 1.75,
+            duration: 1900,
+            useNativeDriver: false,
+          }),
+          Animated.timing(ring2Scale, {
+            toValue: 1,
+            duration: 0,
+            useNativeDriver: false,
+          }),
+        ]),
       ).start();
       Animated.loop(
         Animated.sequence([
-          Animated.timing(ring2Opacity, { toValue: 0, duration: 1900, useNativeDriver: false }),
-          Animated.timing(ring2Opacity, { toValue: 0.2, duration: 0, useNativeDriver: false }),
-        ])
+          Animated.timing(ring2Opacity, {
+            toValue: 0,
+            duration: 1900,
+            useNativeDriver: false,
+          }),
+          Animated.timing(ring2Opacity, {
+            toValue: 0.2,
+            duration: 0,
+            useNativeDriver: false,
+          }),
+        ]),
       ).start();
     }, 950);
 
     const iconT = setTimeout(() => {
       Animated.parallel([
-        Animated.spring(iconScale, { toValue: 1, friction: 5, tension: 80, useNativeDriver: false }),
-        Animated.timing(iconOpacity, { toValue: 1, duration: 500, useNativeDriver: false }),
+        Animated.spring(iconScale, {
+          toValue: 1,
+          friction: 5,
+          tension: 80,
+          useNativeDriver: false,
+        }),
+        Animated.timing(iconOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: false,
+        }),
       ]).start();
     }, 180);
 
     const titleT = setTimeout(() => {
       Animated.parallel([
-        Animated.timing(titleOpacity, { toValue: 1, duration: 600, useNativeDriver: false }),
-        Animated.timing(titleY, { toValue: 0, duration: 600, useNativeDriver: false }),
+        Animated.timing(titleOpacity, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: false,
+        }),
+        Animated.timing(titleY, {
+          toValue: 0,
+          duration: 600,
+          useNativeDriver: false,
+        }),
       ]).start();
     }, 720);
 
     const sloganT = setTimeout(() => {
-      Animated.timing(sloganOpacity, { toValue: 1, duration: 400, useNativeDriver: false }).start();
+      Animated.timing(sloganOpacity, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: false,
+      }).start();
     }, 1280);
 
     const wordTimers: ReturnType<typeof setTimeout>[] = [];
@@ -254,7 +341,7 @@ export default function OnboardingScreen() {
 
     const totalMs = 1380 + SLOGAN_WORDS.length * 230 + 1500;
     const advanceT = setTimeout(() => {
-      fadeTransition(() => setPhase("slides"));
+      fadeTransition(() => setPhase('slides'));
     }, totalMs);
 
     return () => {
@@ -265,13 +352,21 @@ export default function OnboardingScreen() {
       wordTimers.forEach(clearTimeout);
       clearTimeout(advanceT);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [phase]);
 
   const fadeTransition = (fn: () => void) => {
-    Animated.timing(fadeAnim, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start(() => {
       fn();
-      Animated.timing(fadeAnim, { toValue: 1, duration: 300, useNativeDriver: true }).start();
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
     });
   };
 
@@ -282,14 +377,14 @@ export default function OnboardingScreen() {
       setSlideIndex(next);
       flatRef.current?.scrollToIndex({ index: next, animated: true });
     } else {
-      fadeTransition(() => setPhase("name"));
+      fadeTransition(() => setPhase('name'));
     }
   };
 
   const handleNameNext = () => {
     if (!userName.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    fadeTransition(() => setPhase("assessment"));
+    fadeTransition(() => setPhase('assessment'));
   };
 
   const handleAnswer = (optionScores: Partial<Record<ScoreKey, number>>) => {
@@ -306,31 +401,31 @@ export default function OnboardingScreen() {
       const p = getPersonality(newScores);
       setPersonality(p);
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-      fadeTransition(() => setPhase("result"));
+      fadeTransition(() => setPhase('result'));
     }
   };
 
   const handleFinish = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await completeOnboarding(personality, userName.trim() || undefined);
-    router.replace("/(tabs)/");
+    router.replace('/(tabs)/');
   };
 
-  const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
-  const botPad = Platform.OS === "web" ? 34 : insets.bottom;
+  const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
+  const botPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
-  if (phase === "splash") {
+  if (phase === 'splash') {
     return (
       <Pressable
         style={{ flex: 1 }}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-          fadeTransition(() => setPhase("slides"));
+          fadeTransition(() => setPhase('slides'));
         }}
       >
         <Animated.View style={[styles.fill, { opacity: fadeAnim }]}>
           <LinearGradient
-            colors={["#020919", "#0B1026", "#0C0B34"]}
+            colors={['#020919', '#0B1026', '#0C0B34']}
             style={[styles.fill, styles.splashCenter, { paddingTop: topPad }]}
           >
             {PARTICLES.map((p, i) => (
@@ -355,14 +450,22 @@ export default function OnboardingScreen() {
               <Animated.View
                 style={[
                   styles.splashRing,
-                  { transform: [{ scale: ring1Scale }], opacity: ring1Opacity, borderColor: "#2E3192" },
+                  {
+                    transform: [{ scale: ring1Scale }],
+                    opacity: ring1Opacity,
+                    borderColor: '#2E3192',
+                  },
                 ]}
               />
               <Animated.View
                 style={[
                   styles.splashRing,
                   styles.splashRingOuter,
-                  { transform: [{ scale: ring2Scale }], opacity: ring2Opacity, borderColor: "#92278F" },
+                  {
+                    transform: [{ scale: ring2Scale }],
+                    opacity: ring2Opacity,
+                    borderColor: '#92278F',
+                  },
                 ]}
               />
 
@@ -370,15 +473,15 @@ export default function OnboardingScreen() {
                 style={{
                   opacity: iconOpacity,
                   transform: [{ scale: iconScale }],
-                  alignItems: "center",
+                  alignItems: 'center',
                 }}
               >
                 <LinearGradient
-                  colors={["#2E3192", "#6B1FB0", "#92278F"]}
+                  colors={['#2E3192', '#6B1FB0', '#92278F']}
                   style={styles.splashIconCircle}
                 >
                   <Image
-                    source={require("@/assets/images/icon.png")}
+                    source={require('@/assets/images/icon.png')}
                     style={styles.splashIconImg}
                     resizeMode="cover"
                   />
@@ -390,14 +493,14 @@ export default function OnboardingScreen() {
               style={{
                 opacity: titleOpacity,
                 transform: [{ translateY: titleY }],
-                alignItems: "center",
+                alignItems: 'center',
                 marginTop: 28,
               }}
             >
               <View style={styles.splashTitleRow}>
                 <Text style={styles.splashBrand}>MindWealth</Text>
                 <LinearGradient
-                  colors={["#2E3192", "#92278F", "#F37021"]}
+                  colors={['#2E3192', '#92278F', '#F37021']}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.splashAIBadge}
@@ -408,18 +511,22 @@ export default function OnboardingScreen() {
               <Text style={styles.splashTagline}>Smart Financial Advisory</Text>
             </Animated.View>
 
-            <Animated.View style={[styles.sloganContainer, { opacity: sloganOpacity }]}>
+            <Animated.View
+              style={[styles.sloganContainer, { opacity: sloganOpacity }]}
+            >
               <View style={styles.sloganRow}>
                 {SLOGAN_WORDS.map((word, i) => (
                   <Text
                     key={i}
                     style={[
                       styles.sloganWord,
-                      i < visibleWords ? styles.sloganVisible : styles.sloganHidden,
+                      i < visibleWords
+                        ? styles.sloganVisible
+                        : styles.sloganHidden,
                     ]}
                   >
                     {word}
-                    {i < SLOGAN_WORDS.length - 1 ? " " : ""}
+                    {i < SLOGAN_WORDS.length - 1 ? ' ' : ''}
                   </Text>
                 ))}
               </View>
@@ -434,10 +541,10 @@ export default function OnboardingScreen() {
     );
   }
 
-  if (phase === "slides") {
+  if (phase === 'slides') {
     return (
       <LinearGradient
-        colors={["#0B1026", "#1A1040", "#2E1855"]}
+        colors={['#0B1026', '#1A1040', '#2E1855']}
         style={[styles.fill, { paddingTop: topPad }]}
       >
         <FlatList
@@ -450,7 +557,11 @@ export default function OnboardingScreen() {
           keyExtractor={(s) => s.id}
           renderItem={({ item }) => (
             <View style={[styles.slide, { width }]}>
-              <Image source={item.image} style={styles.slideImage} resizeMode="contain" />
+              <Image
+                source={item.image}
+                style={styles.slideImage}
+                resizeMode="contain"
+              />
               <Text style={styles.slideTitle}>{item.title}</Text>
               <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
             </View>
@@ -469,13 +580,13 @@ export default function OnboardingScreen() {
         <View style={[styles.slideActions, { paddingBottom: botPad + 16 }]}>
           <Pressable style={styles.nextBtn} onPress={handleSlideNext}>
             <LinearGradient
-              colors={["#2E3192", "#92278F", "#F37021"]}
+              colors={['#2E3192', '#92278F', '#F37021']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.nextBtnGrad}
             >
               <Text style={styles.nextBtnText}>
-                {slideIndex === SLIDES.length - 1 ? "Get Started" : "Next"}
+                {slideIndex === SLIDES.length - 1 ? 'Get Started' : 'Next'}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -484,7 +595,10 @@ export default function OnboardingScreen() {
               style={styles.skipBtn}
               onPress={() => {
                 setSlideIndex(SLIDES.length - 1);
-                flatRef.current?.scrollToIndex({ index: SLIDES.length - 1, animated: true });
+                flatRef.current?.scrollToIndex({
+                  index: SLIDES.length - 1,
+                  animated: true,
+                });
               }}
             >
               <Text style={styles.skipText}>Skip</Text>
@@ -495,11 +609,14 @@ export default function OnboardingScreen() {
     );
   }
 
-  if (phase === "name") {
+  if (phase === 'name') {
     return (
       <LinearGradient
-        colors={["#0B1026", "#1A1040", "#2E1855"]}
-        style={[styles.fill, { paddingTop: topPad, paddingBottom: botPad + 16 }]}
+        colors={['#0B1026', '#1A1040', '#2E1855']}
+        style={[
+          styles.fill,
+          { paddingTop: topPad, paddingBottom: botPad + 16 },
+        ]}
       >
         <Animated.View style={[styles.center, { opacity: fadeAnim }]}>
           <Text style={styles.assessTitle}>What should we call you?</Text>
@@ -517,12 +634,15 @@ export default function OnboardingScreen() {
             onSubmitEditing={handleNameNext}
           />
           <Pressable
-            style={[styles.assessBtn, !userName.trim() && styles.assessBtnDisabled]}
+            style={[
+              styles.assessBtn,
+              !userName.trim() && styles.assessBtnDisabled,
+            ]}
             onPress={handleNameNext}
             disabled={!userName.trim()}
           >
             <LinearGradient
-              colors={["#2E3192", "#92278F", "#F37021"]}
+              colors={['#2E3192', '#92278F', '#F37021']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.assessBtnGrad}
@@ -535,12 +655,15 @@ export default function OnboardingScreen() {
     );
   }
 
-  if (phase === "assessment") {
+  if (phase === 'assessment') {
     const q = QUESTIONS[questionIndex];
     return (
       <LinearGradient
-        colors={["#0B1026", "#1A1040", "#2E1855"]}
-        style={[styles.fill, { paddingTop: topPad, paddingBottom: botPad + 16 }]}
+        colors={['#0B1026', '#1A1040', '#2E1855']}
+        style={[
+          styles.fill,
+          { paddingTop: topPad, paddingBottom: botPad + 16 },
+        ]}
       >
         <Animated.View style={[styles.assessContainer, { opacity: fadeAnim }]}>
           <View style={styles.progressRow}>
@@ -562,7 +685,10 @@ export default function OnboardingScreen() {
             {q.options.map((opt, i) => (
               <Pressable
                 key={i}
-                style={({ pressed }) => [styles.option, pressed && styles.optionPressed]}
+                style={({ pressed }) => [
+                  styles.option,
+                  pressed && styles.optionPressed,
+                ]}
                 onPress={() => handleAnswer(opt.scores)}
               >
                 <Text style={styles.optionText}>{opt.text}</Text>
@@ -574,16 +700,26 @@ export default function OnboardingScreen() {
     );
   }
 
-  const info = personalityInfo[personality ?? "Money Vigilance"];
+  const info = personalityInfo[personality ?? 'Money Vigilance'];
   return (
     <LinearGradient
-      colors={["#0B1026", "#1A1040", "#2E1855"]}
+      colors={['#0B1026', '#1A1040', '#2E1855']}
       style={[styles.fill, { paddingTop: topPad, paddingBottom: botPad + 16 }]}
     >
       <Animated.View style={[styles.center, { opacity: fadeAnim }]}>
-        <View style={[styles.personalityBadge, { backgroundColor: info.color + "22", borderColor: info.color + "55" }]}>
+        <View
+          style={[
+            styles.personalityBadge,
+            {
+              backgroundColor: info.color + '22',
+              borderColor: info.color + '55',
+            },
+          ]}
+        >
           <Text style={styles.personalityEmoji}>{info.emoji}</Text>
-          <Text style={[styles.personalityName, { color: info.color }]}>{personality}</Text>
+          <Text style={[styles.personalityName, { color: info.color }]}>
+            {personality}
+          </Text>
         </View>
 
         <Text style={styles.slideTitle}>Your Money Personality</Text>
@@ -594,15 +730,22 @@ export default function OnboardingScreen() {
             <Text style={styles.resultCardLabel}>Strength</Text>
             <Text style={styles.resultCardText}>{info.strength}</Text>
           </View>
-          <View style={[styles.resultCard, { borderColor: "#EF444422", backgroundColor: "#EF444411" }]}>
-            <Text style={[styles.resultCardLabel, { color: "#EF4444" }]}>Watch Out</Text>
+          <View
+            style={[
+              styles.resultCard,
+              { borderColor: '#EF444422', backgroundColor: '#EF444411' },
+            ]}
+          >
+            <Text style={[styles.resultCardLabel, { color: '#EF4444' }]}>
+              Watch Out
+            </Text>
             <Text style={styles.resultCardText}>{info.risk}</Text>
           </View>
         </View>
 
         <Pressable style={styles.nextBtn} onPress={handleFinish}>
           <LinearGradient
-            colors={["#2E3192", "#92278F", "#F37021"]}
+            colors={['#2E3192', '#92278F', '#F37021']}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0 }}
             style={styles.nextBtnGrad}
@@ -617,179 +760,255 @@ export default function OnboardingScreen() {
 
 const styles = StyleSheet.create({
   fill: { flex: 1 },
-  center: { flex: 1, alignItems: "center", justifyContent: "center", paddingHorizontal: 28 },
-  slide: { alignItems: "center", justifyContent: "center", paddingHorizontal: 28 },
+  center: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+  },
+  slide: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+  },
   slideImage: { width: width * 0.7, height: height * 0.32, marginBottom: 36 },
   slideTitle: {
     fontSize: 28,
-    fontFamily: "Inter_700Bold",
-    color: "#FFFFFF",
-    textAlign: "center",
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
     lineHeight: 36,
     marginBottom: 16,
   },
   slideSubtitle: {
     fontSize: 16,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.65)",
-    textAlign: "center",
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.65)',
+    textAlign: 'center',
     lineHeight: 24,
     paddingHorizontal: 8,
   },
-  slideDots: { flexDirection: "row", justifyContent: "center", gap: 8 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: "rgba(255,255,255,0.25)" },
-  dotActive: { width: 24, backgroundColor: "#F37021" },
+  slideDots: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  dotActive: { width: 24, backgroundColor: '#F37021' },
   slideActions: { paddingHorizontal: 28, gap: 12 },
-  nextBtn: { borderRadius: 16, overflow: "hidden" },
-  nextBtnGrad: { paddingVertical: 16, paddingHorizontal: 32, alignItems: "center", borderRadius: 16 },
-  nextBtnText: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
-  skipBtn: { alignItems: "center", paddingVertical: 8 },
-  skipText: { fontSize: 15, fontFamily: "Inter_400Regular", color: "rgba(255,255,255,0.45)" },
+  nextBtn: { borderRadius: 16, overflow: 'hidden' },
+  nextBtnGrad: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  nextBtnText: {
+    fontSize: 17,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
+  skipBtn: { alignItems: 'center', paddingVertical: 8 },
+  skipText: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.45)',
+  },
 
   assessContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
-  progressRow: { flexDirection: "row", gap: 6, marginBottom: 20 },
-  progressDot: { flex: 1, height: 4, borderRadius: 2, backgroundColor: "rgba(255,255,255,0.15)" },
-  progressDotActive: { backgroundColor: "#F37021" },
+  progressRow: { flexDirection: 'row', gap: 6, marginBottom: 20 },
+  progressDot: {
+    flex: 1,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  progressDotActive: { backgroundColor: '#F37021' },
   assessStep: {
     fontSize: 13,
-    fontFamily: "Inter_500Medium",
-    color: "rgba(255,255,255,0.5)",
+    fontFamily: 'Inter_500Medium',
+    color: 'rgba(255,255,255,0.5)',
     marginBottom: 12,
   },
   assessTitle: {
     fontSize: 22,
-    fontFamily: "Inter_700Bold",
-    color: "#FFFFFF",
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
     lineHeight: 30,
     marginBottom: 24,
-    textAlign: "center",
+    textAlign: 'center',
   },
   assessSubtitle: {
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.6)",
-    textAlign: "center",
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.6)',
+    textAlign: 'center',
     lineHeight: 22,
     marginBottom: 32,
     paddingHorizontal: 8,
   },
   optionList: { gap: 12 },
   option: {
-    backgroundColor: "rgba(255,255,255,0.08)",
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
+    borderColor: 'rgba(255,255,255,0.12)',
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
   },
-  optionPressed: { backgroundColor: "rgba(46,49,146,0.4)", borderColor: "rgba(146,39,143,0.6)" },
-  optionText: { fontSize: 15, fontFamily: "Inter_400Regular", color: "#FFFFFF", lineHeight: 22 },
+  optionPressed: {
+    backgroundColor: 'rgba(46,49,146,0.4)',
+    borderColor: 'rgba(146,39,143,0.6)',
+  },
+  optionText: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    lineHeight: 22,
+  },
 
   nameInput: {
-    width: "100%",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.15)",
+    borderColor: 'rgba(255,255,255,0.15)',
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 20,
     fontSize: 18,
-    fontFamily: "Inter_400Regular",
-    color: "#FFFFFF",
-    textAlign: "center",
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    textAlign: 'center',
     marginBottom: 24,
     marginTop: 24,
   },
-  assessBtn: { borderRadius: 16, overflow: "hidden", width: "100%" },
+  assessBtn: { borderRadius: 16, overflow: 'hidden', width: '100%' },
   assessBtnDisabled: { opacity: 0.45 },
-  assessBtnGrad: { paddingVertical: 16, alignItems: "center", borderRadius: 16 },
-  assessBtnText: { fontSize: 17, fontFamily: "Inter_600SemiBold", color: "#FFFFFF" },
+  assessBtnGrad: {
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderRadius: 16,
+  },
+  assessBtnText: {
+    fontSize: 17,
+    fontFamily: 'Inter_600SemiBold',
+    color: '#FFFFFF',
+  },
 
   personalityBadge: {
     borderWidth: 1.5,
     borderRadius: 20,
     paddingVertical: 16,
     paddingHorizontal: 28,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 24,
     gap: 8,
   },
   personalityEmoji: { fontSize: 40 },
-  personalityName: { fontSize: 18, fontFamily: "Inter_700Bold" },
+  personalityName: { fontSize: 18, fontFamily: 'Inter_700Bold' },
   resultDesc: {
     fontSize: 15,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.7)",
-    textAlign: "center",
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.7)',
+    textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
     paddingHorizontal: 4,
   },
-  resultCards: { width: "100%", gap: 12, marginBottom: 32 },
+  resultCards: { width: '100%', gap: 12, marginBottom: 32 },
   resultCard: {
-    backgroundColor: "rgba(34,197,94,0.1)",
+    backgroundColor: 'rgba(34,197,94,0.1)',
     borderWidth: 1,
-    borderColor: "rgba(34,197,94,0.25)",
+    borderColor: 'rgba(34,197,94,0.25)',
     borderRadius: 16,
     padding: 16,
   },
   resultCardLabel: {
     fontSize: 12,
-    fontFamily: "Inter_600SemiBold",
-    color: "#22C55E",
+    fontFamily: 'Inter_600SemiBold',
+    color: '#22C55E',
     marginBottom: 4,
-    textTransform: "uppercase",
+    textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   resultCardText: {
     fontSize: 14,
-    fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.75)",
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.75)',
     lineHeight: 20,
   },
 
-  splashCenter: { alignItems: "center", justifyContent: "center" },
+  splashCenter: { alignItems: 'center', justifyContent: 'center' },
   splashIconWrap: {
-    width: 170, height: 170,
-    alignItems: "center", justifyContent: "center",
+    width: 170,
+    height: 170,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   splashRing: {
-    position: "absolute",
-    width: 170, height: 170, borderRadius: 85,
+    position: 'absolute',
+    width: 170,
+    height: 170,
+    borderRadius: 85,
     borderWidth: 1.5,
   },
   splashRingOuter: {
-    width: 220, height: 220, borderRadius: 110,
+    width: 220,
+    height: 220,
+    borderRadius: 110,
   },
   splashIconCircle: {
-    width: 138, height: 138, borderRadius: 69,
-    overflow: "hidden", alignItems: "center", justifyContent: "center",
+    width: 138,
+    height: 138,
+    borderRadius: 69,
+    overflow: 'hidden',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   splashIconImg: { width: 138, height: 138 },
-  splashTitleRow: { flexDirection: "row", alignItems: "center", gap: 10 },
+  splashTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   splashBrand: {
-    fontSize: 34, fontFamily: "Inter_700Bold",
-    color: "#FFFFFF", letterSpacing: -0.5,
+    fontSize: 34,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    letterSpacing: -0.5,
   },
   splashAIBadge: { borderRadius: 9, paddingHorizontal: 11, paddingVertical: 5 },
-  splashAIText: { fontSize: 17, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
+  splashAIText: { fontSize: 17, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
   splashTagline: {
-    fontSize: 13, fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.4)", marginTop: 7, letterSpacing: 0.8,
-    textTransform: "uppercase",
+    fontSize: 13,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.4)',
+    marginTop: 7,
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
   },
-  sloganContainer: { marginTop: 36, paddingHorizontal: 28, alignItems: "center" },
-  sloganRow: { flexDirection: "row", flexWrap: "wrap", justifyContent: "center" },
+  sloganContainer: {
+    marginTop: 36,
+    paddingHorizontal: 28,
+    alignItems: 'center',
+  },
+  sloganRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+  },
   sloganWord: {
-    fontSize: 20, fontFamily: "Inter_400Regular",
-    lineHeight: 30, textAlign: "center",
+    fontSize: 20,
+    fontFamily: 'Inter_400Regular',
+    lineHeight: 30,
+    textAlign: 'center',
   },
-  sloganVisible: { color: "rgba(255,255,255,0.88)" },
-  sloganHidden: { color: "transparent" },
+  sloganVisible: { color: 'rgba(255,255,255,0.88)' },
+  sloganHidden: { color: 'transparent' },
   tapHint: {
-    position: "absolute", bottom: 48,
-    fontSize: 12, fontFamily: "Inter_400Regular",
-    color: "rgba(255,255,255,0.22)", letterSpacing: 0.5,
+    position: 'absolute',
+    bottom: 48,
+    fontSize: 12,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.22)',
+    letterSpacing: 0.5,
   },
-  particle: { position: "absolute", backgroundColor: "#4A90E2" },
+  particle: { position: 'absolute', backgroundColor: '#4A90E2' },
 });
