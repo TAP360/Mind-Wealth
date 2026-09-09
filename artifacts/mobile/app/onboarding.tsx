@@ -408,7 +408,7 @@ export default function OnboardingScreen() {
   const handleFinish = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     await completeOnboarding(personality, userName.trim() || undefined);
-    router.replace('/(tabs)/');
+    router.replace('/');
   };
 
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;

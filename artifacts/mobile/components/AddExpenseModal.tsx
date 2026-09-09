@@ -347,7 +347,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
 
 const styles = StyleSheet.create({
   overlay: { flex: 1, justifyContent: "flex-end" },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.5)" },
+  backdrop: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(0,0,0,0.5)" },
   sheet: { borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingTop: 12, paddingHorizontal: 20, maxHeight: "94%" },
   handle: { width: 40, height: 4, borderRadius: 2, alignSelf: "center", marginBottom: 16 },
   header: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },

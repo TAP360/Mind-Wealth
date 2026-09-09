@@ -1,17 +1,17 @@
 import { BlurView } from 'expo-blur';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
-import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
+import { NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { Feather } from '@expo/vector-icons';
 import React from 'react';
-import { Platform, StyleSheet, View, useColorScheme } from 'react-native';
+import { Platform, StyleSheet, View, useColorScheme, type ColorValue } from 'react-native';
 import Svg, { Path, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
 
-function AICoachIcon({ color }: { color: string }) {
+function AICoachIcon({ color }: { color: ColorValue }) {
   return (
     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
       <Path
@@ -52,24 +52,24 @@ function NativeTabLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
-        <Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <Label>Home</Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
+        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="coach">
-        <Icon sf={{ default: 'sparkles', selected: 'sparkles' }} />
-        <Label>Coach</Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'sparkles', selected: 'sparkles' }} />
+        <NativeTabs.Trigger.Label>Coach</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="insights">
-        <Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
-        <Label>Insights</Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
+        <NativeTabs.Trigger.Label>Insights</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="goals">
-        <Icon sf={{ default: 'target', selected: 'target' }} />
-        <Label>Goals</Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'target', selected: 'target' }} />
+        <NativeTabs.Trigger.Label>Goals</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
-        <Icon sf={{ default: 'person', selected: 'person.fill' }} />
-        <Label>Profile</Label>
+        <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
+        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );

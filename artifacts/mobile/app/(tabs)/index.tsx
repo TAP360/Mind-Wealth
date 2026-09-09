@@ -462,6 +462,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#F37021' },
+  moodRow: { marginTop: 4 },
   moodLabel: {
     fontSize: 13,
     fontFamily: 'Inter_400Regular',
