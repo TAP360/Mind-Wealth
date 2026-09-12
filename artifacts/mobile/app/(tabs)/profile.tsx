@@ -58,7 +58,7 @@ const PLAN_FEATURES = {
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { profile } = useApp();
+  const { profile, clearData } = useApp();
   const [notifications, setNotifications] = useState(true);
   const [nudges, setNudges] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -512,7 +512,14 @@ export default function ProfileScreen() {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             Alert.alert("Sign Out", "Are you sure you want to sign out?", [
               { text: "Cancel", style: "cancel" },
-              { text: "Sign Out", style: "destructive", onPress: () => {} },
+              {
+                text: "Sign Out",
+                style: "destructive",
+                onPress: async () => {
+                  await clearData();
+                  router.replace("/onboarding");
+                },
+              },
             ]);
           }}
         >

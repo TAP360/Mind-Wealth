@@ -17,6 +17,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { useApp, PersonalityType } from '@/context/AppContext';
 
 const { width, height } = Dimensions.get('window');
@@ -194,9 +195,13 @@ export default function OnboardingScreen() {
   const { completeOnboarding } = useApp();
 
   const [phase, setPhase] = useState<
-    'splash' | 'slides' | 'name' | 'assessment' | 'result'
+    'splash' | 'slides' | 'auth' | 'name' | 'assessment' | 'result'
   >('splash');
   const [slideIndex, setSlideIndex] = useState(0);
+  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [userName, setUserName] = useState('');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [scores, setScores] = useState<Record<ScoreKey, number>>({
@@ -377,8 +382,24 @@ export default function OnboardingScreen() {
       setSlideIndex(next);
       flatRef.current?.scrollToIndex({ index: next, animated: true });
     } else {
-      fadeTransition(() => setPhase('name'));
+      fadeTransition(() => setPhase('auth'));
     }
+  };
+
+  const handleSocialAuth = (_provider: 'apple' | 'google' | 'facebook') => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    fadeTransition(() => setPhase('name'));
+  };
+
+  const handleAuthContinue = () => {
+    const trimmedEmail = email.trim();
+    const trimmedPassword = password.trim();
+    if (!trimmedEmail || !trimmedPassword) return;
+    if (authMode === 'register' && trimmedPassword !== confirmPassword.trim()) {
+      return;
+    }
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    fadeTransition(() => setPhase('name'));
   };
 
   const handleNameNext = () => {
@@ -407,7 +428,11 @@ export default function OnboardingScreen() {
 
   const handleFinish = async () => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    await completeOnboarding(personality, userName.trim() || undefined);
+    await completeOnboarding(
+      personality,
+      userName.trim() || undefined,
+      email.trim() || undefined,
+    );
     router.replace('/');
   };
 
@@ -605,6 +630,153 @@ export default function OnboardingScreen() {
             </Pressable>
           )}
         </View>
+      </LinearGradient>
+    );
+  }
+
+  if (phase === 'auth') {
+    const isRegister = authMode === 'register';
+    const canSubmit =
+      !!email.trim() &&
+      !!password.trim() &&
+      (!isRegister || !!confirmPassword.trim());
+    return (
+      <LinearGradient
+        colors={['#0B1026', '#1A1040', '#2E1855']}
+        style={[
+          styles.fill,
+          { paddingTop: topPad, paddingBottom: botPad + 16 },
+        ]}
+      >
+        <Animated.View style={[styles.fill, { opacity: fadeAnim }]}>
+          <KeyboardAwareScrollViewCompat
+            style={styles.fill}
+            contentContainerStyle={styles.authContainer}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            bottomOffset={24}
+          >
+          <Text style={styles.authTitle}>
+            {isRegister ? 'Create your account' : 'Welcome back'}
+          </Text>
+          <Text style={styles.authSubtitle}>
+            {isRegister
+              ? 'Sign up to start your financial journey.'
+              : 'Log in to continue your financial journey.'}
+          </Text>
+
+          <View style={styles.authToggleRow}>
+            <Pressable
+              style={[
+                styles.authToggle,
+                isRegister && styles.authToggleActive,
+              ]}
+              onPress={() => setAuthMode('register')}
+            >
+              <Text
+                style={[
+                  styles.authToggleText,
+                  isRegister && styles.authToggleTextActive,
+                ]}
+              >
+                Register
+              </Text>
+            </Pressable>
+            <Pressable
+              style={[
+                styles.authToggle,
+                !isRegister && styles.authToggleActive,
+              ]}
+              onPress={() => setAuthMode('login')}
+            >
+              <Text
+                style={[
+                  styles.authToggleText,
+                  !isRegister && styles.authToggleTextActive,
+                ]}
+              >
+                Login
+              </Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.socialStack}>
+            <Pressable
+              style={styles.socialBtn}
+              onPress={() => handleSocialAuth('apple')}
+            >
+              <Text style={styles.socialIcon}></Text>
+              <Text style={styles.socialBtnText}>Continue with Apple</Text>
+            </Pressable>
+            <Pressable
+              style={styles.socialBtn}
+              onPress={() => handleSocialAuth('google')}
+            >
+              <Text style={[styles.socialIcon, { color: '#EA4335' }]}>G</Text>
+              <Text style={styles.socialBtnText}>Continue with Google</Text>
+            </Pressable>
+            <Pressable
+              style={styles.socialBtn}
+              onPress={() => handleSocialAuth('facebook')}
+            >
+              <Text style={[styles.socialIcon, { color: '#1877F2' }]}>f</Text>
+              <Text style={styles.socialBtnText}>Continue with Facebook</Text>
+            </Pressable>
+          </View>
+
+          <View style={styles.authDividerRow}>
+            <View style={styles.authDivider} />
+            <Text style={styles.authDividerText}>or use email</Text>
+            <View style={styles.authDivider} />
+          </View>
+
+          <TextInput
+            style={styles.authInput}
+            value={email}
+            onChangeText={setEmail}
+            placeholder="Email address"
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TextInput
+            style={styles.authInput}
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Password"
+            placeholderTextColor="rgba(255,255,255,0.4)"
+            secureTextEntry
+          />
+          {isRegister && (
+            <TextInput
+              style={styles.authInput}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              placeholder="Confirm password"
+              placeholderTextColor="rgba(255,255,255,0.4)"
+              secureTextEntry
+            />
+          )}
+
+          <Pressable
+            style={[styles.assessBtn, !canSubmit && styles.assessBtnDisabled]}
+            onPress={handleAuthContinue}
+            disabled={!canSubmit}
+          >
+            <LinearGradient
+              colors={['#2E3192', '#92278F', '#F37021']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={styles.assessBtnGrad}
+            >
+              <Text style={styles.assessBtnText}>
+                {isRegister ? 'Create Account' : 'Login'}
+              </Text>
+            </LinearGradient>
+          </Pressable>
+          </KeyboardAwareScrollViewCompat>
+        </Animated.View>
       </LinearGradient>
     );
   }
@@ -817,6 +989,104 @@ const styles = StyleSheet.create({
   },
 
   assessContainer: { flex: 1, paddingHorizontal: 24, paddingTop: 20 },
+  authContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    paddingBottom: 24,
+    justifyContent: 'center',
+  },
+  authTitle: {
+    fontSize: 28,
+    fontFamily: 'Inter_700Bold',
+    color: '#FFFFFF',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  authSubtitle: {
+    fontSize: 15,
+    fontFamily: 'Inter_400Regular',
+    color: 'rgba(255,255,255,0.65)',
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  authToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderRadius: 14,
+    padding: 5,
+    marginBottom: 20,
+  },
+  authToggle: {
+    flex: 1,
+    borderRadius: 10,
+    paddingVertical: 10,
+    alignItems: 'center',
+  },
+  authToggleActive: { backgroundColor: 'rgba(46,49,146,0.65)' },
+  authToggleText: {
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  authToggleTextActive: { color: '#FFFFFF' },
+  socialStack: { gap: 10, marginBottom: 20 },
+  socialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: 'rgba(255,255,255,0.06)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingVertical: 15,
+    paddingHorizontal: 18,
+  },
+  socialIcon: {
+    width: 26,
+    height: 26,
+    textAlign: 'center',
+    lineHeight: 26,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#111827',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 13,
+    overflow: 'hidden',
+  },
+  socialBtnText: {
+    flex: 1,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontFamily: 'Inter_600SemiBold',
+  },
+  authDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 16,
+  },
+  authDivider: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.12)' },
+  authDividerText: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 12,
+    fontFamily: 'Inter_500Medium',
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
+  },
+  authInput: {
+    width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)',
+    borderRadius: 16,
+    paddingVertical: 16,
+    paddingHorizontal: 18,
+    fontSize: 16,
+    fontFamily: 'Inter_400Regular',
+    color: '#FFFFFF',
+    marginBottom: 12,
+  },
   progressRow: { flexDirection: 'row', gap: 6, marginBottom: 20 },
   progressDot: {
     flex: 1,

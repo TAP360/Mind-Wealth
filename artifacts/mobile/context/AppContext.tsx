@@ -62,7 +62,9 @@ interface AppContextValue extends AppState {
   completeOnboarding: (
     personality: PersonalityType,
     name?: string,
+    email?: string,
   ) => Promise<void>;
+  clearData: () => Promise<void>;
   setMood: (mood: MoodType) => void;
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
   updateGoal: (id: string, amount: number) => void;
@@ -215,7 +217,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const completeOnboarding = useCallback(
-    async (personality: PersonalityType, name?: string) => {
+    async (personality: PersonalityType, name?: string, email?: string) => {
       setState((prev) => {
         const next: AppState = {
           ...prev,
@@ -224,6 +226,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             ...prev.profile,
             personalityType: personality,
             name: name ?? prev.profile.name,
+            email: email?.trim() || prev.profile.email,
           },
         };
         saveState(next);
@@ -232,6 +235,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  const clearData = useCallback(async () => {
+    setState(defaultState);
+    try {
+      await AsyncStorage.removeItem(STORAGE_KEY);
+    } catch {}
+  }, []);
 
   const setMood = useCallback((mood: MoodType) => {
     setState((prev) => ({ ...prev, mood }));
@@ -274,6 +284,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         completeOnboarding,
+        clearData,
         setMood,
         addTransaction,
         updateGoal,
