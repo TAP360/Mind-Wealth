@@ -192,16 +192,14 @@ const personalityInfo: Record<
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { completeOnboarding } = useApp();
+  const { completeOnboarding, checkAccountExists, signIn } = useApp();
 
   const [phase, setPhase] = useState<
     'splash' | 'slides' | 'auth' | 'name' | 'assessment' | 'result'
   >('splash');
   const [slideIndex, setSlideIndex] = useState(0);
-  const [authMode, setAuthMode] = useState<'login' | 'register'>('register');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [authChecking, setAuthChecking] = useState(false);
   const [userName, setUserName] = useState('');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [scores, setScores] = useState<Record<ScoreKey, number>>({
@@ -391,15 +389,19 @@ export default function OnboardingScreen() {
     fadeTransition(() => setPhase('name'));
   };
 
-  const handleAuthContinue = () => {
+  const handleAuthContinue = async () => {
     const trimmedEmail = email.trim();
-    const trimmedPassword = password.trim();
-    if (!trimmedEmail || !trimmedPassword) return;
-    if (authMode === 'register' && trimmedPassword !== confirmPassword.trim()) {
-      return;
-    }
+    if (!trimmedEmail || authChecking) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    fadeTransition(() => setPhase('name'));
+    setAuthChecking(true);
+    const exists = await checkAccountExists(trimmedEmail);
+    setAuthChecking(false);
+    if (exists) {
+      await signIn(trimmedEmail);
+      router.replace('/');
+    } else {
+      fadeTransition(() => setPhase('name'));
+    }
   };
 
   const handleNameNext = () => {
@@ -635,11 +637,7 @@ export default function OnboardingScreen() {
   }
 
   if (phase === 'auth') {
-    const isRegister = authMode === 'register';
-    const canSubmit =
-      !!email.trim() &&
-      !!password.trim() &&
-      (!isRegister || !!confirmPassword.trim());
+    const canSubmit = !!email.trim() && !authChecking;
     return (
       <LinearGradient
         colors={['#0B1026', '#1A1040', '#2E1855']}
@@ -656,49 +654,10 @@ export default function OnboardingScreen() {
             keyboardShouldPersistTaps="handled"
             bottomOffset={24}
           >
-          <Text style={styles.authTitle}>
-            {isRegister ? 'Create your account' : 'Welcome back'}
-          </Text>
+          <Text style={styles.authTitle}>Welcome to Bassera</Text>
           <Text style={styles.authSubtitle}>
-            {isRegister
-              ? 'Sign up to start your financial journey.'
-              : 'Log in to continue your financial journey.'}
+            Continue with your email or a social account to get started.
           </Text>
-
-          <View style={styles.authToggleRow}>
-            <Pressable
-              style={[
-                styles.authToggle,
-                isRegister && styles.authToggleActive,
-              ]}
-              onPress={() => setAuthMode('register')}
-            >
-              <Text
-                style={[
-                  styles.authToggleText,
-                  isRegister && styles.authToggleTextActive,
-                ]}
-              >
-                Register
-              </Text>
-            </Pressable>
-            <Pressable
-              style={[
-                styles.authToggle,
-                !isRegister && styles.authToggleActive,
-              ]}
-              onPress={() => setAuthMode('login')}
-            >
-              <Text
-                style={[
-                  styles.authToggleText,
-                  !isRegister && styles.authToggleTextActive,
-                ]}
-              >
-                Login
-              </Text>
-            </Pressable>
-          </View>
 
           <View style={styles.socialStack}>
             <Pressable
@@ -726,7 +685,7 @@ export default function OnboardingScreen() {
 
           <View style={styles.authDividerRow}>
             <View style={styles.authDivider} />
-            <Text style={styles.authDividerText}>or use email</Text>
+            <Text style={styles.authDividerText}>or use email or mobile</Text>
             <View style={styles.authDivider} />
           </View>
 
@@ -734,30 +693,14 @@ export default function OnboardingScreen() {
             style={styles.authInput}
             value={email}
             onChangeText={setEmail}
-            placeholder="Email address"
+            placeholder="Email or Mobile"
             placeholderTextColor="rgba(255,255,255,0.4)"
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="go"
+            onSubmitEditing={handleAuthContinue}
           />
-          <TextInput
-            style={styles.authInput}
-            value={password}
-            onChangeText={setPassword}
-            placeholder="Password"
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            secureTextEntry
-          />
-          {isRegister && (
-            <TextInput
-              style={styles.authInput}
-              value={confirmPassword}
-              onChangeText={setConfirmPassword}
-              placeholder="Confirm password"
-              placeholderTextColor="rgba(255,255,255,0.4)"
-              secureTextEntry
-            />
-          )}
 
           <Pressable
             style={[styles.assessBtn, !canSubmit && styles.assessBtnDisabled]}
@@ -771,7 +714,7 @@ export default function OnboardingScreen() {
               style={styles.assessBtnGrad}
             >
               <Text style={styles.assessBtnText}>
-                {isRegister ? 'Create Account' : 'Login'}
+                {authChecking ? 'Checking…' : 'Continue'}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -1010,26 +953,6 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginBottom: 24,
   },
-  authToggleRow: {
-    flexDirection: 'row',
-    backgroundColor: 'rgba(255,255,255,0.06)',
-    borderRadius: 14,
-    padding: 5,
-    marginBottom: 20,
-  },
-  authToggle: {
-    flex: 1,
-    borderRadius: 10,
-    paddingVertical: 10,
-    alignItems: 'center',
-  },
-  authToggleActive: { backgroundColor: 'rgba(46,49,146,0.65)' },
-  authToggleText: {
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 15,
-    fontFamily: 'Inter_600SemiBold',
-  },
-  authToggleTextActive: { color: '#FFFFFF' },
   socialStack: { gap: 10, marginBottom: 20 },
   socialBtn: {
     flexDirection: 'row',

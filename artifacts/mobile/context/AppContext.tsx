@@ -64,6 +64,8 @@ interface AppContextValue extends AppState {
     name?: string,
     email?: string,
   ) => Promise<void>;
+  checkAccountExists: (email: string) => Promise<boolean>;
+  signIn: (email: string) => Promise<void>;
   clearData: () => Promise<void>;
   setMood: (mood: MoodType) => void;
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
@@ -180,6 +182,28 @@ const defaultState: AppState = {
 const AppContext = createContext<AppContextValue | null>(null);
 
 const STORAGE_KEY = '@mindwealth_state';
+const ACCOUNTS_KEY = '@mindwealth_accounts';
+
+async function readAccounts(): Promise<string[]> {
+  try {
+    const raw = await AsyncStorage.getItem(ACCOUNTS_KEY);
+    return raw ? (JSON.parse(raw) as string[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+async function registerAccount(email: string) {
+  const normalized = email.trim().toLowerCase();
+  if (!normalized) return;
+  const accounts = await readAccounts();
+  if (!accounts.includes(normalized)) {
+    accounts.push(normalized);
+    try {
+      await AsyncStorage.setItem(ACCOUNTS_KEY, JSON.stringify(accounts));
+    } catch {}
+  }
+}
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
@@ -218,6 +242,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const completeOnboarding = useCallback(
     async (personality: PersonalityType, name?: string, email?: string) => {
+      if (email) await registerAccount(email);
       setState((prev) => {
         const next: AppState = {
           ...prev,
@@ -235,6 +260,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     },
     [],
   );
+
+  const checkAccountExists = useCallback(async (email: string) => {
+    const accounts = await readAccounts();
+    return accounts.includes(email.trim().toLowerCase());
+  }, []);
+
+  const signIn = useCallback(async (email: string) => {
+    setState((prev) => {
+      const next: AppState = {
+        ...prev,
+        hasOnboarded: true,
+        profile: {
+          ...prev.profile,
+          email: email.trim() || prev.profile.email,
+        },
+      };
+      saveState(next);
+      return next;
+    });
+  }, []);
 
   const clearData = useCallback(async () => {
     setState(defaultState);
@@ -284,6 +329,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         ...state,
         completeOnboarding,
+        checkAccountExists,
+        signIn,
         clearData,
         setMood,
         addTransaction,
