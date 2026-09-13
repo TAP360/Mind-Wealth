@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useLocalization } from "@/localization";
 
 const personalityColors: Record<string, string> = {
   "Money Vigilance": "#2E3192",
@@ -59,6 +60,7 @@ export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { profile, clearData } = useApp();
+  const { language, setLanguage, t, isRTL } = useLocalization();
   const [notifications, setNotifications] = useState(true);
   const [nudges, setNudges] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
@@ -68,15 +70,23 @@ export default function ProfileScreen() {
   const pColor =
     personalityColors[profile.personalityType ?? "Money Vigilance"] ??
     "#2E3192";
-  const subInfo = SUBSCRIPTION_LABELS[profile.subscription];
+  const subInfo = {
+    ...(SUBSCRIPTION_LABELS[profile.subscription] ?? SUBSCRIPTION_LABELS.free),
+    label:
+      profile.subscription === "premium_plus"
+        ? t("profile.premiumPlus")
+        : profile.subscription === "premium"
+          ? t("profile.premium")
+          : t("profile.free"),
+  };
 
   const settingsSections = [
     {
-      title: "Account",
+      title: t("profile.account"),
       items: [
         {
           icon: "user",
-          label: "Personal Information",
+          label: t("profile.personalInfo"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -85,91 +95,103 @@ export default function ProfileScreen() {
         },
         {
           icon: "link",
-          label: "Linked Accounts",
+          label: t("profile.linkedAccounts"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              "Linked Accounts",
-              "Connect your bank accounts and payment providers for automatic transaction tracking.\n\nComing soon for Egypt & GCC banks.",
-              [{ text: "OK" }],
+              t("profile.linkedAccounts"),
+              t("profile.linkedMessage"),
+              [{ text: t("common.ok") }],
             );
           },
         },
         {
           icon: "credit-card",
-          label: "Payment Methods",
+          label: t("profile.paymentMethods"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              "Payment Methods",
-              "Manage saved cards and payment methods.\n\nComing soon.",
-              [{ text: "OK" }],
+              t("profile.paymentMethods"),
+              t("profile.paymentMessage"),
+              [{ text: t("common.ok") }],
             );
           },
         },
       ],
     },
     {
-      title: "Preferences",
+      title: t("profile.preferences"),
       items: [
         {
           icon: "bell",
-          label: "Notifications",
+          label: t("profile.notifications"),
           toggle: true,
           value: notifications,
           onToggle: setNotifications,
         },
         {
           icon: "zap",
-          label: "Smart Nudges",
+          label: t("profile.smartNudges"),
           toggle: true,
           value: nudges,
           onToggle: setNudges,
         },
         {
           icon: "moon",
-          label: "Dark Mode",
+          label: t("profile.darkMode"),
           toggle: true,
           value: darkMode,
           onToggle: setDarkMode,
         },
         {
           icon: "globe",
-          label: "Language",
-          value: "English",
+          label: t("profile.language"),
+          value: language === "ar" ? t("language.arabic") : t("language.english"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert(
-              "Language",
-              "Additional languages coming soon!\n\n🇪🇬 Arabic\n🇬🇧 English (current)\n🇸🇦 Urdu",
-              [{ text: "OK" }],
-            );
+            Alert.alert(t("profile.languageTitle"), undefined, [
+              {
+                text: t("language.english"),
+                onPress: () => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  void setLanguage("en");
+                },
+              },
+              {
+                text: t("language.arabic"),
+                onPress: () => {
+                  Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+                  void setLanguage("ar");
+                },
+              },
+              { text: t("common.cancel"), style: "cancel" },
+            ]);
           },
         },
       ],
     },
     {
-      title: "Security",
+      title: t("profile.security"),
       items: [
         {
           icon: "lock",
-          label: "Change Passcode",
+          label: t("profile.changePasscode"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              "Change Passcode",
-              "Set a 6-digit PIN to secure your Bassera account.\n\nBiometric authentication is also available.",
-              [{ text: "OK" }],
+              t("profile.changePasscode"),
+              t("profile.passcodeMessage"),
+              [{ text: t("common.ok") }],
             );
           },
         },
         {
           icon: "shield",
-          label: "Biometric Login",
+          label: t("profile.biometric"),
           toggle: true,
           value: true,
           onToggle: () => {
@@ -178,60 +200,60 @@ export default function ProfileScreen() {
         },
         {
           icon: "eye-off",
-          label: "Privacy Settings",
+          label: t("profile.privacy"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              "Privacy Settings",
-              "Bassera only uses your data to personalize your coaching experience. We never sell your data.\n\nData stored locally on your device.",
-              [{ text: "OK" }],
+              t("profile.privacy"),
+              t("profile.privacyMessage"),
+              [{ text: t("common.ok") }],
             );
           },
         },
       ],
     },
     {
-      title: "Support",
+      title: t("profile.support"),
       items: [
         {
           icon: "help-circle",
-          label: "Help Center",
+          label: t("profile.help"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              "Help Center",
-              "📚 FAQs, tutorials, and guides are available at:\nmindwealthai.com/help\n\nOr contact us directly for personalized support.",
-              [{ text: "OK" }],
+              t("profile.help"),
+              t("profile.helpMessage"),
+              [{ text: t("common.ok") }],
             );
           },
         },
         {
           icon: "message-square",
-          label: "Contact Support",
+          label: t("profile.contact"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
             Alert.alert(
-              "Contact Support",
-              "📧 support@mindwealthai.com\n📱 WhatsApp: +20 100 123 4567\n\nResponse within 24 hours.",
-              [{ text: "OK" }],
+              t("profile.contact"),
+              t("profile.contactMessage"),
+              [{ text: t("common.ok") }],
             );
           },
         },
         {
           icon: "star",
-          label: "Rate Bassera",
+          label: t("profile.rate"),
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             Alert.alert(
-              "Rate Bassera ⭐",
-              "Enjoying the app? Your review helps us reach more people!\n\nLeave us a 5-star review on the App Store.",
+              `${t("profile.rate")} ⭐`,
+              t("profile.rateMessage"),
               [
-                { text: "Not Now", style: "cancel" },
-                { text: "⭐ Rate Now", onPress: () => {} },
+                { text: t("profile.notNow"), style: "cancel" },
+                { text: t("profile.rateNow"), onPress: () => {} },
               ],
             );
           },
@@ -242,7 +264,11 @@ export default function ProfileScreen() {
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={{
+        flex: 1,
+        backgroundColor: colors.background,
+        direction: isRTL ? "rtl" : "ltr",
+      }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: bottomPad }}
     >
@@ -278,7 +304,7 @@ export default function ProfileScreen() {
               {subInfo.label}
             </Text>
           </View>
-          <Text style={styles.joinText}>Member since {profile.joinDate}</Text>
+        <Text style={styles.joinText}>{t("profile.memberSince", { date: t(({ "Jan 2025": "data.jan2025" } as Record<string, string>)[profile.joinDate] ?? profile.joinDate) })}</Text>
         </View>
       </LinearGradient>
 
@@ -302,10 +328,10 @@ export default function ProfileScreen() {
                   { color: colors.mutedForeground },
                 ]}
               >
-                Money Personality
+                {t("profile.moneyPersonality")}
               </Text>
               <Text style={[styles.personalityName, { color: pColor }]}>
-                {profile.personalityType}
+                {t(profile.personalityType)}
               </Text>
             </View>
             <Pressable
@@ -313,12 +339,12 @@ export default function ProfileScreen() {
               onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                 Alert.alert(
-                  "Retake Assessment",
-                  "This will reset your current Money Personality result and run the assessment again.",
+                  t("profile.retakeTitle"),
+                  t("profile.retakeMessage"),
                   [
-                    { text: "Cancel", style: "cancel" },
+                    { text: t("common.cancel"), style: "cancel" },
                     {
-                      text: "Retake",
+                      text: t("profile.retake"),
                       onPress: () => router.push("/onboarding"),
                     },
                   ],
@@ -328,7 +354,7 @@ export default function ProfileScreen() {
               <Text
                 style={[styles.viewBtnText, { color: colors.mutedForeground }]}
               >
-                Retake
+                {t("profile.retake")}
               </Text>
             </Pressable>
           </View>
@@ -340,7 +366,7 @@ export default function ProfileScreen() {
           <View style={styles.subHeader}>
             <View>
               <Text style={[styles.subTitle, { color: colors.foreground }]}>
-                Your Plan
+                {t("profile.yourPlan")}
               </Text>
               <Text style={[styles.subCurrent, { color: subInfo.color }]}>
                 {subInfo.label}
@@ -359,7 +385,7 @@ export default function ProfileScreen() {
                   end={{ x: 1, y: 0 }}
                   style={styles.upgradeBtn}
                 >
-                  <Text style={styles.upgradeBtnText}>Upgrade</Text>
+                  <Text style={styles.upgradeBtnText}>{t("profile.upgrade")}</Text>
                 </LinearGradient>
               </Pressable>
             )}
@@ -377,7 +403,7 @@ export default function ProfileScreen() {
                   <Text
                     style={[styles.featureText, { color: colors.foreground }]}
                   >
-                    {f}
+                    {t(f)}
                   </Text>
                 </View>
               ),
@@ -390,7 +416,7 @@ export default function ProfileScreen() {
                 <Text
                   style={[styles.priceLabel, { color: colors.mutedForeground }]}
                 >
-                  Premium
+                   {t("profile.premium")}
                 </Text>
                 <Text style={[styles.priceValue, { color: "#F37021" }]}>
                   150 EGP
@@ -401,14 +427,14 @@ export default function ProfileScreen() {
                     { color: colors.mutedForeground },
                   ]}
                 >
-                  /month
+                  {t("profile.perMonth")}
                 </Text>
               </View>
               <View style={styles.priceCard}>
                 <Text
                   style={[styles.priceLabel, { color: colors.mutedForeground }]}
                 >
-                  Premium+
+                   {t("profile.premiumPlus")}
                 </Text>
                 <Text style={[styles.priceValue, { color: "#92278F" }]}>
                   400 EGP
@@ -419,7 +445,7 @@ export default function ProfileScreen() {
                     { color: colors.mutedForeground },
                   ]}
                 >
-                  /month
+                  {t("profile.perMonth")}
                 </Text>
               </View>
             </View>
@@ -486,7 +512,7 @@ export default function ProfileScreen() {
                       </Text>
                     ) : (
                       <Feather
-                        name="chevron-right"
+                        name={isRTL ? "chevron-left" : "chevron-right"}
                         size={18}
                         color={colors.mutedForeground}
                       />
@@ -510,10 +536,10 @@ export default function ProfileScreen() {
           style={styles.signOutBtn}
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-            Alert.alert("Sign Out", "Are you sure you want to sign out?", [
-              { text: "Cancel", style: "cancel" },
+            Alert.alert(t("profile.signOut"), t("profile.signOutQuestion"), [
+              { text: t("common.cancel"), style: "cancel" },
               {
-                text: "Sign Out",
+                text: t("profile.signOut"),
                 style: "destructive",
                 onPress: async () => {
                   await clearData();
@@ -527,7 +553,7 @@ export default function ProfileScreen() {
             style={[styles.signOutInner, { borderColor: "#EF4444" + "40" }]}
           >
             <Feather name="log-out" size={18} color="#EF4444" />
-            <Text style={styles.signOutText}>Sign Out</Text>
+          <Text style={styles.signOutText}>{t("profile.signOut")}</Text>
           </View>
         </Pressable>
         <Text style={[styles.version, { color: colors.mutedForeground }]}>

@@ -18,12 +18,14 @@ import { Feather } from '@expo/vector-icons';
 
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useLocalization } from '@/localization';
 
 export default function PersonalInfoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { profile } = useApp();
+  const { t, isRTL } = useLocalization();
 
   const [name, setName] = useState(profile.name);
   const [email, setEmail] = useState(profile.email ?? '');
@@ -42,18 +44,18 @@ export default function PersonalInfoScreen() {
 
   const handleSave = () => {
     if (!name.trim()) {
-      Alert.alert('Name required', 'Please enter your name.');
+      Alert.alert(t('personal.nameRequired'), t('personal.nameRequiredMessage'));
       return;
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert('Saved', 'Your personal information has been updated.', [
-      { text: 'OK', onPress: () => router.back() },
+    Alert.alert(t('personal.saved'), t('personal.savedMessage'), [
+      { text: t('common.ok'), onPress: () => router.back() },
     ]);
   };
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <LinearGradient
@@ -61,9 +63,9 @@ export default function PersonalInfoScreen() {
         style={[styles.header, { paddingTop: topPad + 12 }]}
       >
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
-          <Feather name="arrow-left" size={22} color="#FFFFFF" />
+          <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={22} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.headerTitle}>Personal Information</Text>
+        <Text style={styles.headerTitle}>{t('personal.title')}</Text>
         <View style={{ width: 40 }} />
       </LinearGradient>
 
@@ -90,7 +92,7 @@ export default function PersonalInfoScreen() {
           >
             <Feather name="camera" size={14} color={colors.foreground} />
             <Text style={[styles.editAvatarText, { color: colors.foreground }]}>
-              Change Photo
+              {t('personal.changePhoto')}
             </Text>
           </Pressable>
         </View>
@@ -99,7 +101,7 @@ export default function PersonalInfoScreen() {
           <Text
             style={[styles.sectionLabel, { color: colors.mutedForeground }]}
           >
-            FULL NAME
+            {t('personal.fullName')}
           </Text>
           <TextInput
             style={[
@@ -108,7 +110,7 @@ export default function PersonalInfoScreen() {
             ]}
             value={name}
             onChangeText={handleChange(setName)}
-            placeholder="Your full name"
+            placeholder={t('personal.fullNamePlaceholder')}
             placeholderTextColor={colors.mutedForeground}
             returnKeyType="next"
           />
@@ -118,7 +120,7 @@ export default function PersonalInfoScreen() {
           <Text
             style={[styles.sectionLabel, { color: colors.mutedForeground }]}
           >
-            EMAIL ADDRESS
+            {t('personal.email')}
           </Text>
           <TextInput
             style={[
@@ -127,7 +129,7 @@ export default function PersonalInfoScreen() {
             ]}
             value={email}
             onChangeText={handleChange(setEmail)}
-            placeholder="you@example.com"
+            placeholder={t('personal.emailPlaceholder')}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="email-address"
             autoCapitalize="none"
@@ -139,7 +141,7 @@ export default function PersonalInfoScreen() {
           <Text
             style={[styles.sectionLabel, { color: colors.mutedForeground }]}
           >
-            PHONE NUMBER
+            {t('personal.phone')}
           </Text>
           <TextInput
             style={[
@@ -148,7 +150,7 @@ export default function PersonalInfoScreen() {
             ]}
             value={phone}
             onChangeText={handleChange(setPhone)}
-            placeholder="+20 100 000 0000"
+            placeholder={t('personal.phonePlaceholder')}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="phone-pad"
             returnKeyType="next"
@@ -159,7 +161,7 @@ export default function PersonalInfoScreen() {
           <Text
             style={[styles.sectionLabel, { color: colors.mutedForeground }]}
           >
-            COUNTRY
+            {t('personal.country')}
           </Text>
           <Pressable
             style={[
@@ -169,9 +171,9 @@ export default function PersonalInfoScreen() {
             ]}
             onPress={() =>
               Alert.alert(
-                'Country',
-                'Egypt\nSaudi Arabia\nUAE\nKuwait\nQatar\nBahrain',
-                [{ text: 'OK' }],
+                t('personal.country'),
+                t('Egypt\nSaudi Arabia\nUAE\nKuwait\nQatar\nBahrain'),
+                [{ text: t('common.ok') }],
               )
             }
           >
@@ -190,7 +192,7 @@ export default function PersonalInfoScreen() {
           <Text
             style={[styles.sectionLabel, { color: colors.mutedForeground }]}
           >
-            DEFAULT CURRENCY
+            {t('personal.currency')}
           </Text>
           <Pressable
             style={[
@@ -200,9 +202,9 @@ export default function PersonalInfoScreen() {
             ]}
             onPress={() =>
               Alert.alert(
-                'Currency',
-                'EGP — Egyptian Pound\nSAR — Saudi Riyal\nAED — UAE Dirham\nKWD — Kuwaiti Dinar',
-                [{ text: 'OK' }],
+                t('personal.currency'),
+                t('EGP — Egyptian Pound\nSAR — Saudi Riyal\nAED — UAE Dirham\nKWD — Kuwaiti Dinar'),
+                [{ text: t('common.ok') }],
               )
             }
           >
@@ -228,7 +230,7 @@ export default function PersonalInfoScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.saveBtnGrad}
           >
-            <Text style={styles.saveBtnText}>Save Changes</Text>
+            <Text style={styles.saveBtnText}>{t('personal.save')}</Text>
           </LinearGradient>
         </Pressable>
       </ScrollView>

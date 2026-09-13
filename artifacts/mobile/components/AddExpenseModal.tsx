@@ -16,6 +16,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useLocalization } from "@/localization";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, EMOTION_TAGS, Category } from "@/constants/categories";
 
 interface Props {
@@ -35,6 +36,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { addTransaction } = useApp();
+  const { t, isRTL } = useLocalization();
 
   const [type, setType] = useState<"expense" | "income">(initialType);
   const [step, setStep] = useState<"amount" | "details">("amount");
@@ -105,9 +107,10 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
             {
               backgroundColor: colors.card,
               paddingBottom: botPad + 16,
+              direction: isRTL ? "rtl" : "ltr",
             },
           ]}
-        >
+          >
           <View style={[styles.handle, { backgroundColor: colors.border }]} />
 
           <View style={styles.header}>
@@ -117,7 +120,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 onPress={() => { setType("expense"); setSelectedCategory(null); }}
               >
                 <Text style={[styles.typeBtnText, type === "expense" && styles.typeBtnTextActive]}>
-                  Expense
+                  {t("home.expense")}
                 </Text>
               </Pressable>
               <Pressable
@@ -125,7 +128,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 onPress={() => { setType("income"); setSelectedCategory(null); }}
               >
                 <Text style={[styles.typeBtnText, type === "income" && styles.typeBtnTextActive]}>
-                  Income
+                  {t("data.income")}
                 </Text>
               </Pressable>
             </View>
@@ -153,7 +156,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 </Text>
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Category</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("Category")}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -193,7 +196,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                         },
                       ]}
                     >
-                      {cat.label}
+                      {t(cat.label)}
                     </Text>
                   </Pressable>
                 ))}
@@ -246,14 +249,14 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                   end={{ x: 1, y: 0 }}
                   style={styles.nextBtnGrad}
                 >
-                  <Text style={styles.nextBtnText}>Next →</Text>
+                  <Text style={styles.nextBtnText}>{t("common.next")} →</Text>
                 </LinearGradient>
               </Pressable>
             </>
           ) : (
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.detailsScroll}>
               <View style={[styles.amountSummary, { backgroundColor: colors.secondary }]}>
-                <Text style={[styles.amountSummaryLabel, { color: colors.mutedForeground }]}>Amount</Text>
+                <Text style={[styles.amountSummaryLabel, { color: colors.mutedForeground }]}>{t("Amount")}</Text>
                 <Text style={[styles.amountSummaryVal, { color: type === "expense" ? "#F37021" : "#22C55E" }]}>
                   {type === "expense" ? "−" : "+"}{numericAmount.toLocaleString()} EGP
                 </Text>
@@ -261,23 +264,23 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                   <View style={[styles.catTag, { backgroundColor: selectedCategory.color + "20" }]}>
                     <Text style={styles.catTagEmoji}>{selectedCategory.emoji}</Text>
                     <Text style={[styles.catTagText, { color: selectedCategory.color }]}>
-                      {selectedCategory.label}
+                      {t(selectedCategory.label)}
                     </Text>
                   </View>
                 )}
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Title (optional)</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("Title (optional)")}</Text>
               <TextInput
                 style={[styles.textField, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
                 value={title}
                 onChangeText={setTitle}
-                placeholder={`e.g. ${selectedCategory?.label ?? "Transaction"}`}
+                placeholder={`${t("e.g.")} ${t(selectedCategory?.label ?? "Transaction")}`}
                 placeholderTextColor={colors.mutedForeground}
                 returnKeyType="done"
               />
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>How did this feel?</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("How did this feel?")}</Text>
               <View style={styles.emotionGrid}>
                 {EMOTION_TAGS.map((e) => (
                   <Pressable
@@ -298,18 +301,18 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                   >
                     <Text style={styles.emotionEmoji}>{e.emoji}</Text>
                     <Text style={[styles.emotionLabel, { color: emotionTag === e.id ? e.color : colors.foreground }]}>
-                      {e.label}
+                      {t(e.label)}
                     </Text>
                   </Pressable>
                 ))}
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>Note (optional)</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("Note (optional)")}</Text>
               <TextInput
                 style={[styles.textField, styles.noteField, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
                 value={note}
                 onChangeText={setNote}
-                placeholder="Add a note..."
+                placeholder={t("Add a note...")}
                 placeholderTextColor={colors.mutedForeground}
                 multiline
                 numberOfLines={3}
@@ -323,7 +326,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                     setStep("amount");
                   }}
                 >
-                  <Text style={[styles.backBtnText, { color: colors.mutedForeground }]}>Back</Text>
+                  <Text style={[styles.backBtnText, { color: colors.mutedForeground }]}>{t("common.back")}</Text>
                 </Pressable>
                 <Pressable style={styles.saveBtn} onPress={handleSave}>
                   <LinearGradient
@@ -333,7 +336,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                     style={styles.saveBtnGrad}
                   >
                     <Feather name="check" size={18} color="#FFFFFF" />
-                    <Text style={styles.saveBtnText}>Save</Text>
+                    <Text style={styles.saveBtnText}>{t("common.save")}</Text>
                   </LinearGradient>
                 </Pressable>
               </View>

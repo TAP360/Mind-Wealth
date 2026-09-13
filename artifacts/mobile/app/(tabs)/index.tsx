@@ -19,6 +19,7 @@ import { AddExpenseModal } from '@/components/AddExpenseModal';
 import { AddReceiptModal } from '@/components/AddReceiptModal';
 import { useApp, MoodType } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useLocalization } from '@/localization';
 
 const MOODS: { type: MoodType; icon: string; label: string }[] = [
   { type: 'great', icon: '😄', label: 'Great' },
@@ -57,6 +58,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile, mood, setMood, transactions, hasOnboarded } = useApp();
+  const { t, isRTL } = useLocalization();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddReceipt, setShowAddReceipt] = useState(false);
@@ -77,32 +79,32 @@ export default function HomeScreen() {
 
   const hour = new Date().getHours();
   const greeting =
-    hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+    hour < 12 ? t('home.goodMorning') : hour < 17 ? t('home.goodAfternoon') : t('home.goodEvening');
 
   const quickActions = [
     {
       icon: 'message-circle',
-      label: 'Coach',
+      label: t('home.coach'),
       onPress: () => router.push('/(tabs)/coach'),
     },
     {
       icon: 'plus-circle',
-      label: 'Expense',
+      label: t('home.expense'),
       onPress: () => setShowAddExpense(true),
     },
     {
       icon: 'camera',
-      label: 'Receipt',
+      label: t('home.receipt'),
       onPress: () => setShowAddReceipt(true),
     },
     {
       icon: 'target',
-      label: 'Goals',
+      label: t('home.goals'),
       onPress: () => router.push('/(tabs)/goals'),
     },
     {
       icon: 'bar-chart-2',
-      label: 'Insights',
+      label: t('home.insights'),
       onPress: () => router.push('/(tabs)/insights'),
     },
   ];
@@ -110,7 +112,7 @@ export default function HomeScreen() {
   return (
     <Animated.View
       style={[
-        { flex: 1, backgroundColor: colors.background, opacity: fadeAnim },
+        { flex: 1, backgroundColor: colors.background, opacity: fadeAnim, direction: isRTL ? 'rtl' : 'ltr' },
       ]}
     >
       <ScrollView
@@ -140,7 +142,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.moodRow}>
-            <Text style={styles.moodLabel}>How are you feeling today?</Text>
+              <Text style={styles.moodLabel}>{t('home.feeling')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -165,7 +167,7 @@ export default function HomeScreen() {
                       mood === m.type && styles.moodTextActive,
                     ]}
                   >
-                    {m.label}
+                    {t(`home.${m.type === 'neutral' ? 'okay' : m.type}`)}
                   </Text>
                 </Pressable>
               ))}
@@ -175,7 +177,7 @@ export default function HomeScreen() {
 
         <View style={styles.body}>
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Your Wellness Overview
+            {t('Your Wellness Overview')}
           </Text>
 
           <View style={[styles.mainCard, { backgroundColor: colors.card }]}>
@@ -185,10 +187,10 @@ export default function HomeScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.mainCardHeader}
             >
-              <Text style={styles.mainCardTitle}>Financial Wellness Score</Text>
+              <Text style={styles.mainCardTitle}>{t('home.wellnessScore')}</Text>
               <View style={styles.trendBadge}>
                 <Feather name="trending-up" size={12} color="#22C55E" />
-                <Text style={styles.trendText}>+5 this month</Text>
+                <Text style={styles.trendText}>{t('home.thisMonth')}</Text>
               </View>
             </LinearGradient>
             <View style={styles.mainCardBody}>
@@ -207,7 +209,7 @@ export default function HomeScreen() {
                   <Text
                     style={[styles.detailBold, { color: colors.foreground }]}
                   >
-                    Savings Rate{' '}
+                    {t('Savings Rate')}{' '}
                   </Text>
                   18%
                 </Text>
@@ -217,7 +219,7 @@ export default function HomeScreen() {
                   <Text
                     style={[styles.detailBold, { color: colors.foreground }]}
                   >
-                    Debt Ratio{' '}
+                    {t('Debt Ratio')}{' '}
                   </Text>
                   Low
                 </Text>
@@ -227,7 +229,7 @@ export default function HomeScreen() {
                   <Text
                     style={[styles.detailBold, { color: colors.foreground }]}
                   >
-                    Habit Score{' '}
+                    {t('Habit Score')}{' '}
                   </Text>
                   Good
                 </Text>
@@ -285,10 +287,9 @@ export default function HomeScreen() {
           >
             <View style={styles.insightCardInner}>
               <View>
-                <Text style={styles.insightCardTitle}>Today's Insight</Text>
+              <Text style={styles.insightCardTitle}>{t('home.todaysInsight')}</Text>
                 <Text style={styles.insightCardText}>
-                  You saved 12% more this week. Reducing coffee spending by 20%
-                  could add 300 EGP to your Emergency Fund.
+                  {t('You saved 12% more this week. Reducing coffee spending by 20% could add 300 EGP to your Emergency Fund.')}
                 </Text>
               </View>
               <Feather name="zap" size={28} color="rgba(255,255,255,0.7)" />
@@ -296,7 +297,7 @@ export default function HomeScreen() {
           </LinearGradient>
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Quick Actions
+            {t('Quick Actions')}
           </Text>
           <View style={styles.actionsRow}>
             {quickActions.map((a) => (
@@ -330,7 +331,7 @@ export default function HomeScreen() {
           </View>
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Smart Nudges
+            {t('Smart Nudges')}
           </Text>
           {NUDGES.map((n) => (
             <View
@@ -343,13 +344,13 @@ export default function HomeScreen() {
                 <Feather name={n.icon as any} size={18} color={n.color} />
               </View>
               <Text style={[styles.nudgeText, { color: colors.foreground }]}>
-                {n.text}
+                {t(n.text)}
               </Text>
             </View>
           ))}
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Recent Transactions
+            {t('home.recentTransactions')}
           </Text>
           {transactions.slice(0, 4).map((tx) => (
             <View
@@ -375,12 +376,12 @@ export default function HomeScreen() {
               </View>
               <View style={styles.txInfo}>
                 <Text style={[styles.txTitle, { color: colors.foreground }]}>
-                  {tx.title}
+                  {t(({ '1': 'data.morningCoffee', '2': 'data.salaryDeposit', '3': 'data.onlineShopping', '4': 'data.gymMembership', '5': 'data.freelancePayment' } as Record<string, string>)[tx.id] ?? tx.title)}
                 </Text>
                 <Text
                   style={[styles.txCategory, { color: colors.mutedForeground }]}
                 >
-                  {tx.category}
+                  {t(({ 'Food & Drink': 'data.foodDrink', Income: 'data.income', Shopping: 'data.shopping', Health: 'data.health' } as Record<string, string>)[tx.category] ?? tx.category)}
                   {tx.emotionTag ? ` · ${tx.emotionTag}` : ''}
                 </Text>
               </View>
@@ -397,7 +398,7 @@ export default function HomeScreen() {
                 <Text
                   style={[styles.txDate, { color: colors.mutedForeground }]}
                 >
-                  {tx.date}
+                  {t(({ Today: 'data.today', Yesterday: 'data.yesterday', '2 days ago': 'data.twoDaysAgo', '3 days ago': 'data.threeDaysAgo', '4 days ago': 'data.fourDaysAgo', 'Just now': 'data.justNow' } as Record<string, string>)[tx.date] ?? tx.date)}
                 </Text>
               </View>
             </View>

@@ -15,6 +15,7 @@ import { CircularProgress } from '@/components/CircularProgress';
 import { RadarChart, RadarDimension } from '@/components/RadarChart';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useLocalization } from '@/localization';
 
 const EFI_DIMENSIONS: RadarDimension[] = [
   { label: 'Awareness', value: 72 },
@@ -119,9 +120,11 @@ function MiniBar({
 function SpendingBar({
   item,
   maxVal,
+  monthLabel,
 }: {
   item: (typeof MONTHLY_DATA)[0];
   maxVal: number;
+  monthLabel: string;
 }) {
   const barH = 80;
   const savH = Math.round((item.savings / maxVal) * barH);
@@ -161,7 +164,7 @@ function SpendingBar({
           fontFamily: 'Inter_400Regular',
         }}
       >
-        {item.month}
+        {monthLabel}
       </Text>
     </View>
   );
@@ -171,6 +174,7 @@ export default function InsightsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
+  const { t, isRTL } = useLocalization();
   const [activeTab, setActiveTab] = useState<TabKey>('efi');
 
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
@@ -182,14 +186,14 @@ export default function InsightsScreen() {
 
   const tabs: { key: TabKey; label: string }[] = [
     { key: 'efi', label: 'EFI' },
-    { key: 'forecast', label: 'Forecast' },
-    { key: 'nudges', label: 'Nudges' },
-    { key: 'anomalies', label: 'Alerts' },
+    { key: 'forecast', label: t('insights.forecast') },
+    { key: 'nudges', label: t('insights.nudges') },
+    { key: 'anomalies', label: t('insights.anomalies') },
   ];
 
   return (
     <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
+      style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={{ paddingBottom: bottomPad }}
     >
@@ -197,8 +201,8 @@ export default function InsightsScreen() {
         colors={['#0B1026', '#1A1040', '#2E3192']}
         style={[styles.header, { paddingTop: topPad + 16 }]}
       >
-        <Text style={styles.headerTitle}>Financial Insights</Text>
-        <Text style={styles.headerSub}>AI-powered behavioral analysis</Text>
+        <Text style={styles.headerTitle}>{t('insights.title')}</Text>
+        <Text style={styles.headerSub}>{t('insights.subtitle')}</Text>
 
         <View style={styles.scoreRow}>
           <View style={styles.headerScoreCard}>
@@ -210,7 +214,7 @@ export default function InsightsScreen() {
               valueColor="#FFFFFF"
               trackColor="rgba(255,255,255,0.15)"
             />
-            <Text style={styles.headerScoreLabel}>EFI Score</Text>
+            <Text style={styles.headerScoreLabel}>{t('insights.efi')}</Text>
           </View>
           <View style={styles.headerScoreCard}>
             <CircularProgress
@@ -221,7 +225,7 @@ export default function InsightsScreen() {
               valueColor="#FFFFFF"
               trackColor="rgba(255,255,255,0.15)"
             />
-            <Text style={styles.headerScoreLabel}>Wellness</Text>
+            <Text style={styles.headerScoreLabel}>{t('home.wellnessScore')}</Text>
           </View>
           <View style={styles.headerScoreCard}>
             <CircularProgress
@@ -232,28 +236,28 @@ export default function InsightsScreen() {
               valueColor="#FFFFFF"
               trackColor="rgba(255,255,255,0.15)"
             />
-            <Text style={styles.headerScoreLabel}>Confidence</Text>
+            <Text style={styles.headerScoreLabel}>{t('insights.confidence')}</Text>
           </View>
         </View>
       </LinearGradient>
 
       <View style={styles.tabBar}>
-        {tabs.map((t) => (
+        {tabs.map((tab) => (
           <Pressable
-            key={t.key}
-            style={[styles.tab, activeTab === t.key && styles.tabActive]}
-            onPress={() => setActiveTab(t.key)}
+            key={tab.key}
+            style={[styles.tab, activeTab === tab.key && styles.tabActive]}
+            onPress={() => setActiveTab(tab.key)}
           >
             <Text
               style={[
                 styles.tabText,
                 {
                   color:
-                    activeTab === t.key ? '#2E3192' : colors.mutedForeground,
+                    activeTab === tab.key ? '#2E3192' : colors.mutedForeground,
                 },
               ]}
             >
-              {t.label}
+              {tab.label}
             </Text>
           </Pressable>
         ))}
@@ -264,14 +268,17 @@ export default function InsightsScreen() {
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Emotional Financial Intelligence
+                {t('Emotional Financial Intelligence')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                Your 5 EFI dimensions at a glance
+                {t('Your 5 EFI dimensions at a glance')}
               </Text>
               <View style={{ alignItems: 'center', marginTop: 8 }}>
                 <RadarChart
-                  dimensions={EFI_DIMENSIONS}
+                  dimensions={EFI_DIMENSIONS.map((dimension) => ({
+                    ...dimension,
+                    label: t(dimension.label.replace('\n', ' ')),
+                  }))}
                   color="#7C83E0"
                   size={220}
                 />
@@ -280,12 +287,12 @@ export default function InsightsScreen() {
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Dimension Breakdown
+                {t('Dimension Breakdown')}
               </Text>
               {EFI_DIMENSIONS.map((d) => (
                 <View key={d.label} style={styles.dimRow}>
                   <Text style={[styles.dimLabel, { color: colors.foreground }]}>
-                    {d.label.replace('\n', ' ')}
+                      {t(d.label.replace('\n', ' '))}
                   </Text>
                   <View style={{ flex: 1, marginHorizontal: 10 }}>
                     <MiniBar value={d.value} max={100} color="#7C83E0" />
@@ -301,7 +308,7 @@ export default function InsightsScreen() {
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Risk Indicators
+                {t('Risk Indicators')}
               </Text>
               {[
                 {
@@ -331,7 +338,7 @@ export default function InsightsScreen() {
                     <Text
                       style={[styles.riskLabel, { color: colors.foreground }]}
                     >
-                      {r.label}
+                      {t(r.label)}
                     </Text>
                     <Text
                       style={[
@@ -339,7 +346,7 @@ export default function InsightsScreen() {
                         { color: colors.mutedForeground },
                       ]}
                     >
-                      {r.desc}
+                      {t(r.desc)}
                     </Text>
                   </View>
                   <Text style={[styles.riskValue, { color: r.color }]}>
@@ -355,14 +362,14 @@ export default function InsightsScreen() {
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Monthly Overview
+                {t('insights.monthlyOverview')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                Savings vs Spending (EGP)
+                {t('Savings vs Spending (EGP)')}
               </Text>
               <View style={styles.chartRow}>
                 {MONTHLY_DATA.map((d) => (
-                  <SpendingBar key={d.month} item={d} maxVal={maxBarVal} />
+                  <SpendingBar key={d.month} item={d} maxVal={maxBarVal} monthLabel={t(`month.${d.month}`)} />
                 ))}
               </View>
               <View style={styles.legendRow}>
@@ -376,7 +383,7 @@ export default function InsightsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    Savings
+                    {t('insights.savings')}
                   </Text>
                 </View>
                 <View style={styles.legendItem}>
@@ -392,7 +399,7 @@ export default function InsightsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    Spending
+                    {t('insights.spending')}
                   </Text>
                 </View>
               </View>
@@ -400,7 +407,7 @@ export default function InsightsScreen() {
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                July Predictions
+                {t('July Predictions')}
               </Text>
               {[
                 {
@@ -438,7 +445,7 @@ export default function InsightsScreen() {
                     <Feather name={p.icon as any} size={16} color={p.color} />
                   </View>
                   <Text style={[styles.predCat, { color: colors.foreground }]}>
-                    {p.cat}
+                    {t(p.cat)}
                   </Text>
                   <Text
                     style={[styles.predVal, { color: colors.mutedForeground }]}
@@ -459,11 +466,9 @@ export default function InsightsScreen() {
                 color="rgba(255,255,255,0.8)"
                 style={{ marginBottom: 8 }}
               />
-              <Text style={styles.savingOpTitle}>Savings Opportunity</Text>
+              <Text style={styles.savingOpTitle}>{t('insights.savingsOpportunity')}</Text>
               <Text style={styles.savingOpText}>
-                Reducing coffee spending by 20% this month could save you 300
-                EGP. Over 12 months, that's 3,600 EGP toward your Emergency
-                Fund.
+                {t('Reducing coffee spending by 20% this month could save you 300 EGP. Over 12 months, that\'s 3,600 EGP toward your Emergency Fund.')}
               </Text>
             </LinearGradient>
           </>
@@ -473,10 +478,10 @@ export default function InsightsScreen() {
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Smart Nudges
+                {t('profile.smartNudges')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                AI-powered behavioral interventions
+                {t('AI-powered behavioral interventions')}
               </Text>
             </View>
             {NUDGES.map((n) => (
@@ -499,7 +504,7 @@ export default function InsightsScreen() {
                   <Text
                     style={[styles.nudgeTitle, { color: colors.foreground }]}
                   >
-                    {n.title}
+                    {t(n.title)}
                   </Text>
                   <Text
                     style={[
@@ -507,7 +512,7 @@ export default function InsightsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    {n.text}
+                    {t(n.text)}
                   </Text>
                 </View>
               </View>
@@ -519,10 +524,10 @@ export default function InsightsScreen() {
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                Anomaly Detection
+                {t('Anomaly Detection')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                Unusual patterns detected by AI
+                {t('Unusual patterns detected by AI')}
               </Text>
             </View>
             {ANOMALIES.map((a) => (
@@ -553,7 +558,7 @@ export default function InsightsScreen() {
                         { color: colors.foreground },
                       ]}
                     >
-                      {a.title}
+                      {t(a.title)}
                     </Text>
                     <Text
                       style={[
@@ -561,7 +566,7 @@ export default function InsightsScreen() {
                         { color: colors.mutedForeground },
                       ]}
                     >
-                      {a.desc}
+                      {t(a.desc)}
                     </Text>
                   </View>
                 </View>
@@ -572,10 +577,10 @@ export default function InsightsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    AI Confidence: {a.confidence}%
+                    {t('AI Confidence')}: {a.confidence}%
                   </Text>
                   <Pressable style={styles.anomalyBtn}>
-                    <Text style={styles.anomalyBtnText}>View Details</Text>
+                    <Text style={styles.anomalyBtnText}>{t('View Details')}</Text>
                   </Pressable>
                 </View>
               </View>

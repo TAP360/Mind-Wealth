@@ -18,6 +18,7 @@ import { Feather } from '@expo/vector-icons';
 
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
+import { useLocalization } from '@/localization';
 
 const ACHIEVEMENTS = [
   {
@@ -123,6 +124,7 @@ export default function GoalsScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { goals, streak, profile, addGoal } = useApp();
+  const { t, isRTL } = useLocalization();
   const [showAdd, setShowAdd] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState('');
   const [newGoalTarget, setNewGoalTarget] = useState('');
@@ -136,7 +138,7 @@ export default function GoalsScreen() {
   const overallPct = Math.round((totalSaved / totalTarget) * 100);
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: botPad }}
@@ -145,23 +147,23 @@ export default function GoalsScreen() {
           colors={['#0B1026', '#1A1040', '#2E3192']}
           style={[styles.header, { paddingTop: topPad + 16 }]}
         >
-          <Text style={styles.headerTitle}>Goals & Challenges</Text>
+          <Text style={styles.headerTitle}>{t('goals.title')}</Text>
           <Text style={styles.headerSub}>
-            Build your financial future, one goal at a time
+            {t('Build your financial future, one goal at a time')}
           </Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{streak}</Text>
-              <Text style={styles.statLabel}>Day Streak</Text>
+              <Text style={styles.statLabel}>{t('goals.dayStreak')}</Text>
             </View>
             <View style={[styles.statCard, styles.statCardMain]}>
               <Text style={styles.statValue}>{overallPct}%</Text>
-              <Text style={styles.statLabel}>Total Progress</Text>
+              <Text style={styles.statLabel}>{t('goals.totalProgress')}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statValue}>{goals.length}</Text>
-              <Text style={styles.statLabel}>Active Goals</Text>
+              <Text style={styles.statLabel}>{t('goals.active')}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -181,7 +183,7 @@ export default function GoalsScreen() {
                     { color: colors.mutedForeground },
                   ]}
                 >
-                  saved of {totalTarget.toLocaleString()} EGP total
+                  {t('goals.savedOfTotal', { amount: `${totalTarget.toLocaleString()} EGP` })}
                 </Text>
               </View>
               <View style={[styles.pctBadge, { backgroundColor: '#2E319215' }]}>
@@ -198,7 +200,7 @@ export default function GoalsScreen() {
           </View>
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Active Goals
+            {t('goals.active')}
           </Text>
 
           {goals.map((g) => {
@@ -224,7 +226,7 @@ export default function GoalsScreen() {
                     <Text
                       style={[styles.goalTitle, { color: colors.foreground }]}
                     >
-                      {g.title}
+                      {t(({ '1': 'data.emergencyFund', '2': 'data.newCar', '3': 'data.travelFund', '4': 'data.education' } as Record<string, string>)[g.id] ?? g.title)}
                     </Text>
                     <Text
                       style={[
@@ -232,7 +234,7 @@ export default function GoalsScreen() {
                         { color: colors.mutedForeground },
                       ]}
                     >
-                      Target: {g.deadline}
+                      {t('goals.target', { date: t(({ 'Dec 2025': 'data.dec2025', 'Jun 2026': 'data.jun2026', 'Mar 2026': 'data.mar2026', 'Sep 2026': 'data.sep2026' } as Record<string, string>)[g.deadline] ?? g.deadline) })}
                     </Text>
                   </View>
                   <View
@@ -263,7 +265,7 @@ export default function GoalsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    {remaining.toLocaleString()} EGP to go
+                    {remaining.toLocaleString()} EGP {t('remaining to go')}
                   </Text>
                 </View>
               </View>
@@ -271,7 +273,7 @@ export default function GoalsScreen() {
           })}
 
           <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
-            Achievements
+            {t('Achievements')}
           </Text>
           <View style={styles.achievementsGrid}>
             {ACHIEVEMENTS.map((a) => (
@@ -298,7 +300,7 @@ export default function GoalsScreen() {
                 <Text
                   style={[styles.achieveLabel, { color: colors.foreground }]}
                 >
-                  {a.label}
+                  {t(a.label)}
                 </Text>
                 <Text
                   style={[
@@ -306,7 +308,7 @@ export default function GoalsScreen() {
                     { color: colors.mutedForeground },
                   ]}
                 >
-                  {a.desc}
+                  {t(a.desc)}
                 </Text>
                 {a.unlocked && (
                   <View
@@ -328,10 +330,9 @@ export default function GoalsScreen() {
             <View style={styles.challengeRow}>
               <Feather name="flag" size={22} color="rgba(255,255,255,0.8)" />
               <View style={{ flex: 1 }}>
-                <Text style={styles.challengeTitle}>This Week's Challenge</Text>
+                <Text style={styles.challengeTitle}>{t("This Week's Challenge")}</Text>
                 <Text style={styles.challengeText}>
-                  Skip 3 impulse purchases and add the savings to your Emergency
-                  Fund.
+                  {t('Skip 3 impulse purchases and add the savings to your Emergency Fund.')}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
                   {[1, 2, 3].map((i) => (
@@ -397,7 +398,7 @@ export default function GoalsScreen() {
                 style={[styles.handle, { backgroundColor: colors.border }]}
               />
               <Text style={[styles.modalTitle, { color: colors.foreground }]}>
-                New Goal
+                {t('goals.new')}
               </Text>
 
               <ScrollView
@@ -437,7 +438,7 @@ export default function GoalsScreen() {
                         },
                       ]}
                     >
-                      {p.label}
+                      {t(p.label)}
                     </Text>
                   </Pressable>
                 ))}
@@ -452,7 +453,7 @@ export default function GoalsScreen() {
                     borderColor: colors.border,
                   },
                 ]}
-                placeholder="Goal name (e.g. Emergency Fund)"
+                placeholder={t('goals.goalName')}
                 placeholderTextColor={colors.mutedForeground}
                 value={newGoalTitle}
                 onChangeText={setNewGoalTitle}
@@ -467,7 +468,7 @@ export default function GoalsScreen() {
                     borderColor: colors.border,
                   },
                 ]}
-                placeholder="Target amount (EGP)"
+                placeholder={t('goals.targetAmount')}
                 placeholderTextColor={colors.mutedForeground}
                 value={newGoalTarget}
                 onChangeText={setNewGoalTarget}
@@ -489,7 +490,7 @@ export default function GoalsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Text>
                 </Pressable>
                 <Pressable
@@ -522,7 +523,7 @@ export default function GoalsScreen() {
                     colors={['#2E3192', '#92278F']}
                     style={styles.modalConfirmGrad}
                   >
-                    <Text style={styles.modalConfirmText}>Create Goal</Text>
+                    <Text style={styles.modalConfirmText}>{t('goals.addGoal')}</Text>
                   </LinearGradient>
                 </Pressable>
               </View>

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { useApp, PersonalityType } from '@/context/AppContext';
+import { useLocalization } from '@/localization';
 
 const { width, height } = Dimensions.get('window');
 
@@ -193,6 +194,7 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { completeOnboarding, checkAccountExists, signIn } = useApp();
+  const { t } = useLocalization();
 
   const [phase, setPhase] = useState<
     'splash' | 'slides' | 'auth' | 'name' | 'assessment' | 'result'
@@ -535,7 +537,7 @@ export default function OnboardingScreen() {
                   <Text style={styles.splashAIText}>AI</Text>
                 </LinearGradient>
               </View>
-              <Text style={styles.splashTagline}>Smart Financial Advisory</Text>
+              <Text style={styles.splashTagline}>{t('Smart Financial Advisory')}</Text>
             </Animated.View>
 
             <Animated.View
@@ -552,7 +554,7 @@ export default function OnboardingScreen() {
                         : styles.sloganHidden,
                     ]}
                   >
-                    {word}
+                    {t(word)}
                     {i < SLOGAN_WORDS.length - 1 ? ' ' : ''}
                   </Text>
                 ))}
@@ -560,7 +562,7 @@ export default function OnboardingScreen() {
             </Animated.View>
 
             {visibleWords >= SLOGAN_WORDS.length && (
-              <Text style={styles.tapHint}>Tap anywhere to continue</Text>
+              <Text style={styles.tapHint}>{t('Tap anywhere to continue')}</Text>
             )}
           </LinearGradient>
         </Animated.View>
@@ -589,8 +591,8 @@ export default function OnboardingScreen() {
                 style={styles.slideImage}
                 resizeMode="contain"
               />
-              <Text style={styles.slideTitle}>{item.title}</Text>
-              <Text style={styles.slideSubtitle}>{item.subtitle}</Text>
+              <Text style={styles.slideTitle}>{t(item.title)}</Text>
+              <Text style={styles.slideSubtitle}>{t(item.subtitle)}</Text>
             </View>
           )}
         />
@@ -613,7 +615,7 @@ export default function OnboardingScreen() {
               style={styles.nextBtnGrad}
             >
               <Text style={styles.nextBtnText}>
-                {slideIndex === SLIDES.length - 1 ? 'Get Started' : 'Next'}
+                {slideIndex === SLIDES.length - 1 ? t('onboarding.getStarted') : t('common.next')}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -628,7 +630,7 @@ export default function OnboardingScreen() {
                 });
               }}
             >
-              <Text style={styles.skipText}>Skip</Text>
+              <Text style={styles.skipText}>{t('onboarding.skip')}</Text>
             </Pressable>
           )}
         </View>
@@ -654,9 +656,9 @@ export default function OnboardingScreen() {
             keyboardShouldPersistTaps="handled"
             bottomOffset={24}
           >
-          <Text style={styles.authTitle}>Welcome to Bassera</Text>
+          <Text style={styles.authTitle}>{t('onboarding.welcome')}</Text>
           <Text style={styles.authSubtitle}>
-            Continue with your email or a social account to get started.
+            {t('onboarding.emailSubtitle')}
           </Text>
 
           <View style={styles.socialStack}>
@@ -665,27 +667,27 @@ export default function OnboardingScreen() {
               onPress={() => handleSocialAuth('apple')}
             >
               <Text style={styles.socialIcon}></Text>
-              <Text style={styles.socialBtnText}>Continue with Apple</Text>
+              <Text style={styles.socialBtnText}>{t('Continue with Apple')}</Text>
             </Pressable>
             <Pressable
               style={styles.socialBtn}
               onPress={() => handleSocialAuth('google')}
             >
               <Text style={[styles.socialIcon, { color: '#EA4335' }]}>G</Text>
-              <Text style={styles.socialBtnText}>Continue with Google</Text>
+              <Text style={styles.socialBtnText}>{t('Continue with Google')}</Text>
             </Pressable>
             <Pressable
               style={styles.socialBtn}
               onPress={() => handleSocialAuth('facebook')}
             >
               <Text style={[styles.socialIcon, { color: '#1877F2' }]}>f</Text>
-              <Text style={styles.socialBtnText}>Continue with Facebook</Text>
+              <Text style={styles.socialBtnText}>{t('Continue with Facebook')}</Text>
             </Pressable>
           </View>
 
           <View style={styles.authDividerRow}>
             <View style={styles.authDivider} />
-            <Text style={styles.authDividerText}>or use email or mobile</Text>
+            <Text style={styles.authDividerText}>{t('or use email or mobile')}</Text>
             <View style={styles.authDivider} />
           </View>
 
@@ -693,7 +695,7 @@ export default function OnboardingScreen() {
             style={styles.authInput}
             value={email}
             onChangeText={setEmail}
-            placeholder="Email or Mobile"
+            placeholder={t('Email or Mobile')}
             placeholderTextColor="rgba(255,255,255,0.4)"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -714,7 +716,7 @@ export default function OnboardingScreen() {
               style={styles.assessBtnGrad}
             >
               <Text style={styles.assessBtnText}>
-                {authChecking ? 'Checking…' : 'Continue'}
+                {authChecking ? t('common.loading') : t('onboarding.continue')}
               </Text>
             </LinearGradient>
           </Pressable>
@@ -734,15 +736,15 @@ export default function OnboardingScreen() {
         ]}
       >
         <Animated.View style={[styles.center, { opacity: fadeAnim }]}>
-          <Text style={styles.assessTitle}>What should we call you?</Text>
+          <Text style={styles.assessTitle}>{t('onboarding.nameTitle')}</Text>
           <Text style={styles.assessSubtitle}>
-            Bassera will personalize your experience based on your name.
+            {t('Bassera will personalize your experience based on your name.')}
           </Text>
           <TextInput
             style={styles.nameInput}
             value={userName}
             onChangeText={setUserName}
-            placeholder="Your first name"
+            placeholder={t('onboarding.namePlaceholder')}
             placeholderTextColor="rgba(255,255,255,0.4)"
             autoFocus
             returnKeyType="done"
@@ -762,7 +764,7 @@ export default function OnboardingScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.assessBtnGrad}
             >
-              <Text style={styles.assessBtnText}>Continue</Text>
+              <Text style={styles.assessBtnText}>{t('onboarding.continue')}</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>
@@ -793,9 +795,9 @@ export default function OnboardingScreen() {
             ))}
           </View>
           <Text style={styles.assessStep}>
-            Question {questionIndex + 1} of {QUESTIONS.length}
+            {t('onboarding.question', { current: questionIndex + 1, total: QUESTIONS.length })}
           </Text>
-          <Text style={styles.assessTitle}>{q.text}</Text>
+          <Text style={styles.assessTitle}>{t(q.text)}</Text>
           <View style={styles.optionList}>
             {q.options.map((opt, i) => (
               <Pressable
@@ -806,7 +808,7 @@ export default function OnboardingScreen() {
                 ]}
                 onPress={() => handleAnswer(opt.scores)}
               >
-                <Text style={styles.optionText}>{opt.text}</Text>
+                <Text style={styles.optionText}>{t(opt.text)}</Text>
               </Pressable>
             ))}
           </View>
@@ -833,17 +835,17 @@ export default function OnboardingScreen() {
         >
           <Text style={styles.personalityEmoji}>{info.emoji}</Text>
           <Text style={[styles.personalityName, { color: info.color }]}>
-            {personality}
+            {t(personality ?? '')}
           </Text>
         </View>
 
-        <Text style={styles.slideTitle}>Your Money Personality</Text>
-        <Text style={styles.resultDesc}>{info.desc}</Text>
+        <Text style={styles.slideTitle}>{t('onboarding.result')}</Text>
+        <Text style={styles.resultDesc}>{t(info.desc)}</Text>
 
         <View style={styles.resultCards}>
           <View style={styles.resultCard}>
-            <Text style={styles.resultCardLabel}>Strength</Text>
-            <Text style={styles.resultCardText}>{info.strength}</Text>
+            <Text style={styles.resultCardLabel}>{t('Strength')}</Text>
+            <Text style={styles.resultCardText}>{t(info.strength)}</Text>
           </View>
           <View
             style={[
@@ -852,9 +854,9 @@ export default function OnboardingScreen() {
             ]}
           >
             <Text style={[styles.resultCardLabel, { color: '#EF4444' }]}>
-              Watch Out
+              {t('Watch Out')}
             </Text>
-            <Text style={styles.resultCardText}>{info.risk}</Text>
+            <Text style={styles.resultCardText}>{t(info.risk)}</Text>
           </View>
         </View>
 
@@ -865,7 +867,7 @@ export default function OnboardingScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.nextBtnGrad}
           >
-            <Text style={styles.nextBtnText}>Start My Journey</Text>
+            <Text style={styles.nextBtnText}>{t('Start My Journey')}</Text>
           </LinearGradient>
         </Pressable>
       </Animated.View>

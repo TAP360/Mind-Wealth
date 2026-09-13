@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useLocalization } from "@/localization";
 
 interface Message {
   id: string;
@@ -66,12 +67,13 @@ export default function CoachScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
+  const { t, isRTL } = useLocalization();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "0",
       role: "ai",
-      text: `Hi ${profile.name}! I'm your AI Financial Coach. I've reviewed your financial profile and I'm ready to help you build better financial habits. What's on your mind today?`,
-      time: "Now",
+      text: t("coach.greeting", { name: profile.name }),
+      time: t("common.today"),
     },
   ]);
   const [input, setInput] = useState("");
@@ -100,8 +102,8 @@ export default function CoachScreen() {
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: "ai",
-        text: getAIResponse(text),
-        time: "Now",
+         text: t(getAIResponse(text) === AI_RESPONSES.overspend ? "coach.overspend" : getAIResponse(text) === AI_RESPONSES.save ? "coach.save" : getAIResponse(text) === AI_RESPONSES.debt ? "coach.debt" : getAIResponse(text) === AI_RESPONSES.spending ? "coach.spending" : "coach.default"),
+         time: t("common.today"),
       };
       setIsTyping(false);
       setMessages((prev) => [aiMsg, ...prev]);
@@ -110,7 +112,7 @@ export default function CoachScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background, direction: isRTL ? "rtl" : "ltr" }]}>
       <LinearGradient
         colors={["#0B1026", "#1A1040", "#2E3192"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}
@@ -128,7 +130,7 @@ export default function CoachScreen() {
           <View style={styles.coachInfo}>
             <Text style={styles.coachName}>Bassera AI Coach</Text>
             <Text style={styles.coachStatus}>
-              Active · Personalized for you
+              {t("coach.online")} · {t("Personalized for you")}
             </Text>
           </View>
           <Feather
@@ -214,7 +216,7 @@ export default function CoachScreen() {
                 <Text
                   style={[styles.suggestedText, { color: colors.foreground }]}
                 >
-                  {s}
+                  {t(({ "Why do I overspend?": "coach.whyOverspend", "Help me save for a car": "coach.saveCar", "Analyze my spending": "coach.analyzeSpending", "How to reduce debt?": "coach.reduceDebt", "What is my money personality?": "coach.personality", "Build an emergency fund": "coach.emergencyFund" } as Record<string, string>)[s] ?? s)}
                 </Text>
               </Pressable>
             ))}
@@ -238,7 +240,7 @@ export default function CoachScreen() {
             ]}
             value={input}
             onChangeText={setInput}
-            placeholder="Ask your AI coach..."
+            placeholder={t("coach.ask")}
             placeholderTextColor={colors.mutedForeground}
             multiline
             maxLength={500}

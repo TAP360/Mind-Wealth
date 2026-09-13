@@ -17,6 +17,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useLocalization } from "@/localization";
 import { EXPENSE_CATEGORIES, EMOTION_TAGS } from "@/constants/categories";
 
 interface ReceiptItem {
@@ -55,6 +56,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const { addTransaction } = useApp();
+  const { t, isRTL } = useLocalization();
 
   const [step, setStep] = useState<ReceiptStep>("scan");
   const [items, setItems] = useState<ReceiptItem[]>([]);
@@ -137,6 +139,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
             {
               backgroundColor: step === "scan" ? "#0B1026" : colors.card,
               paddingBottom: botPad + 16,
+              direction: isRTL ? "rtl" : "ltr",
             },
           ]}
         >
@@ -145,13 +148,13 @@ export function AddReceiptModal({ visible, onClose }: Props) {
           {step === "scan" && (
             <View style={styles.scanContainer}>
               <View style={styles.scanHeader}>
-                <Text style={styles.scanTitle}>Scan Receipt</Text>
+                <Text style={styles.scanTitle}>{t("Scan Receipt")}</Text>
                 <Pressable onPress={handleClose}>
                   <Feather name="x" size={22} color="rgba(255,255,255,0.7)" />
                 </Pressable>
               </View>
 
-              <Text style={styles.scanSubtitle}>Point your camera at a receipt or bill</Text>
+              <Text style={styles.scanSubtitle}>{t("Point your camera at a receipt or bill")}</Text>
 
               <View style={styles.viewfinder}>
                 <View style={styles.corner} />
@@ -168,7 +171,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
 
                 <View style={styles.docPlaceholder}>
                   <Feather name="file-text" size={48} color="rgba(255,255,255,0.15)" />
-                  <Text style={styles.docPlaceholderText}>Receipt preview</Text>
+                  <Text style={styles.docPlaceholderText}>{t("Receipt preview")}</Text>
                 </View>
               </View>
 
@@ -180,12 +183,12 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                   style={styles.shutterBtn}
                 >
                   <Feather name="camera" size={26} color="#FFFFFF" />
-                  <Text style={styles.shutterText}>Scan Receipt</Text>
+                  <Text style={styles.shutterText}>{t("Scan Receipt")}</Text>
                 </LinearGradient>
               </Pressable>
 
               <Pressable style={styles.manualBtn} onPress={startScan}>
-                <Text style={styles.manualBtnText}>Enter manually instead</Text>
+                <Text style={styles.manualBtnText}>{t("Enter manually instead")}</Text>
               </Pressable>
             </View>
           )}
@@ -198,8 +201,8 @@ export function AddReceiptModal({ visible, onClose }: Props) {
               >
                 <Feather name="cpu" size={32} color="#FFFFFF" />
               </LinearGradient>
-              <Text style={styles.processingTitle}>Analyzing Receipt</Text>
-              <Text style={styles.processingSubtitle}>AI is extracting and categorizing items…</Text>
+              <Text style={styles.processingTitle}>{t("Analyzing Receipt")}</Text>
+              <Text style={styles.processingSubtitle}>{t("AI is extracting and categorizing items…")}</Text>
 
               <View style={styles.processingSteps}>
                 {[
@@ -218,7 +221,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                       {s.done && <Feather name="check" size={10} color="#FFFFFF" />}
                     </View>
                     <Text style={[styles.stepText, { color: s.done ? "#22C55E" : "#94A3B8" }]}>
-                      {s.label}
+                      {t(s.label)}
                     </Text>
                   </View>
                 ))}
@@ -230,12 +233,12 @@ export function AddReceiptModal({ visible, onClose }: Props) {
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
               <View style={styles.reviewHeader}>
                 <View>
-                  <Text style={[styles.reviewTitle, { color: colors.foreground }]}>Receipt Scanned!</Text>
+                  <Text style={[styles.reviewTitle, { color: colors.foreground }]}>{t("Receipt Scanned!")}</Text>
                   <Text style={[styles.reviewMerchant, { color: colors.mutedForeground }]}>{merchant}</Text>
                 </View>
                 <View style={[styles.aiTag, { backgroundColor: "#2E319215" }]}>
                   <Feather name="cpu" size={12} color="#2E3192" />
-                  <Text style={styles.aiTagText}>AI Categorized</Text>
+                  <Text style={styles.aiTagText}>{t("AI Categorized")}</Text>
                 </View>
               </View>
 
@@ -250,11 +253,11 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                       >
                         <Text style={styles.itemEmoji}>{item.emoji}</Text>
                         <View style={{ flex: 1 }}>
-                          <Text style={[styles.itemName, { color: colors.foreground }]}>{item.name}</Text>
+                          <Text style={[styles.itemName, { color: colors.foreground }]}>{t(item.name)}</Text>
                           <View style={styles.itemCatRow}>
                             <View style={[styles.itemCatBadge, { backgroundColor: (cat?.color ?? "#64748B") + "20" }]}>
                               <Text style={[styles.itemCatText, { color: cat?.color ?? "#64748B" }]}>
-                                {item.category}
+                                {t(item.category)}
                               </Text>
                             </View>
                             <Feather
@@ -271,7 +274,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
 
                       {editingItem === idx && (
                         <View style={styles.itemCategoryPicker}>
-                          <Text style={[styles.pickLabel, { color: colors.mutedForeground }]}>Change category:</Text>
+                          <Text style={[styles.pickLabel, { color: colors.mutedForeground }]}>{t("Change category:")}</Text>
                           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
                             {EXPENSE_CATEGORIES.map((c) => (
                               <Pressable
@@ -298,7 +301,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                                 }}
                               >
                                 <Text style={{ fontSize: 16 }}>{c.emoji}</Text>
-                                <Text style={[styles.pickChipText, { color: colors.foreground }]}>{c.label}</Text>
+                                <Text style={[styles.pickChipText, { color: colors.foreground }]}>{t(c.label)}</Text>
                               </Pressable>
                             ))}
                           </ScrollView>
@@ -314,13 +317,13 @@ export function AddReceiptModal({ visible, onClose }: Props) {
               </View>
 
               <View style={[styles.totalRow, { backgroundColor: colors.card }]}>
-                <Text style={[styles.totalLabel, { color: colors.mutedForeground }]}>Total</Text>
+                <Text style={[styles.totalLabel, { color: colors.mutedForeground }]}>{t("Total")}</Text>
                 <Text style={[styles.totalAmount, { color: "#F37021" }]}>
                   {totalAmount.toLocaleString()} EGP
                 </Text>
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>How did this feel?</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("How did this feel?")}</Text>
               <View style={styles.emotionGrid}>
                 {EMOTION_TAGS.map((e) => (
                   <Pressable
@@ -340,7 +343,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                   >
                     <Text style={styles.emotionEmoji}>{e.emoji}</Text>
                     <Text style={[styles.emotionLabel, { color: emotionTag === e.id ? e.color : colors.foreground }]}>
-                      {e.label}
+                      {t(e.label)}
                     </Text>
                   </Pressable>
                 ))}
@@ -355,7 +358,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                   }}
                 >
                   <Feather name="refresh-cw" size={16} color={colors.mutedForeground} />
-                  <Text style={[styles.retryText, { color: colors.mutedForeground }]}>Retry</Text>
+                  <Text style={[styles.retryText, { color: colors.mutedForeground }]}>{t("common.retry")}</Text>
                 </Pressable>
                 <Pressable style={styles.confirmBtn} onPress={handleSave}>
                   <LinearGradient
@@ -365,7 +368,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                     style={styles.confirmBtnGrad}
                   >
                     <Feather name="check" size={18} color="#FFFFFF" />
-                    <Text style={styles.confirmBtnText}>Save {items.length} Items</Text>
+                    <Text style={styles.confirmBtnText}>{t("Save {count} Items", { count: items.length })}</Text>
                   </LinearGradient>
                 </Pressable>
               </View>

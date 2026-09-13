@@ -16,6 +16,7 @@ import { Feather } from "@expo/vector-icons";
 
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
+import { useLocalization } from "@/localization";
 
 const PLANS = [
   {
@@ -82,6 +83,7 @@ export default function UpgradeScreen() {
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { profile } = useApp();
+  const { t, isRTL } = useLocalization();
   const [annual, setAnnual] = useState(false);
   const [selected, setSelected] = useState<string>("premium");
 
@@ -101,17 +103,17 @@ export default function UpgradeScreen() {
     }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert(
-      `Upgrade to ${selectedPlan.name}`,
-      `You'll be charged ${price.toLocaleString()} EGP ${annual ? "per year" : "per month"}. Payment integration coming soon.`,
+      t("upgrade.upgradeTo", { plan: t(selectedPlan.name) }),
+      `You'll be charged ${price.toLocaleString()} EGP ${annual ? t("upgrade.perYear") : t("upgrade.perMonth")}. Payment integration coming soon.`,
       [
-        { text: "Cancel", style: "cancel" },
-        { text: "Confirm", onPress: () => router.back() },
+        { text: t("common.cancel"), style: "cancel" },
+        { text: t("common.ok"), onPress: () => router.back() },
       ]
     );
   };
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#0B1026" }}>
+    <View style={{ flex: 1, backgroundColor: "#0B1026", direction: isRTL ? "rtl" : "ltr" }}>
       <LinearGradient
         colors={["#0B1026", "#1A0A30", "#0B1026"]}
         style={[styles.header, { paddingTop: topPad + 12 }]}
@@ -126,9 +128,9 @@ export default function UpgradeScreen() {
         >
           <Feather name="zap" size={28} color="#FFFFFF" />
         </LinearGradient>
-        <Text style={styles.headerTitle}>Upgrade Bassera بصيرة</Text>
+        <Text style={styles.headerTitle}>{t("upgrade.title")}</Text>
         <Text style={styles.headerSub}>
-          Unlock the full power of behavioral finance coaching
+          {t("upgrade.subtitle")}
         </Text>
 
         <View style={[styles.toggle, { backgroundColor: "rgba(255,255,255,0.08)" }]}>
@@ -136,15 +138,15 @@ export default function UpgradeScreen() {
             style={[styles.toggleBtn, !annual && styles.toggleActive]}
             onPress={() => setAnnual(false)}
           >
-            <Text style={[styles.toggleText, !annual && styles.toggleTextActive]}>Monthly</Text>
+            <Text style={[styles.toggleText, !annual && styles.toggleTextActive]}>{t("upgrade.monthly")}</Text>
           </Pressable>
           <Pressable
             style={[styles.toggleBtn, annual && styles.toggleActive]}
             onPress={() => setAnnual(true)}
           >
-            <Text style={[styles.toggleText, annual && styles.toggleTextActive]}>Annual</Text>
+            <Text style={[styles.toggleText, annual && styles.toggleTextActive]}>{t("upgrade.annual")}</Text>
             <View style={styles.savingsBadge}>
-              <Text style={styles.savingsText}>Save 20%</Text>
+              <Text style={styles.savingsText}>{t("upgrade.save", { percent: 20 })}</Text>
             </View>
           </Pressable>
         </View>
@@ -180,28 +182,28 @@ export default function UpgradeScreen() {
                   </View>
                   <View>
                     <View style={styles.planNameRow}>
-                      <Text style={styles.planName}>{plan.name}</Text>
+                       <Text style={styles.planName}>{t(plan.name)}</Text>
                       {plan.badge && (
                         <View style={[styles.planBadge, { backgroundColor: plan.color + "25", borderColor: plan.color + "50" }]}>
-                          <Text style={[styles.planBadgeText, { color: plan.color }]}>{plan.badge}</Text>
+                           <Text style={[styles.planBadgeText, { color: plan.color }]}>{t(plan.badge)}</Text>
                         </View>
                       )}
                       {isCurrent && (
                         <View style={[styles.planBadge, { backgroundColor: "#22C55E25", borderColor: "#22C55E50" }]}>
-                          <Text style={[styles.planBadgeText, { color: "#22C55E" }]}>Current</Text>
+                           <Text style={[styles.planBadgeText, { color: "#22C55E" }]}>{t("upgrade.current")}</Text>
                         </View>
                       )}
                     </View>
                     <View style={styles.planPriceRow}>
                       {planPrice === 0 ? (
-                        <Text style={[styles.planPrice, { color: plan.color }]}>Free</Text>
+                         <Text style={[styles.planPrice, { color: plan.color }]}>{t("profile.free")}</Text>
                       ) : (
                         <>
                           <Text style={[styles.planPrice, { color: plan.color }]}>
                             {planPrice.toLocaleString()}
                           </Text>
                           <Text style={styles.planCurrency}> EGP</Text>
-                          <Text style={styles.planPeriod}>/{annual ? "yr" : "mo"}</Text>
+                           <Text style={styles.planPeriod}>{annual ? t("upgrade.perYear") : t("upgrade.perMonth")}</Text>
                         </>
                       )}
                     </View>
@@ -215,7 +217,7 @@ export default function UpgradeScreen() {
                     <View style={[styles.featureCheck, { backgroundColor: plan.color + "20" }]}>
                       <Feather name="check" size={11} color={plan.color} />
                     </View>
-                    <Text style={styles.featureText}>{f}</Text>
+                    <Text style={styles.featureText}>{t(f)}</Text>
                   </View>
                 ))}
                 {plan.missing.map((f) => (
@@ -223,7 +225,7 @@ export default function UpgradeScreen() {
                     <View style={[styles.featureCheck, { backgroundColor: "rgba(255,255,255,0.06)" }]}>
                       <Feather name="minus" size={11} color="rgba(255,255,255,0.25)" />
                     </View>
-                    <Text style={[styles.featureText, { color: "rgba(255,255,255,0.25)" }]}>{f}</Text>
+                    <Text style={[styles.featureText, { color: "rgba(255,255,255,0.25)" }]}>{t(f)}</Text>
                   </View>
                 ))}
               </View>
@@ -235,7 +237,7 @@ export default function UpgradeScreen() {
       <View style={[styles.footer, { paddingBottom: botPad + 12, backgroundColor: "#0B1026" }]}>
         {savings > 0 && (
           <Text style={styles.footerSavings}>
-            🎉 You save {((selectedPlan.priceMonthly * 12) - selectedPlan.priceYearly).toLocaleString()} EGP per year
+            {t("upgrade.savings", { amount: ((selectedPlan.priceMonthly * 12) - selectedPlan.priceYearly).toLocaleString() })}
           </Text>
         )}
         <Pressable onPress={handleSubscribe} style={styles.ctaBtn}>
@@ -247,18 +249,18 @@ export default function UpgradeScreen() {
           >
             <Text style={styles.ctaText}>
               {selected === "free"
-                ? "Stay on Free Plan"
-                : `Upgrade to ${selectedPlan.name}`}
+                 ? t("upgrade.stayFree")
+                : t("upgrade.upgradeTo", { plan: t(selectedPlan.name) })}
             </Text>
             {price > 0 && (
               <Text style={styles.ctaSub}>
-                {price.toLocaleString()} EGP/{annual ? "year" : "month"}
+                {price.toLocaleString()} EGP{annual ? t("upgrade.perYear") : t("upgrade.perMonth")}
               </Text>
             )}
           </LinearGradient>
         </Pressable>
         <Text style={styles.terms}>
-          Cancel anytime · Secure payment · No hidden fees
+          {t("upgrade.terms")}
         </Text>
       </View>
     </View>

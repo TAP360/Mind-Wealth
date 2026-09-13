@@ -10,6 +10,7 @@ import Svg, { Path, Circle } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useColors } from '@/hooks/useColors';
+import { useLocalization } from '@/localization';
 
 function AICoachIcon({ color }: { color: ColorValue }) {
   return (
@@ -49,27 +50,28 @@ function AICoachIcon({ color }: { color: ColorValue }) {
 }
 
 function NativeTabLayout() {
+  const { t } = useLocalization();
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <NativeTabs.Trigger.Label>Home</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="coach">
         <NativeTabs.Trigger.Icon sf={{ default: 'sparkles', selected: 'sparkles' }} />
-        <NativeTabs.Trigger.Label>Coach</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.coach')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="insights">
         <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
-        <NativeTabs.Trigger.Label>Insights</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.insights')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="goals">
         <NativeTabs.Trigger.Icon sf={{ default: 'target', selected: 'target' }} />
-        <NativeTabs.Trigger.Label>Goals</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.goals')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
         <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
-        <NativeTabs.Trigger.Label>Profile</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Label>{t('tabs.profile')}</NativeTabs.Trigger.Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
@@ -82,6 +84,7 @@ function ClassicTabLayout() {
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
+  const { t } = useLocalization();
 
   return (
     <Tabs
@@ -118,7 +121,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="house" tintColor={color} size={24} />
@@ -130,7 +133,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="coach"
         options={{
-          title: 'Coach',
+          title: t('tabs.coach'),
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="sparkles" tintColor={color} size={24} />
@@ -142,7 +145,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="insights"
         options={{
-          title: 'Insights',
+          title: t('tabs.insights'),
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="chart.bar" tintColor={color} size={24} />
@@ -154,7 +157,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="goals"
         options={{
-          title: 'Goals',
+          title: t('tabs.goals'),
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="target" tintColor={color} size={24} />
@@ -166,7 +169,7 @@ function ClassicTabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
           tabBarIcon: ({ color }) =>
             isIOS ? (
               <SymbolView name="person" tintColor={color} size={24} />
