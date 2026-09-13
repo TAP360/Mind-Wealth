@@ -1,7 +1,7 @@
 import { BlurView } from 'expo-blur';
 import { isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Tabs } from 'expo-router';
-import { NativeTabs } from 'expo-router/unstable-native-tabs';
+import { Icon, Label, NativeTabs } from 'expo-router/unstable-native-tabs';
 import { SymbolView } from 'expo-symbols';
 import { Feather } from '@expo/vector-icons';
 import React from 'react';
@@ -54,24 +54,24 @@ function NativeTabLayout() {
   return (
     <NativeTabs>
       <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
+        <Icon sf={{ default: 'house', selected: 'house.fill' }} />
+        <Label>{t('tabs.home')}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="coach">
-        <NativeTabs.Trigger.Icon sf={{ default: 'sparkles', selected: 'sparkles' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.coach')}</NativeTabs.Trigger.Label>
+        <Icon sf={{ default: 'sparkles', selected: 'sparkles' }} />
+        <Label>{t('tabs.coach')}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="insights">
-        <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.insights')}</NativeTabs.Trigger.Label>
+        <Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
+        <Label>{t('tabs.insights')}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="goals">
-        <NativeTabs.Trigger.Icon sf={{ default: 'target', selected: 'target' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.goals')}</NativeTabs.Trigger.Label>
+        <Icon sf={{ default: 'target', selected: 'target' }} />
+        <Label>{t('tabs.goals')}</Label>
       </NativeTabs.Trigger>
       <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.profile')}</NativeTabs.Trigger.Label>
+        <Icon sf={{ default: 'person', selected: 'person.fill' }} />
+        <Label>{t('tabs.profile')}</Label>
       </NativeTabs.Trigger>
     </NativeTabs>
   );
