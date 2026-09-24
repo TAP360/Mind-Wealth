@@ -1,5 +1,4 @@
 uploads = []
-outputs = []
 
 [[generated]]
 id = "lZ4vAK7M_aDLikNwfHZ8S"
@@ -24,3 +23,17 @@ id = "6ZfE56fHXOJBS8tmNUaVX"
 uri = "file://artifacts/mobile/assets/images/onboarding2.png"
 type = "image"
 title = "generated_image"
+
+[[outputs]]
+id = "HqqIpnxzEy5V1t9HvP8v2"
+uri = "file://docs/bassera-web-portal-build-prompt.md"
+type = "text"
+title = "Bassera web portal build prompt"
+description = "Detailed Markdown brief covering the landing page, design, all screens, bilingual content, functionality, demo limitations, and end-to-end journeys."
+logical_id = "3f0e36bd-d910-4161-aa37-9241601c4cf5"
+content_hash = "sha256:fbca354468eda9fc94ad30109c78fd993d35e70729a66ee29fe1843691c985aa"
+size = 25688
+mtime_ms = 1790253254541
+storage_uri = "gcs://replit-rams-assets-sisko/rams/assets/repl:acc01957-8a50-496f-9846-c1383ee3f6b5/3f0e36bd-d910-4161-aa37-9241601c4cf5/99a2258f-453f-4fb1-894a-90683de88ad2"
+storage_version_token = "1790253273164552"
+content_type = "text/markdown"
