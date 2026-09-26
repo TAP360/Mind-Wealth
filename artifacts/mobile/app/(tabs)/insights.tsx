@@ -8,6 +8,7 @@ import {
   ScrollView,
   StyleSheet,
   Text,
+  useWindowDimensions,
   View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,7 +16,7 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { CircularProgress } from '@/components/CircularProgress';
-import { EfiOrbitChart } from '@/components/EfiOrbitChart';
+import { EfiBarChart } from '@/components/EfiBarChart';
 import { ForecastCoachWidget } from '@/components/ForecastCoachWidget';
 import { InsightAssistant } from '@/components/InsightAssistant';
 import { useApp } from '@/context/AppContext';
@@ -90,36 +91,6 @@ const NUDGES = [
 type TabKey = 'efi' | 'forecast' | 'nudges' | 'anomalies';
 const TRUSTED_ANOMALY_PREFIX = '@bassera_trusted_sample_anomaly_v1_';
 
-function MiniBar({
-  value,
-  max,
-  color,
-}: {
-  value: number;
-  max: number;
-  color: string;
-}) {
-  return (
-    <View
-      style={{
-        height: 4,
-        flex: 1,
-        backgroundColor: '#E2E8F0',
-        borderRadius: 2,
-      }}
-    >
-      <View
-        style={{
-          width: `${(value / max) * 100}%`,
-          height: '100%',
-          backgroundColor: color,
-          borderRadius: 2,
-        }}
-      />
-    </View>
-  );
-}
-
 function SpendingBar({
   item,
   maxVal,
@@ -175,6 +146,8 @@ function SpendingBar({
 
 export default function InsightsScreen() {
   const colors = useColors();
+  const { width } = useWindowDimensions();
+  const summarySize = width < 360 ? 66 : 80;
   const router = useRouter();
   const { section, coach } = useLocalSearchParams<{ section?: string; coach?: string }>();
   const insets = useSafeAreaInsets();
@@ -276,7 +249,7 @@ export default function InsightsScreen() {
           <View style={styles.headerScoreCard}>
             <CircularProgress
               value={profile.efiScore}
-              size={80}
+              size={summarySize}
               strokeWidth={7}
               colors={['#92278F', '#F37021', '#F37021']}
               valueColor="#FFFFFF"
@@ -287,7 +260,7 @@ export default function InsightsScreen() {
           <View style={styles.headerScoreCard}>
             <CircularProgress
               value={profile.wellnessScore}
-              size={80}
+              size={summarySize}
               strokeWidth={7}
               colors={['#2E3192', '#92278F', '#92278F']}
               valueColor="#FFFFFF"
@@ -298,7 +271,7 @@ export default function InsightsScreen() {
           <View style={styles.headerScoreCard}>
             <CircularProgress
               value={profile.confidenceScore}
-              size={80}
+              size={summarySize}
               strokeWidth={7}
               colors={['#22C55E', '#2E3192', '#2E3192']}
               valueColor="#FFFFFF"
@@ -342,36 +315,15 @@ export default function InsightsScreen() {
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
                 {t('insights.dimensionsGlance')}
               </Text>
-              <EfiOrbitChart
-                score={profile.efiScore}
-                title={t('insights.overall')}
+              <EfiBarChart
+                title={t('insights.dimensionBreakdown')}
+                outOfLabel={t('insights.outOf100')}
                 dimensions={EFI_DIMENSIONS.map((dimension, index) => ({
                   label: t(dimension.key).replace('\n', ' '),
                   value: dimension.value,
                   color: [colors.indigo, colors.purple, colors.orange, colors.success, colors.warning][index],
                 }))}
               />
-            </View>
-
-            <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                {t('insights.dimensionBreakdown')}
-              </Text>
-              {EFI_DIMENSIONS.map((d) => (
-                <View key={d.key} style={styles.dimRow}>
-                  <Text style={[styles.dimLabel, { color: colors.foreground }]}>
-                      {t(d.key).replace('\n', ' ')}
-                  </Text>
-                  <View style={{ flex: 1, marginHorizontal: 10 }}>
-                    <MiniBar value={d.value} max={100} color="#7C83E0" />
-                  </View>
-                  <Text
-                    style={[styles.dimValue, { color: colors.mutedForeground }]}
-                  >
-                    {d.value}
-                  </Text>
-                </View>
-              ))}
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
@@ -736,12 +688,13 @@ const styles = StyleSheet.create({
     marginTop: 4,
     marginBottom: 20,
   },
-  scoreRow: { flexDirection: 'row', justifyContent: 'space-around' },
-  headerScoreCard: { alignItems: 'center', gap: 8 },
+  scoreRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  headerScoreCard: { alignItems: 'center', gap: 8, width: '32%' },
   headerScoreLabel: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
     color: 'rgba(255,255,255,0.65)',
+    textAlign: 'center',
   },
   tabBar: {
     flexDirection: 'row',
@@ -764,14 +717,6 @@ const styles = StyleSheet.create({
   },
   cardTitle: { fontSize: 16, fontFamily: 'Inter_600SemiBold', marginBottom: 4 },
   cardSub: { fontSize: 12, fontFamily: 'Inter_400Regular', marginBottom: 8 },
-  dimRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 6 },
-  dimLabel: { fontSize: 13, fontFamily: 'Inter_400Regular', width: 80 },
-  dimValue: {
-    fontSize: 12,
-    fontFamily: 'Inter_600SemiBold',
-    width: 28,
-    textAlign: 'right',
-  },
   riskRow: {
     flexDirection: 'row',
     alignItems: 'center',
