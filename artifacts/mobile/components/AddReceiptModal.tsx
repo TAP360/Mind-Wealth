@@ -19,6 +19,7 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useLocalization } from "@/localization";
 import { EXPENSE_CATEGORIES, EMOTION_TAGS } from "@/constants/categories";
+import { TransactionSaveFeedback } from "@/components/TransactionSaveFeedback";
 
 interface ReceiptItem {
   name: string;
@@ -50,7 +51,7 @@ interface Props {
   onClose: () => void;
 }
 
-type ReceiptStep = "scan" | "processing" | "review" | "emotion";
+type ReceiptStep = "scan" | "processing" | "review" | "emotion" | "feedback";
 
 export function AddReceiptModal({ visible, onClose }: Props) {
   const colors = useColors();
@@ -63,6 +64,7 @@ export function AddReceiptModal({ visible, onClose }: Props) {
   const [editingItem, setEditingItem] = useState<number | null>(null);
   const [emotionTag, setEmotionTag] = useState("");
   const [merchant, setMerchant] = useState("");
+  const saveLock = useRef(false);
 
   const scanAnim = useRef(new Animated.Value(0)).current;
   const dotAnim = useRef(new Animated.Value(0)).current;
@@ -100,6 +102,8 @@ export function AddReceiptModal({ visible, onClose }: Props) {
   };
 
   const handleSave = () => {
+    if (!items.length || saveLock.current) return;
+    saveLock.current = true;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     items.forEach((item) => {
       addTransaction({
@@ -111,10 +115,11 @@ export function AddReceiptModal({ visible, onClose }: Props) {
         emotionTag: emotionTag || undefined,
       });
     });
-    handleClose();
+    setStep("feedback");
   };
 
   const handleClose = () => {
+    saveLock.current = false;
     setStep("scan");
     setItems([]);
     setEmotionTag("");
@@ -123,6 +128,14 @@ export function AddReceiptModal({ visible, onClose }: Props) {
   };
 
   const totalAmount = items.reduce((sum, i) => sum + i.amount, 0);
+  const receiptCategoryId =
+    items.length > 0 && items.every((item) => item.categoryId === items[0].categoryId)
+      ? items[0].categoryId
+      : "mixed";
+  const receiptCategoryLabel =
+    receiptCategoryId === "mixed"
+      ? t("transaction.mixedCategories")
+      : t(items[0]?.category ?? "Other");
 
   const scanLineY = scanAnim.interpolate({
     inputRange: [0, 1],
@@ -227,6 +240,19 @@ export function AddReceiptModal({ visible, onClose }: Props) {
                 ))}
               </View>
             </View>
+          )}
+
+          {step === "feedback" && (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              <TransactionSaveFeedback
+                type="expense"
+                amount={totalAmount}
+                categoryId={receiptCategoryId}
+                categoryLabel={receiptCategoryLabel}
+                emotionTag={emotionTag || undefined}
+                onDone={handleClose}
+              />
+            </ScrollView>
           )}
 
           {(step === "review" || step === "emotion") && (

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -19,12 +20,13 @@ import { Feather } from '@expo/vector-icons';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
+import { showProfilePhotoOptions } from '@/utils/profilePhoto';
 
 export default function PersonalInfoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const { profile } = useApp();
+  const { profile, updateProfile } = useApp();
   const { t, isRTL } = useLocalization();
 
   const [name, setName] = useState(profile.name);
@@ -42,16 +44,26 @@ export default function PersonalInfoScreen() {
     setChanged(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!name.trim()) {
       Alert.alert(t('personal.nameRequired'), t('personal.nameRequiredMessage'));
       return;
     }
+    await updateProfile({ name: name.trim(), email: email.trim() });
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    Alert.alert(t('personal.saved'), t('personal.savedMessage'), [
-      { text: t('common.ok'), onPress: () => router.back() },
-    ]);
+    setChanged(false);
+    if (Platform.OS === 'web') {
+      window.alert(`${t('personal.saved')}\n${t('personal.savedMessage')}`);
+      router.back();
+    } else {
+      Alert.alert(t('personal.saved'), t('personal.savedMessage'), [
+        { text: t('common.ok'), onPress: () => router.back() },
+      ]);
+    }
   };
+
+  const choosePhoto = () =>
+    showProfilePhotoOptions(t, (photoUri) => updateProfile({ photoUri }));
 
   return (
     <KeyboardAvoidingView
@@ -76,19 +88,27 @@ export default function PersonalInfoScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.avatarSection}>
-          <LinearGradient
-            colors={['#2E3192', '#92278F']}
-            style={styles.avatarCircle}
-          >
-            <Text style={styles.avatarLetter}>
-              {(name || '?')[0]?.toUpperCase()}
-            </Text>
-          </LinearGradient>
+          <View style={styles.avatarFrame}>
+            <LinearGradient
+              colors={['#2E3192', '#92278F']}
+              style={styles.avatarCircle}
+            >
+              {profile.photoUri ? (
+                <Image source={{ uri: profile.photoUri }} style={styles.avatarPhoto} />
+              ) : (
+                <Text style={styles.avatarLetter}>
+                  {(name.trim() || '?')[0]?.toUpperCase()}
+                </Text>
+              )}
+            </LinearGradient>
+          </View>
           <Pressable
             style={[
               styles.editAvatarBtn,
               { backgroundColor: colors.card, borderColor: colors.border },
             ]}
+            accessibilityRole="button"
+            onPress={choosePhoto}
           >
             <Feather name="camera" size={14} color={colors.foreground} />
             <Text style={[styles.editAvatarText, { color: colors.foreground }]}>
@@ -261,6 +281,7 @@ const styles = StyleSheet.create({
   },
   body: { padding: 20, gap: 12 },
   avatarSection: { alignItems: 'center', paddingVertical: 16, gap: 12 },
+  avatarFrame: { width: 88, height: 88, borderRadius: 44, overflow: 'hidden' },
   avatarCircle: {
     width: 88,
     height: 88,
@@ -269,6 +290,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarLetter: { fontSize: 40, fontFamily: 'Inter_700Bold', color: '#FFFFFF' },
+  avatarPhoto: { width: '100%', height: '100%', borderRadius: 44 },
   editAvatarBtn: {
     flexDirection: 'row',
     alignItems: 'center',

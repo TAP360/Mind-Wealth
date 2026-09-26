@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -126,18 +127,36 @@ export default function HomeScreen() {
           style={[styles.header, { paddingTop: topPad + 16 }]}
         >
           <View style={styles.headerRow}>
-            <View>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={t('personal.title')}
+              onPress={() => router.push('/personal-info')}
+            >
               <Text style={styles.greetingSmall}>{greeting},</Text>
               <Text style={styles.greetingName}>{profile.name} 👋</Text>
-            </View>
+            </Pressable>
             <View style={styles.headerRight}>
               <Pressable style={styles.iconBtn} onPress={() => {}}>
                 <Feather name="bell" size={22} color="rgba(255,255,255,0.8)" />
                 <View style={styles.notifBadge} />
               </Pressable>
-              <View style={styles.avatar}>
-                <Text style={styles.avatarText}>{profile.name[0]}</Text>
-              </View>
+              <Pressable
+                style={styles.avatar}
+                accessibilityRole="button"
+                accessibilityLabel={t('personal.title')}
+                onPress={() => router.push('/personal-info')}
+              >
+                {profile.photoUri ? (
+                  <Image
+                    source={{ uri: profile.photoUri }}
+                    style={styles.avatarPhoto}
+                  />
+                ) : (
+                  <Text style={styles.avatarText}>
+                    {profile.name.trim()[0]?.toUpperCase() ?? '?'}
+                  </Text>
+                )}
+              </Pressable>
             </View>
           </View>
 
@@ -463,6 +482,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { fontSize: 16, fontFamily: 'Inter_700Bold', color: '#F37021' },
+  avatarPhoto: { width: '100%', height: '100%', borderRadius: 20 },
   moodRow: { marginTop: 4 },
   moodLabel: {
     fontSize: 13,

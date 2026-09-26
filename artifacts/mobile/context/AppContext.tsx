@@ -20,6 +20,7 @@ export type MoodType = 'great' | 'good' | 'neutral' | 'stressed' | 'anxious';
 interface UserProfile {
   name: string;
   email: string;
+  photoUri?: string;
   personalityType: PersonalityType;
   subscription: 'free' | 'premium' | 'premium_plus';
   joinDate: string;
@@ -67,6 +68,7 @@ interface AppContextValue extends AppState {
   checkAccountExists: (email: string) => Promise<boolean>;
   signIn: (email: string) => Promise<void>;
   clearData: () => Promise<void>;
+  updateProfile: (updates: Partial<Pick<UserProfile, 'name' | 'email' | 'photoUri'>>) => Promise<void>;
   setMood: (mood: MoodType) => void;
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
   updateGoal: (id: string, amount: number) => void;
@@ -218,7 +220,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
         const saved = JSON.parse(raw) as Partial<AppState>;
-        setState((prev) => ({ ...prev, ...saved }));
+        setState((prev) => ({
+          ...prev,
+          ...saved,
+          profile: { ...prev.profile, ...saved.profile },
+        }));
       }
     } catch {
     } finally {
@@ -226,19 +232,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const saveState = async (newState: AppState) => {
-    try {
-      await AsyncStorage.setItem(
-        STORAGE_KEY,
-        JSON.stringify({
-          hasOnboarded: newState.hasOnboarded,
-          profile: newState.profile,
-          goals: newState.goals,
-          streak: newState.streak,
-        }),
-      );
-    } catch {}
-  };
+  // Persist the complete local state, including newly recorded transactions.
+  // Wait until the initial read finishes so the default state cannot overwrite it.
+  useEffect(() => {
+    if (!loaded) return;
+    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(state)).catch((error) => {
+      console.error('Unable to save Bassera data', error);
+    });
+  }, [loaded, state]);
 
   const completeOnboarding = useCallback(
     async (personality: PersonalityType, name?: string, email?: string) => {
@@ -254,7 +255,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             email: email?.trim() || prev.profile.email,
           },
         };
-        saveState(next);
         return next;
       });
     },
@@ -276,7 +276,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           email: email.trim() || prev.profile.email,
         },
       };
-      saveState(next);
       return next;
     });
   }, []);
@@ -287,6 +286,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await AsyncStorage.removeItem(STORAGE_KEY);
     } catch {}
   }, []);
+
+  const updateProfile = useCallback(
+    async (updates: Partial<Pick<UserProfile, 'name' | 'email' | 'photoUri'>>) => {
+      setState((prev) => {
+        const next: AppState = {
+          ...prev,
+          profile: { ...prev.profile, ...updates },
+        };
+        return next;
+      });
+    },
+    [],
+  );
 
   const setMood = useCallback((mood: MoodType) => {
     setState((prev) => ({ ...prev, mood }));
@@ -332,6 +344,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         checkAccountExists,
         signIn,
         clearData,
+        updateProfile,
         setMood,
         addTransaction,
         updateGoal,

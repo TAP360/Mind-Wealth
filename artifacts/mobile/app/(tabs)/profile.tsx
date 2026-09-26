@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 import React, { useState } from "react";
 import {
   Alert,
+  Image,
   Platform,
   Pressable,
   ScrollView,
@@ -18,6 +19,7 @@ import { Feather } from "@expo/vector-icons";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useLocalization } from "@/localization";
+import { showProfilePhotoOptions } from "@/utils/profilePhoto";
 
 const personalityColors: Record<string, string> = {
   "Money Vigilance": "#2E3192",
@@ -59,7 +61,7 @@ const PLAN_FEATURES = {
 export default function ProfileScreen() {
   const colors = useColors();
   const insets = useSafeAreaInsets();
-  const { profile, clearData } = useApp();
+  const { profile, clearData, updateProfile } = useApp();
   const { language, setLanguage, t, isRTL } = useLocalization();
   const [notifications, setNotifications] = useState(true);
   const [nudges, setNudges] = useState(true);
@@ -79,6 +81,8 @@ export default function ProfileScreen() {
           ? t("profile.premium")
           : t("profile.free"),
   };
+  const choosePhoto = () =>
+    showProfilePhotoOptions(t, (photoUri) => updateProfile({ photoUri }));
 
   const settingsSections = [
     {
@@ -281,13 +285,32 @@ export default function ProfileScreen() {
             colors={[pColor, pColor + "AA"]}
             style={styles.avatarCircle}
           >
-            <Text style={styles.avatarLetter}>{profile.name[0]}</Text>
+            {profile.photoUri ? (
+              <Image source={{ uri: profile.photoUri }} style={styles.avatarPhoto} />
+            ) : (
+              <Text style={styles.avatarLetter}>
+                {profile.name.trim()[0]?.toUpperCase() ?? "?"}
+              </Text>
+            )}
           </LinearGradient>
-          <Pressable style={styles.editAvatarBtn}>
+          <Pressable
+            style={styles.editAvatarBtn}
+            accessibilityRole="button"
+            accessibilityLabel={t("personal.changePhoto")}
+            onPress={choosePhoto}
+          >
             <Feather name="camera" size={14} color="#FFFFFF" />
           </Pressable>
         </View>
-        <Text style={styles.profileName}>{profile.name}</Text>
+        <Pressable
+          style={styles.nameEdit}
+          accessibilityRole="button"
+          accessibilityLabel={t("personal.editName")}
+          onPress={() => router.push("/personal-info")}
+        >
+          <Text style={styles.profileName}>{profile.name}</Text>
+          <Feather name="edit-2" size={15} color="rgba(255,255,255,0.75)" />
+        </Pressable>
         <Text style={styles.profileEmail}>{profile.email}</Text>
         <View style={styles.headerBadges}>
           <View
@@ -574,6 +597,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
+  avatarPhoto: {
+    ...StyleSheet.absoluteFill,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+  },
   avatarLetter: { fontSize: 36, fontFamily: "Inter_700Bold", color: "#FFFFFF" },
   editAvatarBtn: {
     position: "absolute",
@@ -594,6 +623,7 @@ const styles = StyleSheet.create({
     color: "#FFFFFF",
     marginBottom: 4,
   },
+  nameEdit: { flexDirection: "row", alignItems: "center", gap: 8 },
   profileEmail: {
     fontSize: 14,
     fontFamily: "Inter_400Regular",

@@ -1,6 +1,6 @@
 import * as Haptics from "expo-haptics";
 import { LinearGradient } from "expo-linear-gradient";
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import {
   Modal,
   Platform,
@@ -18,6 +18,7 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useLocalization } from "@/localization";
 import { EXPENSE_CATEGORIES, INCOME_CATEGORIES, EMOTION_TAGS, Category } from "@/constants/categories";
+import { TransactionSaveFeedback } from "@/components/TransactionSaveFeedback";
 
 interface Props {
   visible: boolean;
@@ -39,12 +40,13 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
   const { t, isRTL } = useLocalization();
 
   const [type, setType] = useState<"expense" | "income">(initialType);
-  const [step, setStep] = useState<"amount" | "details">("amount");
+  const [step, setStep] = useState<"amount" | "details" | "feedback">("amount");
   const [amount, setAmount] = useState("0");
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [title, setTitle] = useState("");
   const [emotionTag, setEmotionTag] = useState<string>("");
   const [note, setNote] = useState("");
+  const saveLock = useRef(false);
 
   const botPad = Platform.OS === "web" ? insets.bottom + 34 : insets.bottom;
 
@@ -69,20 +71,22 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
   };
 
   const handleSave = () => {
-    if (!canProceed) return;
+    if (!canProceed || !selectedCategory || saveLock.current) return;
+    saveLock.current = true;
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     addTransaction({
-      title: title || selectedCategory!.label,
-      category: selectedCategory!.label,
+      title: title || selectedCategory.label,
+      category: selectedCategory.label,
       amount: type === "expense" ? -numericAmount : numericAmount,
       date: "Just now",
       type,
       emotionTag: emotionTag || undefined,
     });
-    handleClose();
+    setStep("feedback");
   };
 
   const handleClose = () => {
+    saveLock.current = false;
     setStep("amount");
     setAmount("0");
     setSelectedCategory(null);
@@ -139,7 +143,18 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
             </Pressable>
           </View>
 
-          {step === "amount" ? (
+          {step === "feedback" && selectedCategory ? (
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 8 }}>
+              <TransactionSaveFeedback
+                type={type}
+                amount={numericAmount}
+                categoryId={selectedCategory.id}
+                categoryLabel={t(selectedCategory.label)}
+                emotionTag={emotionTag || undefined}
+                onDone={handleClose}
+              />
+            </ScrollView>
+          ) : step === "amount" ? (
             <>
               <View style={styles.amountDisplay}>
                 <Text style={[styles.currency, { color: colors.mutedForeground }]}>EGP</Text>

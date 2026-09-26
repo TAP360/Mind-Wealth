@@ -1,0 +1,1 @@
+- [Transaction coaching transparency](transaction-coaching.md) — distinguish local rules from live AI analysis when showing post-save financial guidance.
