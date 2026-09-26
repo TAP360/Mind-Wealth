@@ -1,6 +1,8 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { useEffect, useRef, useState } from 'react';
 import {
+  ActivityIndicator,
   Platform,
   Pressable,
   ScrollView,
@@ -15,6 +17,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { CircularProgress } from '@/components/CircularProgress';
 import { EfiOrbitChart } from '@/components/EfiOrbitChart';
 import { ForecastCoachWidget } from '@/components/ForecastCoachWidget';
+import { InsightAssistant } from '@/components/InsightAssistant';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
@@ -40,24 +43,21 @@ const ANOMALIES = [
   {
     id: '1',
     title: 'Unusual shopping spike',
-    desc: '420 EGP above your average — possible impulse trigger',
-    confidence: 87,
+    descKey: 'insights.exampleShoppingAnomaly',
     risk: 'medium',
     icon: 'shopping-bag',
   },
   {
     id: '2',
     title: 'Weekend dining pattern',
-    desc: 'Consistent 35% over-budget on weekends for 3 weeks',
-    confidence: 92,
+    descKey: 'insights.exampleDiningAnomaly',
     risk: 'low',
     icon: 'coffee',
   },
   {
     id: '3',
     title: 'Subscription waste detected',
-    desc: '3 rarely-used subscriptions totaling 245 EGP/month',
-    confidence: 95,
+    descKey: 'insights.exampleSubscriptionAnomaly',
     risk: 'low',
     icon: 'credit-card',
   },
@@ -69,25 +69,26 @@ const NUDGES = [
     icon: 'trending-up',
     color: '#22C55E',
     title: 'Savings opportunity',
-    text: 'You have 1,200 EGP more than usual this month. Consider adding to your Emergency Fund.',
+    textKey: 'insights.exampleSavingsNudge',
   },
   {
     id: '2',
     icon: 'alert-triangle',
     color: '#F59E0B',
     title: 'Cooling-off reminder',
-    text: "You've browsed 3 shopping sites today — impulse risk is elevated. Try a 24-hour wait.",
+    textKey: 'insights.exampleCoolingNudge',
   },
   {
     id: '3',
     icon: 'award',
     color: '#2E3192',
     title: 'Milestone reached',
-    text: "You've maintained your savings streak for 12 days. Your best streak ever!",
+    textKey: 'insights.exampleMilestoneNudge',
   },
 ];
 
 type TabKey = 'efi' | 'forecast' | 'nudges' | 'anomalies';
+const TRUSTED_ANOMALY_PREFIX = '@bassera_trusted_sample_anomaly_v1_';
 
 function MiniBar({
   value,
@@ -179,7 +180,69 @@ export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const { t, isRTL } = useLocalization();
-  const [activeTab, setActiveTab] = useState<TabKey>(section === 'forecast' ? 'forecast' : 'efi');
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    section === 'forecast' || section === 'nudges' || section === 'anomalies' ? section : 'efi',
+  );
+  const [trustedIds, setTrustedIds] = useState<string[]>([]);
+  const [pendingTrustedIds, setPendingTrustedIds] = useState<string[]>([]);
+  const [trustLoaded, setTrustLoaded] = useState(false);
+  const [trustError, setTrustError] = useState(false);
+  const [savingTrustId, setSavingTrustId] = useState<string | null>(null);
+  const trustTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
+  useEffect(() => {
+    let active = true;
+    Promise.all(ANOMALIES.map(async (item) => {
+      const value = await AsyncStorage.getItem(TRUSTED_ANOMALY_PREFIX + item.id);
+      return value === 'yes' ? item.id : null;
+    }))
+      .then((values) => {
+        if (active) setTrustedIds(values.filter((id): id is string => id !== null));
+      })
+      .catch(() => { if (active) setTrustError(true); })
+      .finally(() => { if (active) setTrustLoaded(true); });
+    return () => {
+      active = false;
+      trustTimers.current.forEach((timer) => clearTimeout(timer));
+      trustTimers.current.clear();
+    };
+  }, []);
+
+  const trustAnomaly = async (id: string) => {
+    if (savingTrustId || trustError || trustedIds.includes(id)) return;
+    setSavingTrustId(id);
+    try {
+      await AsyncStorage.setItem(TRUSTED_ANOMALY_PREFIX + id, 'yes');
+      setTrustedIds((previous) => [...previous, id]);
+      setPendingTrustedIds((previous) => [...previous, id]);
+      const timer = setTimeout(() => {
+        setPendingTrustedIds((previous) => previous.filter((value) => value !== id));
+        trustTimers.current.delete(id);
+      }, 5000);
+      trustTimers.current.set(id, timer);
+    } catch {
+      setTrustError(true);
+    } finally {
+      setSavingTrustId(null);
+    }
+  };
+
+  const undoTrust = async (id: string) => {
+    if (savingTrustId) return;
+    setSavingTrustId(id);
+    try {
+      await AsyncStorage.removeItem(TRUSTED_ANOMALY_PREFIX + id);
+      const timer = trustTimers.current.get(id);
+      if (timer) clearTimeout(timer);
+      trustTimers.current.delete(id);
+      setTrustedIds((previous) => previous.filter((value) => value !== id));
+      setPendingTrustedIds((previous) => previous.filter((value) => value !== id));
+    } catch {
+      setTrustError(true);
+    } finally {
+      setSavingTrustId(null);
+    }
+  };
 
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
 
@@ -250,6 +313,7 @@ export default function InsightsScreen() {
         {tabs.map((tab) => (
           <Pressable
             key={tab.key}
+            testID={`insights-tab-${tab.key}`}
             style={[styles.tab, activeTab === tab.key && styles.tabActive]}
             onPress={() => setActiveTab(tab.key)}
           >
@@ -491,7 +555,7 @@ export default function InsightsScreen() {
                 {t('profile.smartNudges')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                {t('AI-powered behavioral interventions')}
+                {t('insights.exampleNudgesNotice')}
               </Text>
             </View>
             {NUDGES.map((n) => (
@@ -522,8 +586,14 @@ export default function InsightsScreen() {
                       { color: colors.mutedForeground },
                     ]}
                   >
-                    {t(n.text)}
+                    {t(n.textKey)}
                   </Text>
+                  <InsightAssistant
+                    kind="nudge"
+                    id={n.id}
+                    title={t(n.title)}
+                    description={t(n.textKey)}
+                  />
                 </View>
               </View>
             ))}
@@ -534,13 +604,21 @@ export default function InsightsScreen() {
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                {t('Anomaly Detection')}
+                {t('insights.anomalies')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                {t('Unusual patterns detected by AI')}
+                {t('insights.exampleAnomaliesNotice')}
               </Text>
+              {trustError ? (
+                <Text style={[styles.cardSub, { color: colors.destructive }]}>
+                  {t('insights.trustStorageError')}
+                </Text>
+              ) : null}
             </View>
-            {ANOMALIES.map((a) => (
+            {!trustLoaded ? <ActivityIndicator color={colors.primary} /> : null}
+            {trustLoaded && ANOMALIES.filter((a) =>
+              !trustedIds.includes(a.id) || pendingTrustedIds.includes(a.id),
+            ).map((a) => (
               <View
                 key={a.id}
                 style={[styles.anomalyCard, { backgroundColor: colors.card }]}
@@ -576,25 +654,56 @@ export default function InsightsScreen() {
                         { color: colors.mutedForeground },
                       ]}
                     >
-                      {t(a.desc)}
+                        {t(a.descKey)}
                     </Text>
                   </View>
                 </View>
+                <InsightAssistant
+                  kind="anomaly"
+                  id={a.id}
+                  title={t(a.title)}
+                  description={t(a.descKey)}
+                />
                 <View style={styles.anomalyFooter}>
-                  <Text
-                    style={[
-                      styles.anomalyConf,
-                      { color: colors.mutedForeground },
+                  {pendingTrustedIds.includes(a.id) ? (
+                    <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>
+                      {t('insights.hidingSoon')}
+                    </Text>
+                  ) : <View style={{ flex: 1 }} />}
+                  <Pressable
+                    accessibilityRole="button"
+                    testID={`trust-anomaly-${a.id}`}
+                    disabled={!!savingTrustId || trustError}
+                    onPress={() => {
+                      if (pendingTrustedIds.includes(a.id)) void undoTrust(a.id);
+                      else void trustAnomaly(a.id);
+                    }}
+                    style={({ pressed }) => [
+                      styles.anomalyBtn,
+                      { backgroundColor: colors.secondary, opacity: pressed ? 0.7 : 1 },
                     ]}
                   >
-                    {t('AI Confidence')}: {a.confidence}%
-                  </Text>
-                  <Pressable style={styles.anomalyBtn}>
-                    <Text style={styles.anomalyBtnText}>{t('View Details')}</Text>
+                    <Feather
+                      name={pendingTrustedIds.includes(a.id) ? 'rotate-ccw' : 'check-circle'}
+                      size={14}
+                      color={colors.primary}
+                    />
+                    <Text style={[styles.anomalyBtnText, { color: colors.primary }]}>
+                      {pendingTrustedIds.includes(a.id) ? t('insights.undo') : t('insights.trustThis')}
+                    </Text>
                   </Pressable>
                 </View>
               </View>
             ))}
+            {trustLoaded && ANOMALIES.every((a) =>
+              trustedIds.includes(a.id) && !pendingTrustedIds.includes(a.id),
+            ) ? (
+              <View style={[styles.card, { backgroundColor: colors.card }]}>
+                <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                  {t('insights.noExampleAnomalies')}
+                </Text>
+              </View>
+            ) : null}
           </>
         )}
       </View>
@@ -761,17 +870,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: 10,
   },
-  anomalyConf: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+  pendingText: { fontSize: 11, fontFamily: 'Inter_400Regular', flex: 1 },
   anomalyBtn: {
-    backgroundColor: '#2E319215',
     borderRadius: 10,
-    paddingVertical: 6,
-    paddingHorizontal: 12,
+    paddingVertical: 9,
+    paddingHorizontal: 11,
+    flexDirection: 'row',
+    gap: 6,
+    alignItems: 'center',
   },
   anomalyBtnText: {
     fontSize: 12,
     fontFamily: 'Inter_500Medium',
-    color: '#2E3192',
   },
 });

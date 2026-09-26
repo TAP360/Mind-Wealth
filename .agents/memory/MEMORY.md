@@ -1,3 +1,4 @@
 - [Transaction coaching transparency](transaction-coaching.md) — distinguish local rules from live AI analysis when showing post-save financial guidance.
 - [Financial linking boundary](financial-linking.md) — manually saved account and payment labels are local references, not live bank connections or payment instruments.
 - [Forecast honesty](forecast-honesty.md) — label sample forecast visuals as illustrative until they are calculated from real transaction data.
+- [AI explanations of sample insights](sample-insights-ai.md) — never present illustrative nudges or anomalies as observed user behavior when generating explanations.

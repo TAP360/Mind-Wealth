@@ -16,6 +16,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
 import { useLocalSearchParams } from "expo-router";
 import { useEffect } from "react";
+import { useCreateGoalPlan, type GoalPlanInput } from "@workspace/api-client-react";
 
 import { FORECAST_QUESTIONS } from "@/components/ForecastCoachWidget";
 import { useApp } from "@/context/AppContext";
@@ -37,6 +38,10 @@ const SUGGESTED = [
   "What is my money personality?",
   "Build an emergency fund",
 ];
+
+const GOAL_FIELDS = ["priority", "horizon", "cashFlow", "obligations", "outlook"] as const;
+type GoalField = typeof GOAL_FIELDS[number];
+type GoalAnswers = Record<GoalField, string>;
 
 const AI_RESPONSES: Record<string, string> = {
   default:
@@ -75,6 +80,7 @@ export default function CoachScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const { t, isRTL } = useLocalization();
+  const goalPlan = useCreateGoalPlan();
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "0",
@@ -85,6 +91,8 @@ export default function CoachScreen() {
   ]);
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [goalStep, setGoalStep] = useState<number | null>(null);
+  const [goalAnswers, setGoalAnswers] = useState<Partial<GoalAnswers>>({});
   const flatRef = useRef<FlatList>(null);
   const lastForecastRequest = useRef<string | null>(null);
 
@@ -115,19 +123,64 @@ export default function CoachScreen() {
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const botPad = insets.bottom + (Platform.OS === "android" ? 96 : 60);
 
+  const newMessage = (role: Message["role"], text: string): Message => ({
+    id: `${Date.now()}-${Math.random()}`,
+    role,
+    text,
+    time: t("common.today"),
+  });
+
+  const startGoalFlow = () => {
+    if (isTyping) return;
+    setGoalAnswers({});
+    setGoalStep(0);
+    setInput("");
+    setMessages((prev) => [
+      newMessage("ai", `${t("coach.goalIntro")}\n\n1/5 · ${t("coach.goalQuestion.priority")}`),
+      newMessage("user", t("coach.goalPrompt")),
+      ...prev,
+    ]);
+  };
+
   const sendMessage = (text: string) => {
     if (!text.trim()) return;
+    if (isTyping) return;
+    if (goalStep === null && text.trim().toLowerCase() === t("coach.goalPrompt").toLowerCase()) {
+      startGoalFlow();
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-    const userMsg: Message = {
-      id: Date.now().toString(),
-      role: "user",
-      text: text.trim(),
-      time: "Now",
-    };
+    const userMsg = newMessage("user", text.trim());
 
     setMessages((prev) => [userMsg, ...prev]);
     setInput("");
+    if (goalStep !== null) {
+      if (text.trim().length < 2) {
+        setMessages((prev) => [newMessage("ai", t("coach.goalShortAnswer")), ...prev]);
+        return;
+      }
+      const updated = { ...goalAnswers, [GOAL_FIELDS[goalStep]]: text.trim() };
+      setGoalAnswers(updated);
+      if (goalStep < GOAL_FIELDS.length - 1) {
+        const next = goalStep + 1;
+        setGoalStep(next);
+        setMessages((prev) => [
+          newMessage("ai", `${next + 1}/5 · ${t(`coach.goalQuestion.${GOAL_FIELDS[next]}`)}`),
+          ...prev,
+        ]);
+        return;
+      }
+      setGoalStep(null);
+      setIsTyping(true);
+      const answers = updated as GoalAnswers;
+      const data: GoalPlanInput = { ...answers, language: isRTL ? "ar" : "en" };
+      goalPlan.mutateAsync({ data })
+        .then(({ suggestion }) => setMessages((prev) => [newMessage("ai", suggestion), ...prev]))
+        .catch(() => setMessages((prev) => [newMessage("ai", t("coach.goalError")), ...prev]))
+        .finally(() => setIsTyping(false));
+      return;
+    }
     setIsTyping(true);
 
     setTimeout(() => {
@@ -231,6 +284,30 @@ export default function CoachScreen() {
         />
 
         <View style={[styles.suggestedWrap, { borderTopColor: colors.border }]}>
+            <Pressable
+              accessibilityRole="button"
+              testID={goalStep !== null ? "coach-goal-cancel" : "coach-long-term-goal"}
+              style={[
+                styles.goalEntry,
+                { backgroundColor: goalStep !== null ? colors.secondary : colors.primary },
+              ]}
+              onPress={() => {
+                if (goalStep !== null) {
+                  setGoalStep(null);
+                  setGoalAnswers({});
+                  setMessages((prev) => [newMessage("ai", t("coach.goalStopped")), ...prev]);
+                } else {
+                  startGoalFlow();
+                }
+              }}
+              disabled={isTyping}
+            >
+              <Feather name={goalStep !== null ? "x" : "target"} size={18} color={goalStep !== null ? colors.foreground : colors.primaryForeground} />
+              <Text style={[styles.goalEntryText, { color: goalStep !== null ? colors.foreground : colors.primaryForeground }]}>
+                {goalStep !== null ? t("coach.goalCancel") : t("coach.goalPrompt")}
+              </Text>
+            </Pressable>
+          {goalStep === null ? (
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
@@ -253,6 +330,7 @@ export default function CoachScreen() {
               </Pressable>
             ))}
           </ScrollView>
+          ) : null}
         </View>
 
         <View
@@ -357,7 +435,17 @@ const styles = StyleSheet.create({
   },
   aiText: { fontSize: 14, fontFamily: "Inter_400Regular", lineHeight: 21 },
   typingDots: { fontSize: 18, letterSpacing: 4 },
-  suggestedWrap: { borderTopWidth: 1, paddingVertical: 8 },
+  suggestedWrap: { borderTopWidth: 1, paddingVertical: 8, gap: 8 },
+  goalEntry: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginHorizontal: 16,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+  },
+  goalEntryText: { flex: 1, fontFamily: "Inter_600SemiBold", fontSize: 12, lineHeight: 17 },
   suggestedScroll: { paddingHorizontal: 16, gap: 8 },
   suggestedChip: {
     borderRadius: 20,

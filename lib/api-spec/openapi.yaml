@@ -10,7 +10,45 @@ servers:
 tags:
   - name: health
     description: Health operations
+  - name: coach
+    description: Guided coaching
 paths:
+  /coach/explain-insight:
+    post:
+      operationId: explainInsight
+      tags: [coach]
+      summary: Explain a sample nudge or anomaly and suggest next steps
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/InsightExplanationInput"
+      responses:
+        "200":
+          description: AI explanation
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/InsightExplanationOutput"
+  /coach/goal-plan:
+    post:
+      operationId: createGoalPlan
+      tags: [coach]
+      summary: Suggest a long-term goal from the user's answers
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/GoalPlanInput"
+      responses:
+        "200":
+          description: Goal suggestion
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/GoalPlanOutput"
   /healthz:
     get:
       operationId: healthCheck
@@ -26,6 +64,65 @@ paths:
                 $ref: "#/components/schemas/HealthStatus"
 components:
   schemas:
+    InsightExplanationInput:
+      type: object
+      additionalProperties: false
+      required: [language, kind, title, description]
+      properties:
+        language:
+          type: string
+          enum: [en, ar]
+        kind:
+          type: string
+          enum: [nudge, anomaly]
+        title:
+          type: string
+          minLength: 2
+          maxLength: 160
+        description:
+          type: string
+          minLength: 2
+          maxLength: 600
+    InsightExplanationOutput:
+      type: object
+      required: [explanation]
+      properties:
+        explanation:
+          type: string
+    GoalPlanInput:
+      type: object
+      additionalProperties: false
+      required: [language, priority, horizon, cashFlow, obligations, outlook]
+      properties:
+        language:
+          type: string
+          enum: [en, ar]
+        priority:
+          type: string
+          minLength: 2
+          maxLength: 600
+        horizon:
+          type: string
+          minLength: 2
+          maxLength: 600
+        cashFlow:
+          type: string
+          minLength: 2
+          maxLength: 600
+        obligations:
+          type: string
+          minLength: 2
+          maxLength: 600
+        outlook:
+          type: string
+          minLength: 2
+          maxLength: 600
+    GoalPlanOutput:
+      type: object
+      required: [suggestion]
+      properties:
+        suggestion:
+          type: string
     HealthStatus:
       type: object
       properties:
