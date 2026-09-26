@@ -10,10 +10,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { CircularProgress } from '@/components/CircularProgress';
 import { EfiOrbitChart } from '@/components/EfiOrbitChart';
-import { ForecastCoachCard } from '@/components/ForecastCoachCard';
+import { ForecastCoachWidget } from '@/components/ForecastCoachWidget';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
@@ -173,10 +174,12 @@ function SpendingBar({
 
 export default function InsightsScreen() {
   const colors = useColors();
+  const router = useRouter();
+  const { section, coach } = useLocalSearchParams<{ section?: string; coach?: string }>();
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const { t, isRTL } = useLocalization();
-  const [activeTab, setActiveTab] = useState<TabKey>('efi');
+  const [activeTab, setActiveTab] = useState<TabKey>(section === 'forecast' ? 'forecast' : 'efi');
 
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
 
@@ -193,6 +196,7 @@ export default function InsightsScreen() {
   ];
 
   return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}
       showsVerticalScrollIndicator={false}
@@ -360,7 +364,6 @@ export default function InsightsScreen() {
 
         {activeTab === 'forecast' && (
           <>
-            <ForecastCoachCard />
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
                 {t('insights.monthlyOverview')}
@@ -596,6 +599,21 @@ export default function InsightsScreen() {
         )}
       </View>
     </ScrollView>
+    {activeTab === 'forecast' ? (
+      <ForecastCoachWidget
+        initialOpen={coach === 'open'}
+        onContinue={(question) =>
+          router.navigate({
+            pathname: '/(tabs)/coach',
+            params: {
+              forecastQuestion: question ?? 'intro',
+              forecastRequest: `${Date.now()}-${Math.random()}`,
+            },
+          })
+        }
+      />
+    ) : null}
+    </View>
   );
 }
 

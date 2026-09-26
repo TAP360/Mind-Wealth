@@ -14,7 +14,10 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Feather } from "@expo/vector-icons";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect } from "react";
 
+import { FORECAST_QUESTIONS } from "@/components/ForecastCoachWidget";
 import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useLocalization } from "@/localization";
@@ -65,6 +68,10 @@ function getAIResponse(input: string): string {
 
 export default function CoachScreen() {
   const colors = useColors();
+  const { forecastQuestion, forecastRequest } = useLocalSearchParams<{
+    forecastQuestion?: string;
+    forecastRequest?: string;
+  }>();
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const { t, isRTL } = useLocalization();
@@ -79,6 +86,31 @@ export default function CoachScreen() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const flatRef = useRef<FlatList>(null);
+  const lastForecastRequest = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!forecastRequest || lastForecastRequest.current === forecastRequest) return;
+    lastForecastRequest.current = forecastRequest;
+    const selected = FORECAST_QUESTIONS.find((question) => question.id === forecastQuestion);
+    const time = t("common.today");
+    const newMessages: Message[] = [
+      {
+        id: `${forecastRequest}-answer`,
+        role: "ai",
+        text: selected ? t(selected.answerKey) : t("insights.forecastCoach.mainIntro"),
+        time,
+      },
+    ];
+    if (selected) {
+      newMessages.push({
+        id: `${forecastRequest}-question`,
+        role: "user",
+        text: t(selected.questionKey),
+        time,
+      });
+    }
+    setMessages((previous) => [...newMessages, ...previous]);
+  }, [forecastQuestion, forecastRequest, t]);
 
   const topPad = Platform.OS === "web" ? insets.top + 67 : insets.top;
   const botPad = insets.bottom + (Platform.OS === "android" ? 96 : 60);
