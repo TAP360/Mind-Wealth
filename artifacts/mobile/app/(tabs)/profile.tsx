@@ -103,11 +103,7 @@ export default function ProfileScreen() {
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert(
-              t("profile.linkedAccounts"),
-              t("profile.linkedMessage"),
-              [{ text: t("common.ok") }],
-            );
+            router.push("/linked-accounts");
           },
         },
         {
@@ -116,11 +112,7 @@ export default function ProfileScreen() {
           arrow: true,
           onPress: () => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-            Alert.alert(
-              t("profile.paymentMethods"),
-              t("profile.paymentMessage"),
-              [{ text: t("common.ok") }],
-            );
+            router.push("/payment-methods");
           },
         },
       ],

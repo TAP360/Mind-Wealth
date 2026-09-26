@@ -1,1 +1,2 @@
 - [Transaction coaching transparency](transaction-coaching.md) — distinguish local rules from live AI analysis when showing post-save financial guidance.
+- [Financial linking boundary](financial-linking.md) — manually saved account and payment labels are local references, not live bank connections or payment instruments.

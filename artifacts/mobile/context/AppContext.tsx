@@ -49,12 +49,38 @@ interface Goal {
   color: string;
 }
 
+export type LinkedAccountKind = 'checking' | 'savings' | 'credit' | 'investment' | 'other';
+
+export interface LinkedAccount {
+  id: string;
+  institution: string;
+  label: string;
+  kind: LinkedAccountKind;
+  last4?: string;
+  source: 'manual';
+  createdAt: string;
+}
+
+export type PaymentMethodKind = 'account' | 'card' | 'wallet';
+
+export interface PaymentMethod {
+  id: string;
+  kind: PaymentMethodKind;
+  label: string;
+  accountId?: string;
+  provider?: string;
+  last4?: string;
+  createdAt: string;
+}
+
 interface AppState {
   hasOnboarded: boolean;
   profile: UserProfile;
   mood: MoodType | null;
   transactions: Transaction[];
   goals: Goal[];
+  linkedAccounts: LinkedAccount[];
+  paymentMethods: PaymentMethod[];
   streak: number;
   nudgesCount: number;
 }
@@ -73,6 +99,10 @@ interface AppContextValue extends AppState {
   addTransaction: (t: Omit<Transaction, 'id'>) => void;
   updateGoal: (id: string, amount: number) => void;
   addGoal: (g: Omit<Goal, 'id'>) => void;
+  addLinkedAccount: (account: Pick<LinkedAccount, 'institution' | 'label' | 'kind' | 'last4'>) => void;
+  removeLinkedAccount: (id: string) => void;
+  addPaymentMethod: (method: Pick<PaymentMethod, 'kind' | 'label' | 'accountId' | 'provider' | 'last4'>) => void;
+  removePaymentMethod: (id: string) => void;
 }
 
 const defaultProfile: UserProfile = {
@@ -177,6 +207,8 @@ const defaultState: AppState = {
   mood: null,
   transactions: defaultTransactions,
   goals: defaultGoals,
+  linkedAccounts: [],
+  paymentMethods: [],
   streak: 12,
   nudgesCount: 3,
 };
@@ -224,6 +256,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           ...saved,
           profile: { ...prev.profile, ...saved.profile },
+          linkedAccounts: Array.isArray(saved.linkedAccounts) ? saved.linkedAccounts : [],
+          paymentMethods: Array.isArray(saved.paymentMethods) ? saved.paymentMethods : [],
         }));
       }
     } catch {
@@ -334,6 +368,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setState((prev) => ({ ...prev, goals: [...prev.goals, goal] }));
   }, []);
 
+  const addLinkedAccount = useCallback(
+    (account: Pick<LinkedAccount, 'institution' | 'label' | 'kind' | 'last4'>) => {
+      const linked: LinkedAccount = {
+        ...account,
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
+        source: 'manual',
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({ ...prev, linkedAccounts: [linked, ...prev.linkedAccounts] }));
+    },
+    [],
+  );
+
+  const removeLinkedAccount = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      linkedAccounts: prev.linkedAccounts.filter((account) => account.id !== id),
+      paymentMethods: prev.paymentMethods.filter((method) => method.accountId !== id),
+    }));
+  }, []);
+
+  const addPaymentMethod = useCallback(
+    (method: Pick<PaymentMethod, 'kind' | 'label' | 'accountId' | 'provider' | 'last4'>) => {
+      const entry: PaymentMethod = {
+        ...method,
+        id: Date.now().toString() + Math.random().toString(36).slice(2, 8),
+        createdAt: new Date().toISOString(),
+      };
+      setState((prev) => ({ ...prev, paymentMethods: [entry, ...prev.paymentMethods] }));
+    },
+    [],
+  );
+
+  const removePaymentMethod = useCallback((id: string) => {
+    setState((prev) => ({
+      ...prev,
+      paymentMethods: prev.paymentMethods.filter((method) => method.id !== id),
+    }));
+  }, []);
+
   if (!loaded) return null;
 
   return (
@@ -349,6 +423,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         addTransaction,
         updateGoal,
         addGoal,
+        addLinkedAccount,
+        removeLinkedAccount,
+        addPaymentMethod,
+        removePaymentMethod,
       }}
     >
       {children}

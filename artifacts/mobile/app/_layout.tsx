@@ -41,6 +41,10 @@ function RootLayoutNav() {
         name="personal-info"
         options={{ headerShown: false, animation: 'slide_from_right' }}
       />
+      <Stack.Screen name="linked-accounts" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="add-linked-account" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="payment-methods" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      <Stack.Screen name="add-payment-method" options={{ headerShown: false, animation: 'slide_from_right' }} />
     </Stack>
   );
 }
