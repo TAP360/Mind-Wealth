@@ -12,17 +12,18 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 import { CircularProgress } from '@/components/CircularProgress';
-import { RadarChart, RadarDimension } from '@/components/RadarChart';
+import { EfiOrbitChart } from '@/components/EfiOrbitChart';
+import { ForecastCoachCard } from '@/components/ForecastCoachCard';
 import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
 
-const EFI_DIMENSIONS: RadarDimension[] = [
-  { label: 'Awareness', value: 72 },
-  { label: 'Confidence', value: 75 },
-  { label: 'Impulse\nControl', value: 58 },
-  { label: 'Stress\nMgmt', value: 64 },
-  { label: 'Planning', value: 80 },
+const EFI_DIMENSIONS = [
+  { key: 'insights.awareness', value: 72 },
+  { key: 'insights.confidence', value: 75 },
+  { key: 'insights.impulseControl', value: 58 },
+  { key: 'insights.stressManagement', value: 64 },
+  { key: 'insights.planning', value: 80 },
 ];
 
 const MONTHLY_DATA = [
@@ -268,31 +269,30 @@ export default function InsightsScreen() {
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                {t('Emotional Financial Intelligence')}
+                {t('insights.emotionalIntelligence')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                {t('Your 5 EFI dimensions at a glance')}
+                {t('insights.dimensionsGlance')}
               </Text>
-              <View style={{ alignItems: 'center', marginTop: 8 }}>
-                <RadarChart
-                  dimensions={EFI_DIMENSIONS.map((dimension) => ({
-                    ...dimension,
-                    label: t(dimension.label.replace('\n', ' ')),
-                  }))}
-                  color="#7C83E0"
-                  size={220}
-                />
-              </View>
+              <EfiOrbitChart
+                score={profile.efiScore}
+                title={t('insights.overall')}
+                dimensions={EFI_DIMENSIONS.map((dimension, index) => ({
+                  label: t(dimension.key).replace('\n', ' '),
+                  value: dimension.value,
+                  color: [colors.indigo, colors.purple, colors.orange, colors.success, colors.warning][index],
+                }))}
+              />
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                {t('Dimension Breakdown')}
+                {t('insights.dimensionBreakdown')}
               </Text>
               {EFI_DIMENSIONS.map((d) => (
-                <View key={d.label} style={styles.dimRow}>
+                <View key={d.key} style={styles.dimRow}>
                   <Text style={[styles.dimLabel, { color: colors.foreground }]}>
-                      {t(d.label.replace('\n', ' '))}
+                      {t(d.key).replace('\n', ' ')}
                   </Text>
                   <View style={{ flex: 1, marginHorizontal: 10 }}>
                     <MiniBar value={d.value} max={100} color="#7C83E0" />
@@ -360,12 +360,16 @@ export default function InsightsScreen() {
 
         {activeTab === 'forecast' && (
           <>
+            <ForecastCoachCard />
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
                 {t('insights.monthlyOverview')}
               </Text>
               <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
-                {t('Savings vs Spending (EGP)')}
+                {t('insights.savingsVsSpending')}
+              </Text>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                {t('insights.forecastSampleNote')}
               </Text>
               <View style={styles.chartRow}>
                 {MONTHLY_DATA.map((d) => (
@@ -407,7 +411,10 @@ export default function InsightsScreen() {
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
               <Text style={[styles.cardTitle, { color: colors.foreground }]}>
-                {t('July Predictions')}
+                {t('insights.exampleEstimates')}
+              </Text>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                {t('insights.estimateNote')}
               </Text>
               {[
                 {
@@ -468,7 +475,7 @@ export default function InsightsScreen() {
               />
               <Text style={styles.savingOpTitle}>{t('insights.savingsOpportunity')}</Text>
               <Text style={styles.savingOpText}>
-                {t('Reducing coffee spending by 20% this month could save you 300 EGP. Over 12 months, that\'s 3,600 EGP toward your Emergency Fund.')}
+                {t('insights.forecastTip')}
               </Text>
             </LinearGradient>
           </>
