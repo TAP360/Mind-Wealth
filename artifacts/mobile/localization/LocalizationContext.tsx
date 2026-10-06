@@ -14,11 +14,12 @@ import React, {
 
 import { ar, arExtra } from './ar';
 import { en, type TranslationKey } from './en';
+import { LANGUAGE_STORAGE_KEY, resolveLanguage, type Language } from './preferences';
 
-export type Language = 'en' | 'ar';
+export type { Language } from './preferences';
 export type TranslateParams = Record<string, string | number>;
 
-export const LANGUAGE_STORAGE_KEY = '@bassera_language';
+export { LANGUAGE_STORAGE_KEY } from './preferences';
 
 interface LocalizationContextValue {
   language: Language;
@@ -60,12 +61,7 @@ export function LocalizationProvider({ children }: { children: ReactNode }) {
       try {
         const saved = await AsyncStorage.getItem(LANGUAGE_STORAGE_KEY);
         const deviceLanguage = Localization.getLocales()[0]?.languageCode;
-        const selected: Language =
-          saved === 'ar' || saved === 'en'
-            ? saved
-            : deviceLanguage?.toLowerCase().startsWith('ar')
-              ? 'ar'
-              : 'en';
+        const selected = resolveLanguage(saved, deviceLanguage);
         applyDirection(selected);
         if (mounted) setLanguageState(selected);
       } catch {

@@ -2,3 +2,4 @@
 - [Financial linking boundary](financial-linking.md) — manually saved account and payment labels are local references, not live bank connections or payment instruments.
 - [Forecast honesty](forecast-honesty.md) — label sample forecast visuals as illustrative until they are calculated from real transaction data.
 - [AI explanations of sample insights](sample-insights-ai.md) — never present illustrative nudges or anomalies as observed user behavior when generating explanations.
+- [Expo Go storage boundary](expo-go-storage.md) — keep storage compatible with the current Expo Go setup; adopt native-only storage only with an explicit build change.
