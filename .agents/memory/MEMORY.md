@@ -4,3 +4,4 @@
 - [AI explanations of sample insights](sample-insights-ai.md) — never present illustrative nudges or anomalies as observed user behavior when generating explanations.
 - [Expo Go storage boundary](expo-go-storage.md) — keep storage compatible with the current Expo Go setup; adopt native-only storage only with an explicit build change.
 - [Orval transport default](orval-transport-default.md) — Orval 8 defaults to fetch-shaped requests; explicitly match its transport to custom Axios mutators.
+- [Authentication UI preservation](auth-ui-preservation.md) — keep the original onboarding/sign-in layout; integrate identity behavior without replacing the screens.

@@ -20,7 +20,14 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  ConsumerEmailLoginInput,
+  ConsumerMfaChallengeInput,
+  ConsumerMfaRecoveryInput,
   ConsumerProfile,
+  ConsumerRegistrationInput,
+  ConsumerRegistrationResult,
+  ConsumerRegistrationVerificationInput,
+  ConsumerTokens,
   OtpRequestInput,
   OtpRequestResult,
   OtpVerificationInput,
@@ -40,6 +47,296 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+export const registerConsumer = (
+    consumerRegistrationInput: BodyType<ConsumerRegistrationInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<ConsumerRegistrationResult>(
+      {url: `/v1/identity/consumer/auth/register`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consumerRegistrationInput, signal
+    },
+      options);
+    }
+
+
+
+export const getRegisterConsumerMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerConsumer>>, TError,{data: BodyType<ConsumerRegistrationInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof registerConsumer>>, TError,{data: BodyType<ConsumerRegistrationInput>}, TContext> => {
+
+const mutationKey = ['registerConsumer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof registerConsumer>>, {data: BodyType<ConsumerRegistrationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  registerConsumer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RegisterConsumerMutationResult = NonNullable<Awaited<ReturnType<typeof registerConsumer>>>
+    export type RegisterConsumerMutationBody = BodyType<ConsumerRegistrationInput>
+    export type RegisterConsumerMutationError = ErrorType<unknown>
+
+    export const useRegisterConsumer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof registerConsumer>>, TError,{data: BodyType<ConsumerRegistrationInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof registerConsumer>>,
+        TError,
+        {data: BodyType<ConsumerRegistrationInput>},
+        TContext
+      > => {
+      return useMutation(getRegisterConsumerMutationOptions(options));
+    }
+
+export const verifyConsumerRegistrationOtp = (
+    consumerRegistrationVerificationInput: BodyType<ConsumerRegistrationVerificationInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<ConsumerTokens>(
+      {url: `/v1/identity/consumer/auth/verify-otp`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consumerRegistrationVerificationInput, signal
+    },
+      options);
+    }
+
+
+
+export const getVerifyConsumerRegistrationOtpMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerRegistrationOtp>>, TError,{data: BodyType<ConsumerRegistrationVerificationInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerRegistrationOtp>>, TError,{data: BodyType<ConsumerRegistrationVerificationInput>}, TContext> => {
+
+const mutationKey = ['verifyConsumerRegistrationOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof verifyConsumerRegistrationOtp>>, {data: BodyType<ConsumerRegistrationVerificationInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  verifyConsumerRegistrationOtp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type VerifyConsumerRegistrationOtpMutationResult = NonNullable<Awaited<ReturnType<typeof verifyConsumerRegistrationOtp>>>
+    export type VerifyConsumerRegistrationOtpMutationBody = BodyType<ConsumerRegistrationVerificationInput>
+    export type VerifyConsumerRegistrationOtpMutationError = ErrorType<unknown>
+
+    export const useVerifyConsumerRegistrationOtp = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerRegistrationOtp>>, TError,{data: BodyType<ConsumerRegistrationVerificationInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof verifyConsumerRegistrationOtp>>,
+        TError,
+        {data: BodyType<ConsumerRegistrationVerificationInput>},
+        TContext
+      > => {
+      return useMutation(getVerifyConsumerRegistrationOtpMutationOptions(options));
+    }
+
+export const loginConsumer = (
+    consumerEmailLoginInput: BodyType<ConsumerEmailLoginInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<OtpVerificationResult>(
+      {url: `/v1/identity/consumer/auth/login`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consumerEmailLoginInput, signal
+    },
+      options);
+    }
+
+
+
+export const getLoginConsumerMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginConsumer>>, TError,{data: BodyType<ConsumerEmailLoginInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof loginConsumer>>, TError,{data: BodyType<ConsumerEmailLoginInput>}, TContext> => {
+
+const mutationKey = ['loginConsumer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof loginConsumer>>, {data: BodyType<ConsumerEmailLoginInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  loginConsumer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type LoginConsumerMutationResult = NonNullable<Awaited<ReturnType<typeof loginConsumer>>>
+    export type LoginConsumerMutationBody = BodyType<ConsumerEmailLoginInput>
+    export type LoginConsumerMutationError = ErrorType<unknown>
+
+    export const useLoginConsumer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof loginConsumer>>, TError,{data: BodyType<ConsumerEmailLoginInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof loginConsumer>>,
+        TError,
+        {data: BodyType<ConsumerEmailLoginInput>},
+        TContext
+      > => {
+      return useMutation(getLoginConsumerMutationOptions(options));
+    }
+
+export const challengeConsumerMfa = (
+    consumerMfaChallengeInput: BodyType<ConsumerMfaChallengeInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<ConsumerTokens>(
+      {url: `/v1/identity/consumer/auth/mfa/challenge`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consumerMfaChallengeInput, signal
+    },
+      options);
+    }
+
+
+
+export const getChallengeConsumerMfaMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof challengeConsumerMfa>>, TError,{data: BodyType<ConsumerMfaChallengeInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof challengeConsumerMfa>>, TError,{data: BodyType<ConsumerMfaChallengeInput>}, TContext> => {
+
+const mutationKey = ['challengeConsumerMfa'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof challengeConsumerMfa>>, {data: BodyType<ConsumerMfaChallengeInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  challengeConsumerMfa(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ChallengeConsumerMfaMutationResult = NonNullable<Awaited<ReturnType<typeof challengeConsumerMfa>>>
+    export type ChallengeConsumerMfaMutationBody = BodyType<ConsumerMfaChallengeInput>
+    export type ChallengeConsumerMfaMutationError = ErrorType<unknown>
+
+    export const useChallengeConsumerMfa = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof challengeConsumerMfa>>, TError,{data: BodyType<ConsumerMfaChallengeInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof challengeConsumerMfa>>,
+        TError,
+        {data: BodyType<ConsumerMfaChallengeInput>},
+        TContext
+      > => {
+      return useMutation(getChallengeConsumerMfaMutationOptions(options));
+    }
+
+export const recoverConsumerMfa = (
+    consumerMfaRecoveryInput: BodyType<ConsumerMfaRecoveryInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<ConsumerTokens>(
+      {url: `/v1/identity/consumer/auth/mfa/recovery`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: consumerMfaRecoveryInput, signal
+    },
+      options);
+    }
+
+
+
+export const getRecoverConsumerMfaMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverConsumerMfa>>, TError,{data: BodyType<ConsumerMfaRecoveryInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof recoverConsumerMfa>>, TError,{data: BodyType<ConsumerMfaRecoveryInput>}, TContext> => {
+
+const mutationKey = ['recoverConsumerMfa'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof recoverConsumerMfa>>, {data: BodyType<ConsumerMfaRecoveryInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  recoverConsumerMfa(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RecoverConsumerMfaMutationResult = NonNullable<Awaited<ReturnType<typeof recoverConsumerMfa>>>
+    export type RecoverConsumerMfaMutationBody = BodyType<ConsumerMfaRecoveryInput>
+    export type RecoverConsumerMfaMutationError = ErrorType<unknown>
+
+    export const useRecoverConsumerMfa = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof recoverConsumerMfa>>, TError,{data: BodyType<ConsumerMfaRecoveryInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof recoverConsumerMfa>>,
+        TError,
+        {data: BodyType<ConsumerMfaRecoveryInput>},
+        TContext
+      > => {
+      return useMutation(getRecoverConsumerMfaMutationOptions(options));
+    }
 
 /**
  * @summary Validate a local mobile number and return its canonical E.164 value

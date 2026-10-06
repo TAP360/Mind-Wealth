@@ -72,3 +72,5 @@ export const CreateGoalPlanResponse = zod.object({
 export const HealthCheckResponse = zod.object({
   "status": zod.string()
 })
+
+

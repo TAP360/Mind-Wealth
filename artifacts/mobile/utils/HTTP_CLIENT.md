@@ -1,4 +1,4 @@
-# Mobile identity login
+# Consumer identity login
 
 The mobile app uses the existing Axios client in `utils/httpClient.ts` for
 the external consumer identity service. Its owner-supplied test base URL is
@@ -9,6 +9,42 @@ to the documented `NW-EG`. Restart/rebuild Expo after changing these values.
 These settings are public configuration, not credentials.
 
 ## Flow
+
+The original splash, introductory slides and onboarding sign-in appearance
+are retained. `IdentityAuthForm` uses one Email or Mobile input. Explicit
+international prefixes (`+` or `00`) are separated while typing, without
+moving focus away from the identifier field. Full bare international numbers
+are split only when they are valid and either not a possible local number or
+already recognized as international by the phone parser. Local
+numbers are not assigned arbitrary country prefixes. The searchable country
+list includes all calling-code regions from libphonenumber metadata, with
+English and Arabic country names. Shared calling codes remain selectable by
+country; server-side phone validation remains authoritative.
+
+For email identifiers the password input is shown underneath. Sign in uses
+POST `/v1/identity/consumer/auth/login` with email, password and businessCode.
+Create account uses POST `/v1/identity/consumer/auth/register` (minimum password
+length 8); optional name/phone are not required by the UI. Registration returns
+a pending userId, not an authenticated session. The entered code is submitted
+to POST `/v1/identity/consumer/auth/verify-otp` with userId and otp; this endpoint
+returns a **flat** token response.
+
+Email login and phone OTP verification return **nested** tokens, or
+`mfaRequired: true` plus userId. MFA is completed using POST
+`/v1/identity/consumer/auth/mfa/challenge` with userId and totpCode, or POST
+`/v1/identity/consumer/auth/mfa/recovery` with userId and recoveryCode. These
+return **flat** token responses. Tokens and `/me` are never requested/persisted
+before all required verification completes. Recovery codes are single-use,
+managed by the backend. No registration resend or expiry endpoint/contract was
+provided; the app does not invent one.
+
+Passwords, verification codes and pending MFA/registration identifiers stay
+ephemeral. Sensitive mutations are reset after each action; their inactive
+cache retention is zero. Social buttons preserve the original appearance but
+show an explicit unavailable message; no OAuth endpoints were supplied and
+they cannot bypass authentication.
+
+Phone flow:
 
 1. POST `/v1/identity/consumer/auth/phone/validate` with `{ countryCode, phone }`.
    Only a `valid: true` response with a canonical `e164` number continues.
@@ -63,9 +99,9 @@ logs until an SMS sender is configured. Requesting a code is not proof that
 an SMS was delivered. Development test codes remain a backend behavior;
 the client does not bypass verification.
 
-MFA-required accounts remain signed out, with an explanatory message.
-No MFA challenge or refresh-token endpoint was provided. Refresh tokens are
-persisted but automatic token refresh is not fabricated.
+MFA-required accounts remain signed out until the challenge/recovery call
+succeeds. No refresh-token endpoint was provided. Refresh tokens are persisted
+but automatic token refresh is not fabricated.
 
 AsyncStorage supports the current Expo Go setup, but is unencrypted.
 Choose appropriate production token protection and web session security

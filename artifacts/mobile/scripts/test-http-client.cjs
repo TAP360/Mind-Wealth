@@ -34,6 +34,24 @@ async function main() {
   assert.equal(await preferences.getRequestLanguage(), "ar");
   deviceLanguage = "fr";
   assert.equal(await preferences.getRequestLanguage(), "en");
+  const countries = loadSource("utils/countries.ts", {});
+  const options = countries.getCountryOptions("en");
+  assert.ok(options.length >= 240, "Include all supported worldwide calling-code countries and territories");
+  assert.equal(new Set(options.map((item) => item.country)).size, options.length);
+  for (const country of ["EG", "US", "CA", "GB", "SA", "IN", "JP", "ZA", "BR", "AU"]) {
+    assert.ok(options.some((option) => option.country === country));
+  }
+  assert.equal(countries.getCountryOptions("ar").find((o) => o.country === "EG").name, "مصر");
+  assert.deepEqual(countries.splitInternationalInput("+20 01012345678", "EG"), {
+    identifier: "01012345678", countryCode: "+20", country: "EG",
+  });
+  assert.equal(countries.splitInternationalInput("00966501234567", "EG").countryCode, "+966");
+  assert.equal(countries.splitInternationalInput("+١٢٠٢٥٥٥٠١٢٣", "EG").countryCode, "+1");
+  assert.equal(countries.splitInternationalInput("201012345678", "EG").countryCode, "+20");
+  assert.equal(countries.splitInternationalInput("+12425550123", "EG").country, "BS");
+  assert.equal(countries.splitInternationalInput("01012345678", "EG").identifier, "01012345678");
+  assert.equal(countries.splitInternationalInput("person@example.invalid", "EG").identifier, "person@example.invalid");
+  assert.equal(countries.splitInternationalInput("+4", "EG").identifier, "+4", "Preserve incomplete calling codes while typing");
 
   const values = new Map();
   let writeError;
@@ -203,6 +221,42 @@ async function main() {
   assert.equal(JSON.parse(values.get(storeModule.AUTH_STORAGE_KEY)).state.tokens, null);
   assert.equal(cache.getQueryData(session.consumerQueryKey("test-consumer")), undefined);
   cache.clear();
+  const emailCalls = [];
+  httpClient.defaults.adapter = async (config) => {
+    emailCalls.push(config);
+    const path = config.url;
+    const data = path.endsWith("/register") ? { userId: "test-consumer", message: "Code requested" }
+      : path.endsWith("/login") ? { mfaRequired: true, userId: "test-consumer" }
+      : tokens("flat-session-token");
+    return { data, status: path.endsWith("/register") ? 201 : 200, statusText: "OK", headers: {}, config };
+  };
+  const credentials = { email: "person@example.invalid", password: "test-only-password", businessCode: "NW-EG" };
+  const registration = await api.registerConsumer(credentials);
+  assert.equal(registration.userId, "test-consumer");
+  const activated = await api.verifyConsumerRegistrationOtp({ userId: registration.userId, otp: "123456" });
+  assert.equal(storeModule.validateSession(activated).accessToken, "flat-session-token");
+  assert.equal(activated.tokens, undefined, "Registration verification returns a flat token object");
+  const needsMfa = await api.loginConsumer(credentials);
+  assert.equal(needsMfa.mfaRequired, true);
+  assert.equal(needsMfa.tokens, undefined);
+  const challenged = await api.challengeConsumerMfa({ userId: needsMfa.userId, totpCode: "123456" });
+  const recovered = await api.recoverConsumerMfa({ userId: needsMfa.userId, recoveryCode: "TEST-ONLY" });
+  assert.equal(storeModule.validateSession(challenged).userId, "test-consumer");
+  assert.equal(storeModule.validateSession(recovered).userId, "test-consumer");
+  assert.deepEqual(emailCalls.map((c) => c.url), [
+    "/v1/identity/consumer/auth/register", "/v1/identity/consumer/auth/verify-otp",
+    "/v1/identity/consumer/auth/login", "/v1/identity/consumer/auth/mfa/challenge",
+    "/v1/identity/consumer/auth/mfa/recovery",
+  ]);
+  assert.deepEqual(JSON.parse(emailCalls[0].data), credentials);
+  assert.deepEqual(JSON.parse(emailCalls[1].data), { userId: "test-consumer", otp: "123456" });
+  assert.deepEqual(JSON.parse(emailCalls[2].data), credentials);
+  assert.deepEqual(JSON.parse(emailCalls[3].data), { userId: "test-consumer", totpCode: "123456" });
+  assert.deepEqual(JSON.parse(emailCalls[4].data), { userId: "test-consumer", recoveryCode: "TEST-ONLY" });
+  for (const call of emailCalls) {
+    assert.equal(call.headers.has("Authorization"), false);
+    assert.equal(call.headers.get("Accept-Language"), "en");
+  }
   console.log("Mobile auth checks passed: API contracts, languages, persisted token pairs, hydration, persistence failures, headers, query cache isolation/logout, and errors.");
 }
 

@@ -20,6 +20,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollViewCompat } from '@/components/KeyboardAwareScrollViewCompat';
 import { useApp, PersonalityType } from '@/context/AppContext';
 import { useLocalization } from '@/localization';
+import { IdentityAuthForm } from '@/components/IdentityAuthForm';
+import { useMobileLogin } from '@/hooks/useMobileLogin';
+import { useConsumerSession } from '@/hooks/useConsumerSession';
 
 const { width, height } = Dimensions.get('window');
 
@@ -193,16 +196,16 @@ const personalityInfo: Record<
 export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { completeOnboarding, checkAccountExists, signIn } = useApp();
+  const { completeOnboarding } = useApp();
   const { t } = useLocalization();
+  const auth = useMobileLogin();
+  const { data: consumer, isAuthenticated } = useConsumerSession();
 
   const [phase, setPhase] = useState<
     'splash' | 'slides' | 'auth' | 'name' | 'assessment' | 'result'
-  >('splash');
+  >(isAuthenticated ? 'name' : auth.stage === 'profile' ? 'auth' : 'splash');
   const [slideIndex, setSlideIndex] = useState(0);
-  const [email, setEmail] = useState('');
-  const [authChecking, setAuthChecking] = useState(false);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(consumer?.name ?? '');
   const [questionIndex, setQuestionIndex] = useState(0);
   const [scores, setScores] = useState<Record<ScoreKey, number>>({
     worship: 0,
@@ -386,26 +389,6 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleSocialAuth = (_provider: 'apple' | 'google' | 'facebook') => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    fadeTransition(() => setPhase('name'));
-  };
-
-  const handleAuthContinue = async () => {
-    const trimmedEmail = email.trim();
-    if (!trimmedEmail || authChecking) return;
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-    setAuthChecking(true);
-    const exists = await checkAccountExists(trimmedEmail);
-    setAuthChecking(false);
-    if (exists) {
-      await signIn(trimmedEmail);
-      router.replace('/');
-    } else {
-      fadeTransition(() => setPhase('name'));
-    }
-  };
-
   const handleNameNext = () => {
     if (!userName.trim()) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -435,7 +418,7 @@ export default function OnboardingScreen() {
     await completeOnboarding(
       personality,
       userName.trim() || undefined,
-      email.trim() || undefined,
+      consumer?.email || (auth.isEmail ? auth.identifier.trim() : undefined),
     );
     router.replace('/');
   };
@@ -639,7 +622,6 @@ export default function OnboardingScreen() {
   }
 
   if (phase === 'auth') {
-    const canSubmit = !!email.trim() && !authChecking;
     return (
       <LinearGradient
         colors={['#0B1026', '#1A1040', '#2E1855']}
@@ -649,78 +631,7 @@ export default function OnboardingScreen() {
         ]}
       >
         <Animated.View style={[styles.fill, { opacity: fadeAnim }]}>
-          <KeyboardAwareScrollViewCompat
-            style={styles.fill}
-            contentContainerStyle={styles.authContainer}
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            bottomOffset={24}
-          >
-          <Text style={styles.authTitle}>{t('onboarding.welcome')}</Text>
-          <Text style={styles.authSubtitle}>
-            {t('onboarding.emailSubtitle')}
-          </Text>
-
-          <View style={styles.socialStack}>
-            <Pressable
-              style={styles.socialBtn}
-              onPress={() => handleSocialAuth('apple')}
-            >
-              <Text style={styles.socialIcon}></Text>
-              <Text style={styles.socialBtnText}>{t('Continue with Apple')}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.socialBtn}
-              onPress={() => handleSocialAuth('google')}
-            >
-              <Text style={[styles.socialIcon, { color: '#EA4335' }]}>G</Text>
-              <Text style={styles.socialBtnText}>{t('Continue with Google')}</Text>
-            </Pressable>
-            <Pressable
-              style={styles.socialBtn}
-              onPress={() => handleSocialAuth('facebook')}
-            >
-              <Text style={[styles.socialIcon, { color: '#1877F2' }]}>f</Text>
-              <Text style={styles.socialBtnText}>{t('Continue with Facebook')}</Text>
-            </Pressable>
-          </View>
-
-          <View style={styles.authDividerRow}>
-            <View style={styles.authDivider} />
-            <Text style={styles.authDividerText}>{t('or use email or mobile')}</Text>
-            <View style={styles.authDivider} />
-          </View>
-
-          <TextInput
-            style={styles.authInput}
-            value={email}
-            onChangeText={setEmail}
-            placeholder={t('Email or Mobile')}
-            placeholderTextColor="rgba(255,255,255,0.4)"
-            keyboardType="email-address"
-            autoCapitalize="none"
-            autoCorrect={false}
-            returnKeyType="go"
-            onSubmitEditing={handleAuthContinue}
-          />
-
-          <Pressable
-            style={[styles.assessBtn, !canSubmit && styles.assessBtnDisabled]}
-            onPress={handleAuthContinue}
-            disabled={!canSubmit}
-          >
-            <LinearGradient
-              colors={['#2E3192', '#92278F', '#F37021']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={styles.assessBtnGrad}
-            >
-              <Text style={styles.assessBtnText}>
-                {authChecking ? t('common.loading') : t('onboarding.continue')}
-              </Text>
-            </LinearGradient>
-          </Pressable>
-          </KeyboardAwareScrollViewCompat>
+          <IdentityAuthForm auth={auth} />
         </Animated.View>
       </LinearGradient>
     );

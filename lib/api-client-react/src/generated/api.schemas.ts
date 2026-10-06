@@ -84,3 +84,4 @@ export interface GoalPlanOutput {
 export interface HealthStatus {
   status: string;
 }
+

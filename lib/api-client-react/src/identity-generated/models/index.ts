@@ -6,8 +6,14 @@
  * OpenAPI spec version: 1.0.0
  */
 
+export * from './consumerEmailLoginInput';
+export * from './consumerMfaChallengeInput';
+export * from './consumerMfaRecoveryInput';
 export * from './consumerProfile';
 export * from './consumerProfileDemographics';
+export * from './consumerRegistrationInput';
+export * from './consumerRegistrationResult';
+export * from './consumerRegistrationVerificationInput';
 export * from './consumerTokens';
 export * from './otpRequestInput';
 export * from './otpRequestInputLanguage';

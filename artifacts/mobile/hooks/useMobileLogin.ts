@@ -3,23 +3,20 @@ import { useRouter } from "expo-router";
 import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import {
-  useValidateConsumerPhone,
-  useRequestConsumerOtp,
-  useVerifyConsumerOtp,
-  type OtpRequestResult,
+  useValidateConsumerPhone, useRequestConsumerOtp, useVerifyConsumerOtp,
+  useLoginConsumer, useRegisterConsumer, useVerifyConsumerRegistrationOtp,
+  useChallengeConsumerMfa, useRecoverConsumerMfa,
+  type ConsumerTokens, type OtpRequestResult, type OtpVerificationResult,
 } from "@workspace/api-client-react";
+import { getCountryCallingCode } from "libphonenumber-js/min";
 import { useLocalization } from "@/localization";
 import { getRequestLanguage } from "@/localization/preferences";
-import { sessionFromVerification, useAuthStore } from "@/stores/authStore";
+import { useAuthStore, validateSession } from "@/stores/authStore";
 import { consumerQueryOptions, IDENTITY_QUERY_ROOT, logoutSession, useConsumerSession } from "./useConsumerSession";
 import { authErrorMessage, getAuthErrorCode } from "@/utils/authErrors";
+import { isCallingCode, normalizeDigits, splitInternationalInput, type CountryCode } from "@/utils/countries";
 
 const BUSINESS_CODE = process.env.EXPO_PUBLIC_IDENTITY_BUSINESS_CODE || "NW-EG";
-
-function digits(value: string): string {
-  return value.replace(/[٠-٩۰-۹]/g, (digit) =>
-    String(digit.charCodeAt(0) - (digit.charCodeAt(0) >= 0x06f0 ? 0x06f0 : 0x0660)));
-}
 
 export function useMobileLogin() {
   const { language } = useLocalization();
@@ -28,22 +25,38 @@ export function useMobileLogin() {
   const session = useConsumerSession();
   const validate = useValidateConsumerPhone({ mutation: { retry: false } });
   const request = useRequestConsumerOtp({ mutation: { retry: false } });
-  const verify = useVerifyConsumerOtp({ mutation: { retry: false } });
-  const [countryCode, setCountryCode] = useState("+20");
-  const [phone, setPhone] = useState("");
-  const [otp, setOtp] = useState("");
+  const verifyPhone = useVerifyConsumerOtp({ mutation: { retry: false, gcTime: 0 } });
+  const emailLogin = useLoginConsumer({ mutation: { retry: false, gcTime: 0 } });
+  const register = useRegisterConsumer({ mutation: { retry: false, gcTime: 0 } });
+  const verifyRegistration = useVerifyConsumerRegistrationOtp({ mutation: { retry: false, gcTime: 0 } });
+  const mfa = useChallengeConsumerMfa({ mutation: { retry: false, gcTime: 0 } });
+  const recovery = useRecoverConsumerMfa({ mutation: { retry: false, gcTime: 0 } });
+  const [identifier, setIdentifierState] = useState("");
+  const [selectedCountry, setSelectedCountry] = useState<CountryCode>("EG");
+  const [countryCode, setCountryCodeState] = useState("+20");
+  const [phoneMode, setPhoneMode] = useState(false);
+  const [password, setPassword] = useState("");
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [otp, setOtpState] = useState("");
+  const [useRecoveryCode, setUseRecoveryCodeState] = useState(false);
+  const [recoveryCode, setRecoveryCode] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
+  const [mfaId, setMfaId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState(0);
   const [resendAt, setResendAt] = useState(0);
   const [now, setNow] = useState(Date.now());
   const [working, setWorking] = useState(false);
-  const [localError, setLocalError] = useState<unknown>(null);
+  const [localError, setLocalError] = useState<string | null>(null);
   const busy = useRef(false);
-  const callingCode = digits(countryCode.trim());
-  const localPhone = digits(phone.trim()).replace(/[\s()-]/g, "");
-  const phoneReady = /^\+[1-9]\d{0,3}$/.test(callingCode) && /^\d{6,15}$/.test(localPhone);
-  const normalizedPhone = verifiedPhone ?? (phoneReady ? `${callingCode}${localPhone}` : null);
-  const stage = session.tokens ? "profile" : verifiedPhone ? "code" : "phone";
+  const isEmail = identifier.includes("@");
+  const isPhone = !isEmail && (phoneMode || /^[+\d٠-٩۰-۹]/.test(identifier.trim()));
+  const localPhone = normalizeDigits(identifier.trim()).replace(/[\s()-]/g, "");
+  const phoneReady = isPhone && /^\+[1-9]\d{0,3}$/.test(countryCode) &&
+    isCallingCode(countryCode) && /^\d{6,15}$/.test(localPhone);
+  const emailReady = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim()) &&
+    password.length >= (isRegistering ? 8 : 1);
+  const stage = session.tokens ? "profile" : mfaId ? "mfa" : registrationId ? "registrationCode" : verifiedPhone ? "phoneCode" : "identifier";
   const resendIn = Math.max(0, Math.ceil((resendAt - now) / 1000));
   const expiresIn = Math.max(0, Math.ceil((expiresAt - now) / 1000));
 
@@ -53,72 +66,132 @@ export function useMobileLogin() {
     return () => clearInterval(timer);
   }, [expiresAt, resendAt]);
 
+  const resetSensitiveMutations = () => {
+    emailLogin.reset(); register.reset(); verifyPhone.reset();
+    verifyRegistration.reset(); mfa.reset(); recovery.reset();
+  };
   const run = async (action: () => Promise<void>) => {
     if (busy.current) return;
     busy.current = true;
     setWorking(true);
     setLocalError(null);
-    try {
-      await action();
-    } catch (error) {
+    try { await action(); }
+    catch (error) {
       const code = getAuthErrorCode(error);
       if (["OTP_EXPIRED", "OTP_ATTEMPTS_EXHAUSTED", "NO_PENDING_OTP"].includes(code ?? "")) {
-        setExpiresAt(Date.now());
-        setNow(Date.now());
+        setExpiresAt(Date.now()); setNow(Date.now());
       }
       if (axios.isAxiosError(error) && error.response?.status === 429) {
         const seconds = Number(error.response.headers?.["retry-after"]);
         setResendAt(Date.now() + (Number.isFinite(seconds) && seconds > 0 ? seconds : 60) * 1000);
         setNow(Date.now());
       }
-      setLocalError(error);
+      const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+      const displayed = status === 401 && stage === "identifier" && isEmail ? new Error("INVALID_CREDENTIALS")
+        : status === 401 && stage === "mfa" ? new Error(useRecoveryCode ? "INVALID_RECOVERY_CODE" : "INVALID_MFA")
+        : status === 409 && isRegistering ? new Error("EMAIL_ALREADY_EXISTS") : error;
+      setLocalError(authErrorMessage(displayed, language));
     } finally {
+      resetSensitiveMutations();
       busy.current = false;
       setWorking(false);
     }
   };
 
-  const startCode = (result: OtpRequestResult, canonicalPhone: string) => {
+  const startCode = (result: OtpRequestResult, phone: string) => {
     if (!Number.isFinite(result?.expiresIn) || result.expiresIn <= 0 ||
-      !Number.isFinite(result?.resendAfter) || result.resendAfter < 0) {
-      throw new Error("INVALID_API_RESPONSE");
-    }
+      !Number.isFinite(result?.resendAfter) || result.resendAfter < 0) throw new Error("INVALID_API_RESPONSE");
     const timestamp = Date.now();
-    setVerifiedPhone(canonicalPhone);
-    setOtp("");
+    setVerifiedPhone(phone); setOtpState("");
     setExpiresAt(timestamp + result.expiresIn * 1000);
     setResendAt(timestamp + result.resendAfter * 1000);
     setNow(timestamp);
   };
-
   const loadProfile = async () => {
     const tokens = useAuthStore.getState().tokens;
     if (!tokens) throw new Error("INVALID_SESSION");
     await queryClient.fetchQuery(consumerQueryOptions(tokens));
     router.replace("/(tabs)");
   };
+  const finishSession = async (raw: ConsumerTokens, expectedId?: string) => {
+    const tokens = validateSession(raw);
+    if (expectedId && tokens.userId !== expectedId) throw new Error("INVALID_SESSION");
+    setPassword(""); setOtpState(""); setRecoveryCode("");
+    await queryClient.cancelQueries({ queryKey: IDENTITY_QUERY_ROOT });
+    queryClient.removeQueries({ queryKey: IDENTITY_QUERY_ROOT });
+    await useAuthStore.getState().saveSession(tokens);
+    await loadProfile();
+  };
+  const acceptLogin = async (result: OtpVerificationResult) => {
+    if (result?.mfaRequired === true) {
+      if (typeof result.userId !== "string" || !result.userId.trim()) throw new Error("INVALID_API_RESPONSE");
+      setPassword(""); setOtpState(""); setMfaId(result.userId); setUseRecoveryCodeState(false);
+      return;
+    }
+    if (result?.mfaRequired !== false || !result.tokens) throw new Error("INVALID_SESSION");
+    await finishSession(result.tokens);
+  };
+  const changeIdentifier = () => {
+    if (busy.current) return;
+    setVerifiedPhone(null); setRegistrationId(null); setMfaId(null);
+    setOtpState(""); setPassword(""); setRecoveryCode(""); setLocalError(null);
+  };
 
   return {
-    stage,
-    countryCode,
-    phone,
-    otp,
-    setCountryCode,
-    setPhone,
-    setOtp: (value: string) => setOtp(digits(value).replace(/\D/g, "").slice(0, 6)),
-    normalizedPhone,
+    stage, identifier, isEmail, isPhone, countryCode, selectedCountry,
+    password, setPassword, isRegistering,
+    setIsRegistering: (value: boolean) => {
+      if (busy.current) return;
+      setIsRegistering(value); setPassword(""); setLocalError(null);
+    },
+    setIdentifier: (value: string) => {
+      if (busy.current) return;
+      const split = splitInternationalInput(value, selectedCountry);
+      setIdentifierState(split.identifier);
+      if (split.countryCode && split.country) {
+        setCountryCodeState(split.countryCode); setSelectedCountry(split.country); setPhoneMode(true);
+      } else setPhoneMode(/^[+\d٠-٩۰-۹]/.test(value.trim()));
+      if (value.includes("@") !== isEmail) setPassword("");
+      setLocalError(null);
+    },
+    setCountryCode: (value: string) => {
+      const normalized = normalizeDigits(value.trim());
+      setCountryCodeState(normalized);
+      const split = splitInternationalInput(normalized, selectedCountry);
+      if (split.countryCode === normalized && split.country) setSelectedCountry(split.country);
+      setLocalError(null);
+    },
+    setCountry: (country: CountryCode) => {
+      setSelectedCountry(country); setCountryCodeState(`+${getCountryCallingCode(country)}`); setPhoneMode(true);
+      setLocalError(null);
+    },
+    otp, setOtp: (value: string) => setOtpState(normalizeDigits(value).replace(/\D/g, "").slice(0, 6)),
+    useRecoveryCode,
+    setUseRecoveryCode: (value: boolean) => {
+      setUseRecoveryCodeState(value); setOtpState(""); setRecoveryCode(""); setLocalError(null);
+    },
+    recoveryCode, setRecoveryCode,
+    normalizedPhone: verifiedPhone ?? (phoneReady ? `${countryCode}${localPhone}` : null),
+    canContinue: !working && (isEmail ? emailReady : phoneReady && resendIn === 0),
     isPending: working || (stage === "profile" && session.isFetching),
-    error: localError || session.error ? authErrorMessage(localError ?? session.error, language) : null,
-    resendIn,
-    expiresIn,
-    requestCode: () => run(async () => {
+    error: localError ?? (session.error ? authErrorMessage(session.error, language) : null),
+    resendIn, expiresIn,
+    continueAuth: () => run(async () => {
+      if (isEmail) {
+        if (!emailReady) throw new Error(isRegistering && password.length < 8 ? "PASSWORD_TOO_SHORT" : "INVALID_EMAIL");
+        const data = { email: identifier.trim(), password, businessCode: BUSINESS_CODE };
+        if (isRegistering) {
+          const result = await register.mutateAsync({ data });
+          if (typeof result?.userId !== "string" || !result.userId.trim()) throw new Error("INVALID_API_RESPONSE");
+          setPassword(""); setOtpState(""); setRegistrationId(result.userId);
+        } else await acceptLogin(await emailLogin.mutateAsync({ data }));
+        return;
+      }
       if (!phoneReady) throw new Error("INVALID_PHONE");
       if (Date.now() < resendAt) throw new Error("RATE_LIMITED");
-      const validated = await validate.mutateAsync({ data: { countryCode: callingCode, phone: localPhone } });
+      const validated = await validate.mutateAsync({ data: { countryCode, phone: localPhone } });
       if (!validated.valid) throw new Error("INVALID_PHONE");
-      if (typeof validated.e164 !== "string" || !/^\+[1-9]\d{6,14}$/.test(validated.e164)) {
-        throw new Error("INVALID_API_RESPONSE");
-      }
+      if (typeof validated.e164 !== "string" || !/^\+[1-9]\d{6,14}$/.test(validated.e164)) throw new Error("INVALID_API_RESPONSE");
       const result = await request.mutateAsync({ data: {
         businessCode: BUSINESS_CODE, phone: validated.e164, language: await getRequestLanguage(),
       } });
@@ -126,36 +199,36 @@ export function useMobileLogin() {
     }),
     resendCode: () => run(async () => {
       if (!verifiedPhone || Date.now() < resendAt) return;
-      const result = await request.mutateAsync({ data: {
+      startCode(await request.mutateAsync({ data: {
         businessCode: BUSINESS_CODE, phone: verifiedPhone, language: await getRequestLanguage(),
-      } });
-      startCode(result, verifiedPhone);
+      } }), verifiedPhone);
     }),
     verifyCode: () => run(async () => {
-      if (!verifiedPhone || !/^\d{6}$/.test(otp)) throw new Error("INVALID_OTP");
-      if (Date.now() >= expiresAt) throw new Error("OTP_EXPIRED");
-      const result = await verify.mutateAsync({ data: {
-        businessCode: BUSINESS_CODE, phone: verifiedPhone, otp,
-      } });
-      const tokens = sessionFromVerification(result);
-      await queryClient.cancelQueries({ queryKey: IDENTITY_QUERY_ROOT });
-      queryClient.removeQueries({ queryKey: IDENTITY_QUERY_ROOT });
-      await useAuthStore.getState().saveSession(tokens);
-      await loadProfile();
+      if (mfaId) {
+        if (useRecoveryCode) {
+          if (!recoveryCode.trim()) throw new Error("INVALID_RECOVERY_CODE");
+          await finishSession(await recovery.mutateAsync({ data: { userId: mfaId, recoveryCode: recoveryCode.trim() } }), mfaId);
+        } else {
+          if (!/^\d{6}$/.test(otp)) throw new Error("INVALID_MFA");
+          await finishSession(await mfa.mutateAsync({ data: { userId: mfaId, totpCode: otp } }), mfaId);
+        }
+      } else if (registrationId) {
+        if (!/^\d{6}$/.test(otp)) throw new Error("INVALID_OTP");
+        await finishSession(await verifyRegistration.mutateAsync({ data: { userId: registrationId, otp } }), registrationId);
+      } else {
+        if (!verifiedPhone || !/^\d{6}$/.test(otp)) throw new Error("INVALID_OTP");
+        if (Date.now() >= expiresAt) throw new Error("OTP_EXPIRED");
+        await acceptLogin(await verifyPhone.mutateAsync({ data: { businessCode: BUSINESS_CODE, phone: verifiedPhone, otp } }));
+      }
     }),
-    changePhone: () => {
-      if (busy.current) return;
-      setVerifiedPhone(null);
-      setOtp("");
-      setLocalError(null);
-      // Keep the cooldown when changing numbers, rather than bypassing it.
-    },
+    changeIdentifier,
     retryProfile: () => run(loadProfile),
     cancelSession: () => run(async () => {
       await logoutSession(queryClient);
-      setVerifiedPhone(null);
-      setOtp("");
+      setVerifiedPhone(null); setRegistrationId(null); setMfaId(null);
+      setIdentifierState(""); setPassword(""); setOtpState(""); setRecoveryCode("");
       router.replace("/login");
     }),
+    socialNotAvailable: () => setLocalError(authErrorMessage(new Error("SOCIAL_UNAVAILABLE"), language)),
   };
 }

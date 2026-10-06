@@ -4,6 +4,86 @@ info:
   version: 1.0.0
   description: External consumer mobile login API supplied by the project owner.
 paths:
+  /v1/identity/consumer/auth/register:
+    post:
+      operationId: registerConsumer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumerRegistrationInput"
+      responses:
+        "201":
+          description: Pending account; verify the registration OTP before authentication.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerRegistrationResult"
+  /v1/identity/consumer/auth/verify-otp:
+    post:
+      operationId: verifyConsumerRegistrationOtp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumerRegistrationVerificationInput"
+      responses:
+        "200":
+          description: Flat authenticated session, not a nested login outcome.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerTokens"
+  /v1/identity/consumer/auth/login:
+    post:
+      operationId: loginConsumer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumerEmailLoginInput"
+      responses:
+        "200":
+          description: Nested tokens or an MFA requirement and userId.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpVerificationResult"
+  /v1/identity/consumer/auth/mfa/challenge:
+    post:
+      operationId: challengeConsumerMfa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumerMfaChallengeInput"
+      responses:
+        "200":
+          description: Flat authenticated session after TOTP validation.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerTokens"
+  /v1/identity/consumer/auth/mfa/recovery:
+    post:
+      operationId: recoverConsumerMfa
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumerMfaRecoveryInput"
+      responses:
+        "200":
+          description: Flat authenticated session after consuming a recovery code.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerTokens"
   /v1/identity/consumer/auth/phone/validate:
     post:
       operationId: validateConsumerPhone
@@ -75,6 +155,63 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    ConsumerRegistrationInput:
+      type: object
+      required: [email, password, businessCode]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+          minLength: 8
+        businessCode:
+          type: string
+        phone:
+          type: string
+        name:
+          type: string
+    ConsumerRegistrationResult:
+      type: object
+      required: [userId]
+      properties:
+        userId:
+          type: string
+        message:
+          type: string
+    ConsumerRegistrationVerificationInput:
+      type: object
+      required: [userId, otp]
+      properties:
+        userId:
+          type: string
+        otp:
+          type: string
+    ConsumerEmailLoginInput:
+      type: object
+      required: [email, password, businessCode]
+      properties:
+        email:
+          type: string
+        password:
+          type: string
+        businessCode:
+          type: string
+    ConsumerMfaChallengeInput:
+      type: object
+      required: [userId, totpCode]
+      properties:
+        userId:
+          type: string
+        totpCode:
+          type: string
+    ConsumerMfaRecoveryInput:
+      type: object
+      required: [userId, recoveryCode]
+      properties:
+        userId:
+          type: string
+        recoveryCode:
+          type: string
     PhoneValidationInput:
       type: object
       required: [countryCode, phone]
