@@ -243,7 +243,7 @@ export const ar: Record<TranslationKey, string> = {
   'profile.yourPlan': 'خطتك',
   'profile.perMonth': '/شهر',
   'profile.signOut': 'تسجيل الخروج',
-  'profile.signOutQuestion': 'هل أنت متأكد أنك تريد تسجيل الخروج؟',
+  'profile.signOutQuestion': 'سيؤدي تسجيل الخروج إلى مسح جلستك والبيانات المالية المحفوظة على هذا الجهاز. هل تريد المتابعة؟',
   'profile.languageTitle': 'اختر اللغة',
   'profile.linkedMessage': 'اربط حساباتك البنكية ومزودي الدفع لتتبع المعاملات تلقائياً.\n\nقريباً لبنوك مصر ودول الخليج.',
   'profile.paymentMessage': 'إدارة البطاقات وطرق الدفع المحفوظة.\n\nقريباً.',

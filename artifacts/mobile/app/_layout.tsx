@@ -8,7 +8,8 @@ import {
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { KeyboardProvider } from 'react-native-keyboard-controller';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -16,7 +17,11 @@ import { setBaseUrl } from '@workspace/api-client-react';
 
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { AppProvider } from '@/context/AppContext';
-import { LocalizationProvider } from '@/localization';
+import { LocalizationProvider, useLocalization } from '@/localization';
+import { ensureAuthHydrated } from '@/stores/authStore';
+import { useConsumerSession } from '@/hooks/useConsumerSession';
+import { useColors } from '@/hooks/useColors';
+import { authErrorMessage } from '@/utils/authErrors';
 
 SplashScreen.preventAutoHideAsync();
 setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
@@ -24,8 +29,13 @@ setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
 const queryClient = new QueryClient();
 
 function RootLayoutNav() {
+  const { isAuthenticated } = useConsumerSession();
   return (
     <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Protected guard={!isAuthenticated}>
+        <Stack.Screen name="login" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={isAuthenticated}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen
         name="onboarding"
@@ -47,7 +57,38 @@ function RootLayoutNav() {
       <Stack.Screen name="add-linked-account" options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="payment-methods" options={{ headerShown: false, animation: 'slide_from_right' }} />
       <Stack.Screen name="add-payment-method" options={{ headerShown: false, animation: 'slide_from_right' }} />
+      </Stack.Protected>
     </Stack>
+  );
+}
+
+function SessionBootstrap() {
+  const colors = useColors();
+  const { language } = useLocalization();
+  const [ready, setReady] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  const [attempt, setAttempt] = useState(0);
+  useEffect(() => {
+    let mounted = true;
+    setError(null);
+    ensureAuthHydrated().then(
+      () => { if (mounted) setReady(true); },
+      (failure) => { if (mounted) setError(failure); },
+    );
+    return () => { mounted = false; };
+  }, [attempt]);
+  if (ready) return <RootLayoutNav />;
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, gap: 20, backgroundColor: colors.background }}>
+      {error ? <>
+        <Text accessibilityRole="alert" style={{ color: colors.foreground, textAlign: 'center' }}>
+          {authErrorMessage(error, language)}
+        </Text>
+        <Pressable accessibilityRole="button" onPress={() => setAttempt((value) => value + 1)}>
+          <Text style={{ color: colors.primary }}>{language === 'ar' ? 'حاول مرة أخرى' : 'Try again'}</Text>
+        </Pressable>
+      </> : <ActivityIndicator size="large" color={colors.primary} />}
+    </View>
   );
 }
 
@@ -69,19 +110,19 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <QueryClientProvider client={queryClient}>
       <LocalizationProvider>
         <ErrorBoundary>
           <AppProvider>
-            <QueryClientProvider client={queryClient}>
               <GestureHandlerRootView style={{ flex: 1 }}>
                 <KeyboardProvider>
-                  <RootLayoutNav />
+                  <SessionBootstrap />
                 </KeyboardProvider>
               </GestureHandlerRootView>
-            </QueryClientProvider>
           </AppProvider>
         </ErrorBoundary>
       </LocalizationProvider>
+      </QueryClientProvider>
     </SafeAreaProvider>
   );
 }

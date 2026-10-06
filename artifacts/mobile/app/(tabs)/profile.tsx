@@ -20,6 +20,8 @@ import { useApp } from "@/context/AppContext";
 import { useColors } from "@/hooks/useColors";
 import { useLocalization } from "@/localization";
 import { showProfilePhotoOptions } from "@/utils/profilePhoto";
+import { useConsumerSession, useSessionLogout } from "@/hooks/useConsumerSession";
+import { authErrorMessage } from "@/utils/authErrors";
 
 const personalityColors: Record<string, string> = {
   "Money Vigilance": "#2E3192",
@@ -63,12 +65,17 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, clearData, updateProfile } = useApp();
   const { language, setLanguage, t, isRTL } = useLocalization();
+  const { data: consumer } = useConsumerSession();
+  const logout = useSessionLogout();
+  const displayName = consumer?.name?.trim() || (language === "ar" ? "عضو بصيرة" : "Bassera member");
   const [notifications, setNotifications] = useState(true);
   const [nudges, setNudges] = useState(true);
   const [darkMode, setDarkMode] = useState(false);
   const router = useRouter();
   const topPad = Platform.OS === "android" ? insets.top + 20 : insets.top;
-  const bottomPad = insets.bottom + (Platform.OS == "android" ? 96 : 0);
+  // The fixed tab bar overlays the scroll view on web and native platforms.
+  // Keep the final actions above it at the bottom of the scroll range.
+  const bottomPad = insets.bottom + (Platform.OS === "web" ? 104 : 96);
   const pColor =
     personalityColors[profile.personalityType ?? "Money Vigilance"] ??
     "#2E3192";
@@ -83,6 +90,17 @@ export default function ProfileScreen() {
   };
   const choosePhoto = () =>
     showProfilePhotoOptions(t, (photoUri) => updateProfile({ photoUri }));
+  const performSignOut = async () => {
+    try {
+      await logout();
+      await clearData();
+      router.replace("/login");
+    } catch (error) {
+      const message = authErrorMessage(error, language);
+      if (Platform.OS === "web") window.alert(message);
+      else Alert.alert(t("profile.signOut"), message);
+    }
+  };
 
   const settingsSections = [
     {
@@ -281,7 +299,7 @@ export default function ProfileScreen() {
               <Image source={{ uri: profile.photoUri }} style={styles.avatarPhoto} />
             ) : (
               <Text style={styles.avatarLetter}>
-                {profile.name.trim()[0]?.toUpperCase() ?? "?"}
+                {displayName[0]?.toUpperCase() ?? "?"}
               </Text>
             )}
           </LinearGradient>
@@ -300,10 +318,10 @@ export default function ProfileScreen() {
           accessibilityLabel={t("personal.editName")}
           onPress={() => router.push("/personal-info")}
         >
-          <Text style={styles.profileName}>{profile.name}</Text>
+          <Text style={styles.profileName}>{displayName}</Text>
           <Feather name="edit-2" size={15} color="rgba(255,255,255,0.75)" />
         </Pressable>
-        <Text style={styles.profileEmail}>{profile.email}</Text>
+        {consumer?.email ? <Text style={styles.profileEmail}>{consumer.email}</Text> : null}
         <View style={styles.headerBadges}>
           <View
             style={[
@@ -549,17 +567,19 @@ export default function ProfileScreen() {
 
         <Pressable
           style={styles.signOutBtn}
+          testID="sign-out"
           onPress={() => {
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            if (Platform.OS === "web") {
+              if (window.confirm(t("profile.signOutQuestion"))) void performSignOut();
+              return;
+            }
             Alert.alert(t("profile.signOut"), t("profile.signOutQuestion"), [
               { text: t("common.cancel"), style: "cancel" },
               {
                 text: t("profile.signOut"),
                 style: "destructive",
-                onPress: async () => {
-                  await clearData();
-                  router.replace("/onboarding");
-                },
+                onPress: performSignOut,
               },
             ]);
           }}

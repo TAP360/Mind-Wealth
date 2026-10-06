@@ -36,37 +36,68 @@ async function main() {
   assert.equal(await preferences.getRequestLanguage(), "en");
 
   const values = new Map();
-  let tokenStorageError;
-  const tokenStore = loadSource("storage/authToken.ts", {
-    "@react-native-async-storage/async-storage": {
-      setItem: async (key, value) => {
-        if (tokenStorageError) throw tokenStorageError;
-        values.set(key, value);
-      },
-      getItem: async (key) => {
-        if (tokenStorageError) throw tokenStorageError;
-        return values.get(key) ?? null;
-      },
-      removeItem: async (key) => {
-        if (tokenStorageError) throw tokenStorageError;
-        values.delete(key);
-      },
+  let writeError;
+  let readError;
+  let writeGate;
+  const asyncStorage = {
+    setItem: async (key, value) => {
+      if (writeGate) await writeGate;
+      if (writeError) throw writeError;
+      values.set(key, value);
     },
+    getItem: async (key) => {
+      if (readError) throw readError;
+      return values.get(key) ?? null;
+    },
+    removeItem: async (key) => { values.delete(key); },
+  };
+  const createStoreModule = () => loadSource("stores/authStore.ts", {
+    "@react-native-async-storage/async-storage": asyncStorage,
   });
+  const storeModule = createStoreModule();
+  const tokenStore = loadSource("storage/authToken.ts", {
+    "@/stores/authStore": storeModule,
+  });
+  const tokens = (accessToken = "test-token-only") => ({
+    accessToken, refreshToken: "test-refresh-only", userId: "test-consumer",
+    userType: "CONSUMER", expiresIn: 900,
+  });
+  assert.throws(() => storeModule.sessionFromVerification({ mfaRequired: true, tokens: tokens() }), /MFA_REQUIRED/);
+  assert.throws(() => storeModule.sessionFromVerification({ mfaRequired: false }), /INVALID_SESSION/);
+  assert.deepEqual(storeModule.sessionFromVerification({ mfaRequired: false, tokens: tokens() }), tokens());
   assert.equal(await tokenStore.getAuthToken(), null);
-  await tokenStore.setAuthToken("Bearer test-token-only");
+  await tokenStore.setAuthTokens(tokens("Bearer test-token-only"));
   assert.equal(await tokenStore.getAuthToken(), "test-token-only");
-  await tokenStore.setAuthToken("updated-test-token");
+  const persisted = JSON.parse(values.get(storeModule.AUTH_STORAGE_KEY));
+  assert.deepEqual(Object.keys(persisted.state), ["tokens"]);
+  assert.equal(persisted.state.tokens.refreshToken, "test-refresh-only");
+  const restoredModule = createStoreModule();
+  await restoredModule.ensureAuthHydrated();
+  assert.equal(restoredModule.useAuthStore.getState().tokens.accessToken, "test-token-only");
+  assert.equal(restoredModule.useAuthStore.getState().tokens.refreshToken, "test-refresh-only");
+  assert.equal(restoredModule.useAuthStore.getState().sessionReady, true);
+  await tokenStore.setAuthTokens(tokens("updated-test-token"));
   assert.equal(await tokenStore.getAuthToken(), "updated-test-token");
   await tokenStore.clearAuthToken();
   assert.equal(await tokenStore.getAuthToken(), null);
-  await assert.rejects(tokenStore.setAuthToken(" "), /non-empty/);
-  await assert.rejects(tokenStore.setAuthToken("bad\nvalue"), /whitespace/);
-  tokenStorageError = new Error("Token storage failed");
-  await assert.rejects(tokenStore.setAuthToken("test-token"), (error) => error === tokenStorageError);
-  await assert.rejects(tokenStore.getAuthToken(), (error) => error === tokenStorageError);
-  await assert.rejects(tokenStore.clearAuthToken(), (error) => error === tokenStorageError);
-  tokenStorageError = undefined;
+  await assert.rejects(tokenStore.setAuthTokens(tokens(" ")), /INVALID_SESSION/);
+  await assert.rejects(tokenStore.setAuthTokens(tokens("bad\nvalue")), /INVALID_SESSION/);
+  await assert.rejects(tokenStore.setAuthTokens({ ...tokens(), refreshToken: "" }), /INVALID_SESSION/);
+  writeError = new Error("Storage unavailable");
+  await assert.rejects(tokenStore.setAuthTokens(tokens("not-saved")), /SESSION_STORAGE_FAILED/);
+  assert.equal(storeModule.useAuthStore.getState().tokens, null);
+  assert.equal(storeModule.useAuthStore.getState().sessionReady, false);
+  writeError = undefined;
+  let releaseWrite;
+  writeGate = new Promise((resolve) => { releaseWrite = resolve; });
+  const saving = tokenStore.setAuthTokens(tokens());
+  await new Promise((resolve) => setImmediate(resolve));
+  assert.equal(storeModule.useAuthStore.getState().sessionReady, false);
+  assert.equal(await tokenStore.getAuthToken(), null, "Unsaved sessions cannot authorize requests");
+  releaseWrite();
+  await saving;
+  writeGate = undefined;
+  assert.equal(storeModule.useAuthStore.getState().sessionReady, true);
 
   let language = "ar";
   let languageError;
@@ -79,13 +110,13 @@ async function main() {
     },
     "@/storage/authToken": tokenStore,
   });
-  assert.equal(HTTP_BASE_URL, "https://api.example.invalid");
+  assert.equal(HTTP_BASE_URL, process.env.EXPO_PUBLIC_IDENTITY_API_URL || "https://DymmyTest.com");
   let requestCount = 0;
   httpClient.defaults.adapter = async (config) => {
     requestCount++;
     return { data: { ok: true }, status: 200, statusText: "OK", headers: {}, config };
   };
-  await tokenStore.setAuthToken("test-token-only");
+  await tokenStore.setAuthTokens(tokens("test-token-only"));
   const first = await httpClient.get("/test", { headers: { "Content-Type": "text/plain" } });
   assert.equal(first.config.headers.get("Content-Type"), "application/json");
   assert.equal(first.config.headers.get("Accept-Language"), "ar");
@@ -93,7 +124,7 @@ async function main() {
   assert.equal(first.status, 200);
   assert.deepEqual(first.data, { ok: true });
   language = "en";
-  await tokenStore.setAuthToken("second-test-token");
+  await tokenStore.setAuthTokens(tokens("second-test-token"));
   const second = await httpClient.get("/test");
   assert.equal(second.config.headers.get("Accept-Language"), "en");
   assert.equal(second.config.headers.get("Authorization"), "Bearer second-test-token");
@@ -104,14 +135,75 @@ async function main() {
   await assert.rejects(httpClient.get("/test"), (error) => error === languageError);
   assert.equal(requestCount, 3, "A request interceptor failure must prevent dispatch");
   languageError = undefined;
-  tokenStorageError = new Error("Token storage failed");
-  await assert.rejects(httpClient.get("/test"), (error) => error === tokenStorageError);
-  assert.equal(requestCount, 3, "A token read failure must prevent dispatch");
-  tokenStorageError = undefined;
+  const failedHydrationModule = createStoreModule();
+  const failedTokens = loadSource("storage/authToken.ts", { "@/stores/authStore": failedHydrationModule });
+  const failedClient = loadSource("utils/httpClient.ts", {
+    "@/localization/preferences": { getRequestLanguage: async () => "en" },
+    "@/storage/authToken": failedTokens,
+  }).httpClient;
+  failedClient.defaults.adapter = () => { throw new Error("A hydration failure must prevent dispatch"); };
+  readError = new Error("Storage unavailable");
+  await assert.rejects(failedClient.get("/test"), /SESSION_STORAGE_FAILED/);
+  readError = undefined;
+  await failedHydrationModule.ensureAuthHydrated();
+  await tokenStore.setAuthTokens(tokens("stale-token"));
+  const publicRequest = await httpClient.post("/v1/identity/consumer/auth/otp/request", {});
+  assert.equal(publicRequest.config.headers.has("Authorization"), false, "Public auth calls must not leak old tokens");
+  assert.equal(publicRequest.config.headers.get("Accept-Language"), "en");
   const failure = new axios.AxiosError("Unauthorized", "ERR_BAD_REQUEST");
   httpClient.defaults.adapter = async () => { throw failure; };
   await assert.rejects(httpClient.get("/test"), (error) => error === failure);
-  console.log("HTTP client checks passed: languages, AsyncStorage helpers, headers, token updates/logout, and error propagation.");
+  const errorMessages = loadSource("utils/authErrors.ts", {});
+  assert.match(errorMessages.authErrorMessage(new Error("MFA_REQUIRED"), "en"), /additional verification/);
+  assert.match(errorMessages.authErrorMessage(new Error("OTP_EXPIRED"), "en"), /expired/);
+  assert.match(errorMessages.authErrorMessage(new Error("OTP_EXPIRED"), "ar"), /انتهت/);
+  await tokenStore.clearAuthToken();
+
+  const transport = loadSource("../../lib/api-client-react/src/identity-request.ts", {});
+  transport.setIdentityTransport(async (config) => (await httpClient.request(config)).data);
+  const api = loadSource("../../lib/api-client-react/src/identity-generated/identity.ts", {
+    "../identity-request": transport,
+  });
+  const calls = [];
+  httpClient.defaults.adapter = async (config) => {
+    calls.push(config);
+    let data;
+    if (config.url.endsWith("/phone/validate")) data = { valid: true, e164: "+201012345678" };
+    else if (config.url.endsWith("/otp/request")) data = { expiresIn: 300, resendAfter: 60 };
+    else if (config.url.endsWith("/otp/verify")) data = { newUser: false, mfaRequired: false, tokens: tokens("verified-token") };
+    else if (config.url.endsWith("/me")) data = { id: "test-consumer", name: "Test Consumer" };
+    else throw new Error("Unexpected test request");
+    return { data, status: config.url.endsWith("/otp/request") ? 202 : 200, statusText: "OK", headers: {}, config };
+  };
+  const validated = await api.validateConsumerPhone({ countryCode: "+20", phone: "01012345678" });
+  const requested = await api.requestConsumerOtp({ businessCode: "NW-EG", phone: validated.e164, language: "en" });
+  assert.equal(requested.resendAfter, 60);
+  const verified = await api.verifyConsumerOtp({ businessCode: "NW-EG", phone: validated.e164, otp: "123456" });
+  await tokenStore.setAuthTokens(verified.tokens);
+  const { QueryClient } = require("@tanstack/react-query");
+  const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
+  const session = loadSource("hooks/useConsumerSession.ts", {
+    "@workspace/api-client-react": api,
+    "@/stores/authStore": storeModule,
+    "@/utils/identityTransport": {},
+  });
+  const me = await cache.fetchQuery(session.consumerQueryOptions(storeModule.useAuthStore.getState().tokens));
+  assert.equal(me.name, "Test Consumer");
+  assert.equal(cache.getQueryData(session.consumerQueryKey("test-consumer")).id, "test-consumer");
+  assert.notDeepEqual(session.consumerQueryKey("test-consumer"), session.consumerQueryKey("another-consumer"));
+  assert.deepEqual(calls.map((c) => c.method), ["post", "post", "post", "get"]);
+  assert.deepEqual(JSON.parse(calls[0].data), { countryCode: "+20", phone: "01012345678" });
+  assert.deepEqual(JSON.parse(calls[1].data), { businessCode: "NW-EG", phone: "+201012345678", language: "en" });
+  assert.deepEqual(JSON.parse(calls[2].data), { businessCode: "NW-EG", phone: "+201012345678", otp: "123456" });
+  for (const call of calls.slice(0, 3)) assert.equal(call.headers.has("Authorization"), false);
+  assert.equal(calls[3].headers.get("Authorization"), "Bearer verified-token");
+  await assert.rejects(cache.fetchQuery(session.consumerQueryOptions({ ...tokens(), userId: "wrong-consumer" })), /INVALID_PROFILE/);
+  await session.logoutSession(cache);
+  assert.equal(await tokenStore.getAuthToken(), null);
+  assert.equal(JSON.parse(values.get(storeModule.AUTH_STORAGE_KEY)).state.tokens, null);
+  assert.equal(cache.getQueryData(session.consumerQueryKey("test-consumer")), undefined);
+  cache.clear();
+  console.log("Mobile auth checks passed: API contracts, languages, persisted token pairs, hydration, persistence failures, headers, query cache isolation/logout, and errors.");
 }
 
 main().catch((error) => {

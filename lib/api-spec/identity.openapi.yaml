@@ -1,0 +1,179 @@
+openapi: 3.0.3
+info:
+  title: Identity
+  version: 1.0.0
+  description: External consumer mobile login API supplied by the project owner.
+paths:
+  /v1/identity/consumer/auth/phone/validate:
+    post:
+      operationId: validateConsumerPhone
+      summary: Validate a local mobile number and return its canonical E.164 value
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PhoneValidationInput"
+      responses:
+        "200":
+          description: Phone validity; invalid numbers have no e164 value.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PhoneValidationResult"
+  /v1/identity/consumer/auth/otp/request:
+    post:
+      operationId: requestConsumerOtp
+      summary: Request or resend an OTP; the same endpoint handles login and signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpRequestInput"
+      responses:
+        "202":
+          description: Code requested; delivery depends on the identity service.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpRequestResult"
+  /v1/identity/consumer/auth/otp/verify:
+    post:
+      operationId: verifyConsumerOtp
+      summary: Verify an OTP and return a session or an MFA requirement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OtpVerificationInput"
+      responses:
+        "200":
+          description: Verified session, or MFA requirement without tokens.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpVerificationResult"
+  /v1/identity/consumer/me:
+    get:
+      operationId: getCurrentConsumer
+      summary: Get the authenticated consumer profile
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Authenticated consumer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerProfile"
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    PhoneValidationInput:
+      type: object
+      required: [countryCode, phone]
+      properties:
+        countryCode:
+          type: string
+        phone:
+          type: string
+    PhoneValidationResult:
+      type: object
+      required: [valid]
+      properties:
+        valid:
+          type: boolean
+        e164:
+          type: string
+    OtpRequestInput:
+      type: object
+      required: [businessCode, phone, language]
+      properties:
+        businessCode:
+          type: string
+        phone:
+          type: string
+        language:
+          type: string
+          enum: [ar, en]
+    OtpRequestResult:
+      type: object
+      required: [expiresIn, resendAfter]
+      properties:
+        expiresIn:
+          type: integer
+        resendAfter:
+          type: integer
+    OtpVerificationInput:
+      type: object
+      required: [businessCode, phone, otp]
+      properties:
+        businessCode:
+          type: string
+        phone:
+          type: string
+        otp:
+          type: string
+    ConsumerTokens:
+      type: object
+      required: [accessToken, refreshToken, userId, userType, expiresIn]
+      properties:
+        accessToken:
+          type: string
+        refreshToken:
+          type: string
+        userId:
+          type: string
+        userType:
+          type: string
+        expiresIn:
+          type: integer
+    OtpVerificationResult:
+      type: object
+      required: [mfaRequired]
+      properties:
+        newUser:
+          type: boolean
+        mfaRequired:
+          type: boolean
+        userId:
+          type: string
+        tokens:
+          $ref: "#/components/schemas/ConsumerTokens"
+    ConsumerProfile:
+      type: object
+      required: [id]
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          nullable: true
+        businessId:
+          type: string
+        name:
+          type: string
+          nullable: true
+        language:
+          type: string
+        halalMode:
+          type: boolean
+        preferences:
+          type: string
+          nullable: true
+        accountStatus:
+          type: string
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        demographics:
+          type: object
+          nullable: true
+          additionalProperties: true

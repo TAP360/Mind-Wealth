@@ -14,6 +14,24 @@ const titleTransformer: InputTransformerFn = (config) => {
 };
 
 export default defineConfig({
+  identity: {
+    input: "./identity.openapi.yaml",
+    output: {
+      workspace: apiClientReactSrc,
+      target: "identity-generated/identity.ts",
+      schemas: "identity-generated/models",
+      client: "react-query",
+      httpClient: "axios",
+      mode: "split",
+      clean: true,
+      override: {
+        mutator: {
+          path: path.resolve(apiClientReactSrc, "identity-request.ts"),
+          name: "identityRequest",
+        },
+      },
+    },
+  },
   "api-client-react": {
     input: {
       target: "./openapi.yaml",

@@ -3,8 +3,8 @@ import axios from "axios";
 import { getRequestLanguage } from "@/localization/preferences";
 import { getAuthToken } from "@/storage/authToken";
 
-// Reserved, non-routable placeholder. Replace this before using real endpoints.
-export const HTTP_BASE_URL = "https://api.example.invalid";
+// Owner-supplied test URL; override with the real identity service when ready.
+export const HTTP_BASE_URL = process.env.EXPO_PUBLIC_IDENTITY_API_URL || "https://DymmyTest.com";
 
 export const httpClient = axios.create({
   baseURL: HTTP_BASE_URL,
@@ -17,7 +17,8 @@ httpClient.interceptors.request.use(
     config.headers.set("Accept-Language", await getRequestLanguage());
 
     // Read on each request so a login, token update, or logout takes effect immediately.
-    const token = await getAuthToken();
+    const isPublicAuth = config.url?.split("?")[0]?.startsWith("/v1/identity/consumer/auth/");
+    const token = isPublicAuth ? null : await getAuthToken();
     if (token) config.headers.set("Authorization", `Bearer ${token}`);
     else config.headers.delete("Authorization");
 

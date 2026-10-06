@@ -1,20 +1,17 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import type { ConsumerTokens } from "@workspace/api-client-react";
+import { ensureAuthHydrated, useAuthStore } from "@/stores/authStore";
 
-const TOKEN_KEY = "@bassera_access_token";
-
-/** Store the raw access token, not an Authorization header. Never log this value. */
-export async function setAuthToken(token: string): Promise<void> {
-  const normalized = token.trim().replace(/^Bearer\s+/i, "");
-  if (!normalized || /\s/.test(normalized)) {
-    throw new Error("An access token must be a non-empty value without whitespace.");
-  }
-  await AsyncStorage.setItem(TOKEN_KEY, normalized);
+/** Save the complete verified session, never an access-token-only login. */
+export async function setAuthTokens(tokens: ConsumerTokens): Promise<void> {
+  await useAuthStore.getState().saveSession(tokens);
 }
 
 export async function getAuthToken(): Promise<string | null> {
-  return AsyncStorage.getItem(TOKEN_KEY);
+  await ensureAuthHydrated();
+  const state = useAuthStore.getState();
+  return state.sessionReady ? state.tokens?.accessToken ?? null : null;
 }
 
 export async function clearAuthToken(): Promise<void> {
-  await AsyncStorage.removeItem(TOKEN_KEY);
+  await useAuthStore.getState().clearSession();
 }

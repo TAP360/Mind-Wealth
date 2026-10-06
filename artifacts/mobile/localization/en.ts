@@ -234,7 +234,7 @@ export const en = {
   'profile.yourPlan': 'Your Plan',
   'profile.perMonth': '/month',
   'profile.signOut': 'Sign Out',
-  'profile.signOutQuestion': 'Are you sure you want to sign out?',
+  'profile.signOutQuestion': 'Signing out clears your session and the financial data saved on this device. Continue?',
   'profile.languageTitle': 'Choose language',
   'profile.linkedMessage': 'Connect your bank accounts and payment providers for automatic transaction tracking.\n\nComing soon for Egypt & GCC banks.',
   'profile.paymentMessage': 'Manage saved cards and payment methods.\n\nComing soon.',
