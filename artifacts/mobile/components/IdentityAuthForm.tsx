@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { CountryCodePicker } from '@/components/CountryCodePicker';
@@ -14,6 +14,7 @@ export function IdentityAuthForm({ auth }: Props) {
   const ar = language === 'ar';
   const tx = (en: string, arText: string) => (ar ? arText : en);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const identifierRef = useRef<TextInput>(null);
 
   const rtlRow = isRTL ? { flexDirection: 'row-reverse' as const } : null;
   const align = isRTL ? { textAlign: 'right' as const } : null;
@@ -145,7 +146,6 @@ export function IdentityAuthForm({ auth }: Props) {
   }
 
   const phoneLike = auth.isPhone;
-  const callingDisplay = auth.countryCode;
 
   return (
     <KeyboardAwareScrollViewCompat
@@ -179,31 +179,25 @@ export function IdentityAuthForm({ auth }: Props) {
         <View style={styles.authDivider} />
       </View>
 
-      {phoneLike ? (
-        <View style={[styles.ccRow, rtlRow]}>
+      <View style={[styles.identifierField, rtlRow]}>
+        {phoneLike ? (
           <Pressable
             testID="country-picker-open"
             onPress={() => setPickerOpen(true)}
             style={styles.ccPicker}
+            accessibilityRole="button"
+            accessibilityLabel={tx('Choose country', 'اختر الدولة')}
+            disabled={auth.isPending}
           >
             <Text style={styles.ccPickerText}>{auth.selectedCountry}</Text>
           </Pressable>
-          <TextInput
-            testID="country-code"
-            style={[styles.authInput, styles.ccInput]}
-            value={callingDisplay}
-            onChangeText={auth.setCountryCode}
-            keyboardType="phone-pad"
-            placeholder="+"
-            placeholderTextColor="rgba(255,255,255,0.4)"
-          />
-        </View>
-      ) : null}
+        ) : null}
 
       <TextInput
+        ref={identifierRef}
         key="identifier"
         testID="auth-identifier"
-        style={[styles.authInput, align]}
+        style={[styles.identifierInput, align]}
         value={auth.identifier}
         editable={!auth.isPending}
         onChangeText={auth.setIdentifier}
@@ -215,6 +209,7 @@ export function IdentityAuthForm({ auth }: Props) {
         returnKeyType="go"
         onSubmitEditing={() => !disabled && !needsPassword && auth.continueAuth()}
       />
+      </View>
 
       {needsPassword ? (
         <TextInput
@@ -260,7 +255,10 @@ export function IdentityAuthForm({ auth }: Props) {
         isRTL={isRTL}
         selected={auth.selectedCountry}
         onSelect={auth.setCountry}
-        onClose={() => setPickerOpen(false)}
+        onClose={() => {
+          setPickerOpen(false);
+          requestAnimationFrame(() => identifierRef.current?.focus());
+        }}
       />
     </KeyboardAwareScrollViewCompat>
   );
@@ -293,13 +291,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF', marginBottom: 12,
   },
   codeInput: { textAlign: 'center', letterSpacing: 8, fontSize: 22 },
-  ccRow: { flexDirection: 'row', gap: 10, marginBottom: 0 },
+  identifierField: {
+    flexDirection: 'row', alignItems: 'center', width: '100%',
+    backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.15)', borderRadius: 16, marginBottom: 12,
+  },
+  identifierInput: {
+    flex: 1, minWidth: 0, paddingVertical: 16, paddingHorizontal: 18,
+    fontSize: 16, fontFamily: 'Inter_400Regular', color: '#FFFFFF',
+  },
   ccPicker: {
-    backgroundColor: 'rgba(255,255,255,0.08)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.15)',
-    borderRadius: 16, paddingHorizontal: 18, justifyContent: 'center', marginBottom: 12,
+    paddingHorizontal: 18, alignSelf: 'stretch', justifyContent: 'center',
   },
   ccPickerText: { color: '#FFFFFF', fontSize: 16, fontFamily: 'Inter_600SemiBold' },
-  ccInput: { flex: 1, width: undefined },
   assessBtn: { borderRadius: 16, overflow: 'hidden', width: '100%' },
   assessBtnDisabled: { opacity: 0.45 },
   assessBtnGrad: { paddingVertical: 16, alignItems: 'center', borderRadius: 16 },

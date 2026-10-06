@@ -11,7 +11,10 @@ These settings are public configuration, not credentials.
 ## Flow
 
 The original splash, introductory slides and onboarding sign-in appearance
-are retained. `IdentityAuthForm` uses one Email or Mobile input. Explicit
+are retained. `IdentityAuthForm` uses one Email or Mobile input. Phone mode
+shows only the selected country abbreviation beside that same input, with
+no separate calling-code field. The calling code is kept internally for API
+requests. Explicit
 international prefixes (`+` or `00`) are separated while typing, without
 moving focus away from the identifier field. Full bare international numbers
 are split only when they are valid and either not a possible local number or
