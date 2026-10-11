@@ -1,5 +1,4 @@
 import axios from "axios";
-import { Platform } from "react-native";
 
 import { getRequestLanguage } from "@/localization/preferences";
 import { getAuthToken } from "@/storage/authToken";
@@ -8,7 +7,10 @@ import type { ConsumerTokens } from "@workspace/api-client-react";
 
 // Plain HTTP explicitly approved for development only.
 export const IDENTITY_BASE_URL = process.env.EXPO_PUBLIC_IDENTITY_API_URL || "http://72.61.108.231:8080/";
-export const HTTP_BASE_URL = Platform.OS === "web" && IDENTITY_BASE_URL.startsWith("http:")
+// Expo Go uses the same HTTPS relay as web: device policies/networks may
+// reject direct plain-HTTP IP/port requests. Upstream remains development HTTP.
+// The relay is fixed to this backend, so never redirect a custom backend to it.
+export const HTTP_BASE_URL = IDENTITY_BASE_URL.replace(/\/+$/, "") === "http://72.61.108.231:8080" && process.env.EXPO_PUBLIC_DOMAIN
   ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api/identity-dev`
   : IDENTITY_BASE_URL;
 

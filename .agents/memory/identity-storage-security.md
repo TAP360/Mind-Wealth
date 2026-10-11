@@ -15,6 +15,12 @@ Plain HTTP authentication is approved only for development, not production.
 
 **How to apply:** Keep production HTTPS enforcement. A development preview proxy fixes mixed-content restrictions, not upstream transport confidentiality. Obtain actual API contracts rather than guessing paths or putting emails into phone-only APIs.
 
+Use the HTTPS development bridge for Expo Go as well as browser preview when the identity backend uses HTTP.
+
+**Why:** Direct HTTP device sign-in failed despite the backend responding from the workspace. Backend HTTP consent does not ensure device/network policies allow direct HTTP IP/port requests.
+
+**How to apply:** Preserve the backend's upstream URL and API contracts while using the HTTPS client-facing bridge. Do not claim the upstream transport is encrypted or route custom backends through a relay fixed to a different target.
+
 Email OTP is intended to reuse the mobile OTP APIs, not separate email endpoints. The backend owns the identifier-field change.
 
 **Why:** The user confirmed that the APIs are the same and asked to leave the app unchanged while the backend changes the field.

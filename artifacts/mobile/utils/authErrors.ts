@@ -28,7 +28,7 @@ const errors = {
     SESSION_STORAGE_FAILED: "Unable to save or restore your session on this device. Please try again.",
     RATE_LIMITED: "Too many requests. Please wait before requesting another code.",
     UNAUTHORIZED: "Your session has expired. Sign out and sign in again.",
-    NETWORK: "Could not reach the login service. Check your connection and the configured API URL.",
+    NETWORK: "Unable to connect to the sign-in server. Please try again.",
     UNKNOWN: "Unable to complete this request. Please try again.",
   },
   ar: {
@@ -57,7 +57,7 @@ const errors = {
     SESSION_STORAGE_FAILED: "تعذر حفظ أو استعادة جلستك على هذا الجهاز. حاول مرة أخرى.",
     RATE_LIMITED: "طلبات كثيرة جداً. انتظر قبل طلب رمز آخر.",
     UNAUTHORIZED: "انتهت جلستك. سجّل الخروج ثم سجّل الدخول مرة أخرى.",
-    NETWORK: "تعذر الاتصال بخدمة تسجيل الدخول. تحقق من اتصالك ورابط الخدمة.",
+    NETWORK: "تعذر الاتصال بخادم تسجيل الدخول. يرجى المحاولة مرة أخرى.",
     UNKNOWN: "تعذر إكمال هذا الطلب. حاول مرة أخرى.",
   },
 };

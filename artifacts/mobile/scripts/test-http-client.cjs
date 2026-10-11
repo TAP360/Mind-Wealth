@@ -148,7 +148,34 @@ async function main() {
     },
     "@/storage/authToken": tokenStore,
   });
-  assert.equal(HTTP_BASE_URL, process.env.EXPO_PUBLIC_IDENTITY_API_URL || "http://72.61.108.231:8080/");
+  const selectedIdentity = process.env.EXPO_PUBLIC_IDENTITY_API_URL || "http://72.61.108.231:8080/";
+  assert.equal(HTTP_BASE_URL, selectedIdentity.replace(/\/+$/, "") === "http://72.61.108.231:8080" && process.env.EXPO_PUBLIC_DOMAIN
+    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api/identity-dev` : selectedIdentity);
+  const oldDomain = process.env.EXPO_PUBLIC_DOMAIN;
+  const oldIdentityUrl = process.env.EXPO_PUBLIC_IDENTITY_API_URL;
+  try {
+    process.env.EXPO_PUBLIC_DOMAIN = "development-bridge.test";
+    process.env.EXPO_PUBLIC_IDENTITY_API_URL = "http://72.61.108.231:8080/";
+    for (const os of ["ios", "android", "web"]) {
+      const relay = loadSource("utils/httpClient.ts", {
+        "@/stores/authStore": storeModule,
+        "@/storage/authToken": tokenStore,
+        "@/localization/preferences": { getRequestLanguage: async () => "en" },
+        "react-native": { Platform: { OS: os } },
+      });
+      assert.equal(relay.HTTP_BASE_URL, "https://development-bridge.test/api/identity-dev", `${os} must use the HTTPS development bridge`);
+      assert.equal(relay.refreshClient.defaults.baseURL, relay.HTTP_BASE_URL);
+    }
+    process.env.EXPO_PUBLIC_IDENTITY_API_URL = "https://custom-identity.test";
+    const custom = loadSource("utils/httpClient.ts", {
+      "@/stores/authStore": storeModule, "@/storage/authToken": tokenStore,
+      "@/localization/preferences": { getRequestLanguage: async () => "en" },
+    });
+    assert.equal(custom.HTTP_BASE_URL, "https://custom-identity.test");
+  } finally {
+    if (oldDomain === undefined) delete process.env.EXPO_PUBLIC_DOMAIN; else process.env.EXPO_PUBLIC_DOMAIN = oldDomain;
+    if (oldIdentityUrl === undefined) delete process.env.EXPO_PUBLIC_IDENTITY_API_URL; else process.env.EXPO_PUBLIC_IDENTITY_API_URL = oldIdentityUrl;
+  }
   let requestCount = 0;
   httpClient.defaults.adapter = async (config) => {
     requestCount++;

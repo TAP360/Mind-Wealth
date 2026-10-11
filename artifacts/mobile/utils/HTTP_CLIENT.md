@@ -135,12 +135,14 @@ old key is removed. Failed reads/decryption do not overwrite data with defaults.
 The useAuthStore name is only a compatibility facade; its implementation uses
 Redux selectors/actions, not Zustand.
 
-Native development requests use the selected HTTP server directly. HTTPS web
-preview uses `/api/identity-dev` on the existing API server, a fixed-target
-allowlisted bridge that forwards JSON, language, Bearer headers for `/me`,
+Expo Go and web development requests both use `/api/identity-dev` on the
+existing API server when connecting to the owner's HTTP backend. This avoids
+direct HTTP IP/port restrictions on devices as well as browser mixed content.
+The fixed-target
+allowlisted bridge forwards JSON, language, Bearer headers for `/me`,
 status codes and Retry-After without logging bodies/tokens. It is disabled in
 production; production mobile requests also refuse the development HTTP URL.
-HTTPS protects only the browser-to-Replit leg; upstream remains plain HTTP.
+HTTPS protects only the device/browser-to-Replit leg; upstream remains plain HTTP.
 Supply an HTTPS backend before publishing with real credentials.
 
 Public docs required authorization. The owner subsequently supplied the
