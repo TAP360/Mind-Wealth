@@ -69,9 +69,23 @@ async function main() {
     },
     removeItem: async (key) => { values.delete(key); },
   };
-  const createStoreModule = () => loadSource("stores/authStore.ts", {
+  globalThis.indexedDB = require("fake-indexeddb").indexedDB;
+  Object.defineProperty(globalThis, "crypto", { value: require("node:crypto").webcrypto, configurable: true });
+  const storageCore = loadSource("storage/encryptedStorageCore.ts", {
     "@react-native-async-storage/async-storage": asyncStorage,
   });
+  const secureStorage = loadSource("storage/encryptedStorage.web.ts", {
+    "./encryptedStorageCore": storageCore,
+  });
+  const modules = [];
+  const createStoreModule = () => {
+    const instance = loadSource("stores/authStore.ts", {
+      "@react-native-async-storage/async-storage": asyncStorage,
+      "@/storage/encryptedStorage": secureStorage,
+    });
+    modules.push(instance);
+    return instance;
+  };
   const storeModule = createStoreModule();
   const tokenStore = loadSource("storage/authToken.ts", {
     "@/stores/authStore": storeModule,
@@ -86,9 +100,13 @@ async function main() {
   assert.equal(await tokenStore.getAuthToken(), null);
   await tokenStore.setAuthTokens(tokens("Bearer test-token-only"));
   assert.equal(await tokenStore.getAuthToken(), "test-token-only");
-  const persisted = JSON.parse(values.get(storeModule.AUTH_STORAGE_KEY));
-  assert.deepEqual(Object.keys(persisted.state), ["tokens"]);
-  assert.equal(persisted.state.tokens.refreshToken, "test-refresh-only");
+  const cipher = values.get(storeModule.AUTH_STORAGE_KEY);
+  assert.ok(cipher.startsWith(storageCore.ENCRYPTED_PREFIX));
+  assert.equal(cipher.includes("test-token-only"), false);
+  assert.equal(cipher.includes("test-refresh-only"), false);
+  const persisted = JSON.parse(await secureStorage.encryptedStorage.getItem(storeModule.AUTH_STORAGE_KEY));
+  assert.equal(JSON.parse(persisted.tokens).refreshToken, "test-refresh-only");
+  assert.equal(persisted.sessionReady, undefined);
   const restoredModule = createStoreModule();
   await restoredModule.ensureAuthHydrated();
   assert.equal(restoredModule.useAuthStore.getState().tokens.accessToken, "test-token-only");
@@ -120,6 +138,8 @@ async function main() {
   let language = "ar";
   let languageError;
   const { httpClient, HTTP_BASE_URL } = loadSource("utils/httpClient.ts", {
+    "@/stores/authStore": storeModule,
+    "react-native": { Platform: { OS: "ios" } },
     "@/localization/preferences": {
       getRequestLanguage: async () => {
         if (languageError) throw languageError;
@@ -128,7 +148,7 @@ async function main() {
     },
     "@/storage/authToken": tokenStore,
   });
-  assert.equal(HTTP_BASE_URL, process.env.EXPO_PUBLIC_IDENTITY_API_URL || "https://DymmyTest.com");
+  assert.equal(HTTP_BASE_URL, process.env.EXPO_PUBLIC_IDENTITY_API_URL || "http://72.61.108.231:8080/");
   let requestCount = 0;
   httpClient.defaults.adapter = async (config) => {
     requestCount++;
@@ -156,6 +176,8 @@ async function main() {
   const failedHydrationModule = createStoreModule();
   const failedTokens = loadSource("storage/authToken.ts", { "@/stores/authStore": failedHydrationModule });
   const failedClient = loadSource("utils/httpClient.ts", {
+    "@/stores/authStore": failedHydrationModule,
+    "react-native": { Platform: { OS: "ios" } },
     "@/localization/preferences": { getRequestLanguage: async () => "en" },
     "@/storage/authToken": failedTokens,
   }).httpClient;
@@ -218,7 +240,7 @@ async function main() {
   await assert.rejects(cache.fetchQuery(session.consumerQueryOptions({ ...tokens(), userId: "wrong-consumer" })), /INVALID_PROFILE/);
   await session.logoutSession(cache);
   assert.equal(await tokenStore.getAuthToken(), null);
-  assert.equal(JSON.parse(values.get(storeModule.AUTH_STORAGE_KEY)).state.tokens, null);
+  assert.equal(JSON.parse(JSON.parse(await secureStorage.encryptedStorage.getItem(storeModule.AUTH_STORAGE_KEY)).tokens), null);
   assert.equal(cache.getQueryData(session.consumerQueryKey("test-consumer")), undefined);
   cache.clear();
   const emailCalls = [];
@@ -257,7 +279,117 @@ async function main() {
     assert.equal(call.headers.has("Authorization"), false);
     assert.equal(call.headers.get("Accept-Language"), "en");
   }
-  console.log("Mobile auth checks passed: API contracts, languages, persisted token pairs, hydration, persistence failures, headers, query cache isolation/logout, and errors.");
+  await secureStorage.encryptedStorage.setItem("@mindwealth_state", JSON.stringify({ name: "Encrypted Person" }));
+  assert.equal(values.get("@mindwealth_state").includes("Encrypted Person"), false);
+  assert.equal(JSON.parse(await secureStorage.encryptedStorage.getItem("@mindwealth_state")).name, "Encrypted Person");
+  const encryptedOriginal = values.get("@mindwealth_state");
+  values.set("@mindwealth_state", encryptedOriginal.slice(0, -2) + (encryptedOriginal.endsWith("00") ? "01" : "00"));
+  await assert.rejects(secureStorage.encryptedStorage.getItem("@mindwealth_state"), /SESSION_STORAGE_FAILED/);
+  values.set("@mindwealth_state", encryptedOriginal);
+  values.set("@mindwealth_accounts", '["migration@example.invalid"]');
+  assert.equal(await secureStorage.encryptedStorage.getItem("@mindwealth_accounts"), '["migration@example.invalid"]');
+  assert.equal(values.get("@mindwealth_accounts").includes("migration@example.invalid"), false);
+  await tokenStore.setAuthTokens(tokens("profile-token"));
+  await storeModule.saveConsumerProfile({ id: "test-consumer", name: "Encrypted API Name", email: "test@example.invalid", demographics: { age: 28 } });
+  assert.equal(values.get(storeModule.AUTH_STORAGE_KEY).includes("Encrypted API Name"), false);
+  assert.equal(values.get(storeModule.AUTH_STORAGE_KEY).includes("test@example.invalid"), false);
+  const profileRestored = createStoreModule();
+  await profileRestored.ensureAuthHydrated();
+  assert.equal(profileRestored.useAuthStore.getState().profile.name, "Encrypted API Name");
+  assert.equal(profileRestored.useAuthStore.getState().profile.demographics.age, 28);
+  await assert.rejects(storeModule.saveConsumerProfile({ id: "wrong-person" }), /INVALID_PROFILE/);
+  await tokenStore.clearAuthToken();
+  assert.equal(storeModule.useAuthStore.getState().profile, null);
+  for (const instance of modules) { await instance.identityPersistor.flush(); instance.identityPersistor.pause(); }
+  values.delete(storeModule.AUTH_STORAGE_KEY);
+  values.set("@bassera_auth_session", JSON.stringify({ state: { tokens: tokens("legacy-token") }, version: 1 }));
+  const migrated = createStoreModule();
+  await migrated.ensureAuthHydrated();
+  assert.equal(migrated.useAuthStore.getState().tokens.accessToken, "legacy-token");
+  assert.equal(values.has("@bassera_auth_session"), false);
+  assert.equal(values.get(storeModule.AUTH_STORAGE_KEY).includes("legacy-token"), false);
+  await migrated.identityPersistor.flush();
+  migrated.identityPersistor.pause();
+  const secureKeys = new Map();
+  const nativeStorage = loadSource("storage/encryptedStorage.native.ts", {
+    "./encryptedStorageCore": storageCore,
+    "expo-secure-store": {
+      isAvailableAsync: async () => true,
+      getItemAsync: async (key) => secureKeys.get(key) ?? null,
+      setItemAsync: async (key, value) => { secureKeys.set(key, value); },
+    },
+    "expo-crypto": { getRandomBytesAsync: async (size) => new Uint8Array(require("node:crypto").randomBytes(size)) },
+  });
+  await nativeStorage.encryptedStorage.setItem("native-identity-test", '{"name":"Native encrypted person"}');
+  assert.equal(await nativeStorage.encryptedStorage.getItem("native-identity-test"), '{"name":"Native encrypted person"}');
+  assert.equal(values.get("native-identity-test").includes("Native encrypted person"), false);
+  assert.equal(secureKeys.size, 1, "Native encryption key belongs in SecureStore, not AsyncStorage");
+  const nativeCipher = values.get("native-identity-test");
+  values.set("native-identity-test", nativeCipher.slice(0, -2) + (nativeCipher.endsWith("00") ? "01" : "00"));
+  await assert.rejects(nativeStorage.encryptedStorage.getItem("native-identity-test"), /SESSION_STORAGE_FAILED/);
+  httpClient.defaults.adapter = async (config) => ({ data: { id: "test-consumer", name: "Updated API Name" }, status: 200, statusText: "OK", headers: {}, config });
+  const edited = await api.updateCurrentConsumer({ name: "Updated API Name" });
+  assert.equal(edited.name, "Updated API Name");
+  const rotatingStore = createStoreModule();
+  const rotatingTokens = loadSource("storage/authToken.ts", { "@/stores/authStore": rotatingStore });
+  const clients = loadSource("utils/httpClient.ts", {
+    "@/stores/authStore": rotatingStore,
+    "@/storage/authToken": rotatingTokens,
+    "@/localization/preferences": { getRequestLanguage: async () => "en" },
+    "react-native": { Platform: { OS: "ios" } },
+  });
+  await rotatingTokens.setAuthTokens({ ...tokens("old-access"), refreshToken: "old-refresh", expiresIn: 1 });
+  await rotatingStore.saveConsumerProfile({ id: "test-consumer", name: "Refresh profile" });
+  let refreshCount = 0;
+  clients.refreshClient.defaults.adapter = async (config) => {
+    refreshCount++;
+    assert.equal(config.url, "/v1/identity/auth/refresh");
+    assert.equal(config.headers.has("Authorization"), false);
+    assert.equal(config.headers.get("Accept-Language"), "en");
+    assert.deepEqual(JSON.parse(config.data), { refreshToken: refreshCount === 1 ? "old-refresh" : "rotated-refresh" });
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    return { data: { ...tokens(`rotated-access-${refreshCount}`), refreshToken: refreshCount === 1 ? "rotated-refresh" : "second-refresh" }, status: 200, statusText: "OK", headers: {}, config };
+  };
+  clients.httpClient.defaults.adapter = async (config) => {
+    assert.equal(config.headers.get("Authorization"), "Bearer rotated-access-1");
+    return { data: { ok: true }, status: 200, statusText: "OK", headers: {}, config };
+  };
+  await Promise.all([1, 2, 3].map(() => clients.httpClient.get("/protected")));
+  assert.equal(refreshCount, 1, "Concurrent near-expiry requests must rotate exactly once");
+  assert.equal(rotatingStore.useAuthStore.getState().profile.name, "Refresh profile");
+  assert.equal(rotatingStore.useAuthStore.getState().tokens.refreshToken, "rotated-refresh");
+  clients.httpClient.defaults.adapter = async (config) => {
+    if (!config._identityRetried) {
+      throw new (require("axios").AxiosError)("Expired", "ERR_BAD_REQUEST", config, undefined,
+        { data: {}, status: 401, statusText: "Unauthorized", headers: {}, config });
+    }
+    assert.equal(config.headers.get("Authorization"), "Bearer rotated-access-2");
+    return { data: { ok: true }, status: 200, statusText: "OK", headers: {}, config };
+  };
+  await Promise.all([1, 2, 3].map(() => clients.httpClient.get("/protected")));
+  assert.equal(refreshCount, 2, "Concurrent 401s must rotate once and retry with the new pair");
+  assert.equal(rotatingStore.useAuthStore.getState().tokens.refreshToken, "second-refresh");
+  const restoredRotation = createStoreModule();
+  await restoredRotation.ensureAuthHydrated();
+  assert.equal(restoredRotation.useAuthStore.getState().tokens.refreshToken, "second-refresh");
+  assert.equal(restoredRotation.useAuthStore.getState().profile.name, "Refresh profile");
+  assert.equal(values.get(rotatingStore.AUTH_STORAGE_KEY).includes("second-refresh"), false);
+  await restoredRotation.identityPersistor.flush(); restoredRotation.identityPersistor.pause();
+  clients.httpClient.defaults.adapter = async (config) => {
+    throw new (require("axios").AxiosError)("Expired", "ERR_BAD_REQUEST", config, undefined,
+      { data: {}, status: 401, statusText: "Unauthorized", headers: {}, config });
+  };
+  clients.refreshClient.defaults.adapter = async (config) => {
+    throw new (require("axios").AxiosError)("Revoked", "ERR_BAD_REQUEST", config, undefined,
+      { data: { code: "INVALID_REFRESH_TOKEN" }, status: 400, statusText: "Bad Request", headers: {}, config });
+  };
+  await assert.rejects(clients.httpClient.get("/protected"));
+  assert.equal(rotatingStore.useAuthStore.getState().tokens, null);
+  assert.equal(rotatingStore.useAuthStore.getState().profile, null);
+  await assert.rejects(rotatingStore.rotateSession(tokens("late-access"), "second-refresh"), /INVALID_SESSION/);
+  await rotatingStore.identityPersistor.flush(); rotatingStore.identityPersistor.pause();
+  console.log("Refresh checks passed: documented contract, single-flight expiry/401 rotation, encrypted durability, retained profile, revoked-token logout and late-response protection.");
+  console.log("Mobile auth checks passed: AES-GCM encryption/tamper protection, encrypted Redux token/profile restore and logout, migration, persistence failures, API contracts, languages, headers and cache isolation.");
 }
 
 main().catch((error) => {

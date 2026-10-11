@@ -20,7 +20,7 @@ export function IdentityAuthForm({ auth }: Props) {
   const align = isRTL ? { textAlign: 'right' as const } : null;
   const stage = auth.stage;
   const isEmail = auth.isEmail;
-  const needsPassword = isEmail;
+  const needsPassword = isEmail && auth.requiresPassword;
   const disabled = !auth.canContinue || auth.isPending;
 
   const GradButton = ({ label, onPress, off, id }: { label: string; onPress: () => void; off?: boolean; id: string }) => (
@@ -241,7 +241,7 @@ export function IdentityAuthForm({ auth }: Props) {
         onPress={() => auth.continueAuth()}
       />
 
-      {isEmail ? (
+      {needsPassword ? (
         <Link
           id="auth-toggle-register"
           label={auth.isRegistering ? tx('Have an account? Sign in', 'لديك حساب؟ تسجيل الدخول') : tx('New here? Create account', 'جديد هنا؟ إنشاء حساب')}

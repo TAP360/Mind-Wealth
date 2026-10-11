@@ -24,6 +24,7 @@ import type {
   ConsumerMfaChallengeInput,
   ConsumerMfaRecoveryInput,
   ConsumerProfile,
+  ConsumerProfileUpdateInput,
   ConsumerRegistrationInput,
   ConsumerRegistrationResult,
   ConsumerRegistrationVerificationInput,
@@ -33,7 +34,8 @@ import type {
   OtpVerificationInput,
   OtpVerificationResult,
   PhoneValidationInput,
-  PhoneValidationResult
+  PhoneValidationResult,
+  RefreshConsumerSessionBody
 } from './models';
 
 import { identityRequest } from '../identity-request';
@@ -47,6 +49,67 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
+
+/**
+ * Public endpoint. Rotates refresh tokens; the previous token is revoked.
+ */
+export const refreshConsumerSession = (
+    refreshConsumerSessionBody: BodyType<RefreshConsumerSessionBody>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<ConsumerTokens>(
+      {url: `/v1/identity/auth/refresh`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: refreshConsumerSessionBody, signal
+    },
+      options);
+    }
+
+
+
+export const getRefreshConsumerSessionMutationOptions = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshConsumerSession>>, TError,{data: BodyType<RefreshConsumerSessionBody>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof refreshConsumerSession>>, TError,{data: BodyType<RefreshConsumerSessionBody>}, TContext> => {
+
+const mutationKey = ['refreshConsumerSession'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof refreshConsumerSession>>, {data: BodyType<RefreshConsumerSessionBody>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  refreshConsumerSession(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RefreshConsumerSessionMutationResult = NonNullable<Awaited<ReturnType<typeof refreshConsumerSession>>>
+    export type RefreshConsumerSessionMutationBody = BodyType<RefreshConsumerSessionBody>
+    export type RefreshConsumerSessionMutationError = ErrorType<void>
+
+    export const useRefreshConsumerSession = <TError = ErrorType<void>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof refreshConsumerSession>>, TError,{data: BodyType<RefreshConsumerSessionBody>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof refreshConsumerSession>>,
+        TError,
+        {data: BodyType<RefreshConsumerSessionBody>},
+        TContext
+      > => {
+      return useMutation(getRefreshConsumerSessionMutationOptions(options));
+    }
 
 export const registerConsumer = (
     consumerRegistrationInput: BodyType<ConsumerRegistrationInput>,
@@ -528,6 +591,70 @@ export const useVerifyConsumerOtp = <TError = ErrorType<unknown>,
         TContext
       > => {
       return useMutation(getVerifyConsumerOtpMutationOptions(options));
+    }
+
+/**
+ * @summary Partially update supported consumer profile fields; phone/email are immutable here.
+ */
+export const updateCurrentConsumer = (
+    consumerProfileUpdateInput: BodyType<ConsumerProfileUpdateInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<ConsumerProfile>(
+      {url: `/v1/identity/consumer/me`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: consumerProfileUpdateInput, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateCurrentConsumerMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentConsumer>>, TError,{data: BodyType<ConsumerProfileUpdateInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCurrentConsumer>>, TError,{data: BodyType<ConsumerProfileUpdateInput>}, TContext> => {
+
+const mutationKey = ['updateCurrentConsumer'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCurrentConsumer>>, {data: BodyType<ConsumerProfileUpdateInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  updateCurrentConsumer(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCurrentConsumerMutationResult = NonNullable<Awaited<ReturnType<typeof updateCurrentConsumer>>>
+    export type UpdateCurrentConsumerMutationBody = BodyType<ConsumerProfileUpdateInput>
+    export type UpdateCurrentConsumerMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Partially update supported consumer profile fields; phone/email are immutable here.
+ */
+export const useUpdateCurrentConsumer = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCurrentConsumer>>, TError,{data: BodyType<ConsumerProfileUpdateInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof updateCurrentConsumer>>,
+        TError,
+        {data: BodyType<ConsumerProfileUpdateInput>},
+        TContext
+      > => {
+      return useMutation(getUpdateCurrentConsumerMutationOptions(options));
     }
 
 /**

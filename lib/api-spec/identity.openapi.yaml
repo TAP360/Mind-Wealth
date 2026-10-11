@@ -4,6 +4,29 @@ info:
   version: 1.0.0
   description: External consumer mobile login API supplied by the project owner.
 paths:
+  /v1/identity/auth/refresh:
+    post:
+      operationId: refreshConsumerSession
+      description: Public endpoint. Rotates refresh tokens; the previous token is revoked.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken:
+                  type: string
+      responses:
+        "200":
+          description: New flat access/refresh token pair with the same user identity.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerTokens"
+        "400":
+          description: INVALID_REFRESH_TOKEN or ACCOUNT_NOT_ACTIVE.
   /v1/identity/consumer/auth/register:
     post:
       operationId: registerConsumer
@@ -136,6 +159,24 @@ paths:
               schema:
                 $ref: "#/components/schemas/OtpVerificationResult"
   /v1/identity/consumer/me:
+    put:
+      operationId: updateCurrentConsumer
+      summary: Partially update supported consumer profile fields; phone/email are immutable here.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ConsumerProfileUpdateInput"
+      responses:
+        "200":
+          description: Updated consumer profile
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ConsumerProfile"
     get:
       operationId: getCurrentConsumer
       summary: Get the authenticated consumer profile
@@ -155,6 +196,18 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    ConsumerProfileUpdateInput:
+      type: object
+      properties:
+        name:
+          type: string
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        halalMode:
+          type: boolean
+          nullable: true
     ConsumerRegistrationInput:
       type: object
       required: [email, password, businessCode]

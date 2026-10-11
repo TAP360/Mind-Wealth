@@ -54,8 +54,7 @@ export function useMobileLogin() {
   const localPhone = normalizeDigits(identifier.trim()).replace(/[\s()-]/g, "");
   const phoneReady = isPhone && /^\+[1-9]\d{0,3}$/.test(countryCode) &&
     isCallingCode(countryCode) && /^\d{6,15}$/.test(localPhone);
-  const emailReady = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim()) &&
-    password.length >= (isRegistering ? 8 : 1);
+  const emailReady = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim());
   const stage = session.tokens ? "profile" : mfaId ? "mfa" : registrationId ? "registrationCode" : verifiedPhone ? "phoneCode" : "identifier";
   const resendIn = Math.max(0, Math.ceil((resendAt - now) / 1000));
   const expiresIn = Math.max(0, Math.ceil((expiresAt - now) / 1000));
@@ -119,7 +118,7 @@ export function useMobileLogin() {
     setPassword(""); setOtpState(""); setRecoveryCode("");
     await queryClient.cancelQueries({ queryKey: IDENTITY_QUERY_ROOT });
     queryClient.removeQueries({ queryKey: IDENTITY_QUERY_ROOT });
-    await useAuthStore.getState().saveSession(tokens);
+    await useAuthStore.getState().saveSession(tokens, verifiedPhone ?? undefined);
     await loadProfile();
   };
   const acceptLogin = async (result: OtpVerificationResult) => {
@@ -139,6 +138,7 @@ export function useMobileLogin() {
 
   return {
     stage, identifier, isEmail, isPhone, countryCode, selectedCountry,
+    requiresPassword: false,
     password, setPassword, isRegistering,
     setIsRegistering: (value: boolean) => {
       if (busy.current) return;
@@ -174,18 +174,15 @@ export function useMobileLogin() {
     normalizedPhone: verifiedPhone ?? (phoneReady ? `${countryCode}${localPhone}` : null),
     canContinue: !working && (isEmail ? emailReady : phoneReady && resendIn === 0),
     isPending: working || (stage === "profile" && session.isFetching),
-    error: localError ?? (session.error ? authErrorMessage(session.error, language) : null),
+    error: localError ?? (stage === "identifier" && isEmail
+      ? authErrorMessage(new Error("EMAIL_OTP_UNAVAILABLE"), language)
+      : session.error ? authErrorMessage(session.error, language) : null),
     resendIn, expiresIn,
     continueAuth: () => run(async () => {
       if (isEmail) {
-        if (!emailReady) throw new Error(isRegistering && password.length < 8 ? "PASSWORD_TOO_SHORT" : "INVALID_EMAIL");
-        const data = { email: identifier.trim(), password, businessCode: BUSINESS_CODE };
-        if (isRegistering) {
-          const result = await register.mutateAsync({ data });
-          if (typeof result?.userId !== "string" || !result.userId.trim()) throw new Error("INVALID_API_RESPONSE");
-          setPassword(""); setOtpState(""); setRegistrationId(result.userId);
-        } else await acceptLogin(await emailLogin.mutateAsync({ data }));
-        return;
+        // The owner selected email OTP, not password login. No email-OTP
+        // contract exists in the supplied APIs; never put an email into "phone".
+        throw new Error("EMAIL_OTP_UNAVAILABLE");
       }
       if (!phoneReady) throw new Error("INVALID_PHONE");
       if (Date.now() < resendAt) throw new Error("RATE_LIMITED");

@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
   Animated,
+  Alert,
   Dimensions,
   FlatList,
   Image,
@@ -23,6 +24,8 @@ import { useLocalization } from '@/localization';
 import { IdentityAuthForm } from '@/components/IdentityAuthForm';
 import { useMobileLogin } from '@/hooks/useMobileLogin';
 import { useConsumerSession } from '@/hooks/useConsumerSession';
+import { useConsumerProfileUpdate } from '@/hooks/useConsumerProfileUpdate';
+import { authErrorMessage } from '@/utils/authErrors';
 
 const { width, height } = Dimensions.get('window');
 
@@ -197,9 +200,10 @@ export default function OnboardingScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { completeOnboarding } = useApp();
-  const { t } = useLocalization();
+  const { t, language } = useLocalization();
   const auth = useMobileLogin();
   const { data: consumer, isAuthenticated } = useConsumerSession();
+  const profileUpdate = useConsumerProfileUpdate();
 
   const [phase, setPhase] = useState<
     'splash' | 'slides' | 'auth' | 'name' | 'assessment' | 'result'
@@ -389,8 +393,17 @@ export default function OnboardingScreen() {
     }
   };
 
-  const handleNameNext = () => {
-    if (!userName.trim()) return;
+  const handleNameNext = async () => {
+    if (!userName.trim() || profileUpdate.isPending) return;
+    try {
+      if (userName.trim() !== consumer?.name?.trim()) await profileUpdate.update({ name: userName.trim() });
+    } catch (error) {
+      // Remain on the name step; never claim an unsaved name was persisted.
+      const message = authErrorMessage(error, language);
+      if (Platform.OS === 'web') window.alert(message);
+      else Alert.alert(t('onboarding.nameTitle'), message);
+      return;
+    }
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     fadeTransition(() => setPhase('assessment'));
   };
@@ -654,6 +667,8 @@ export default function OnboardingScreen() {
           <TextInput
             style={styles.nameInput}
             value={userName}
+            testID="onboarding-name"
+            editable={!profileUpdate.isPending}
             onChangeText={setUserName}
             placeholder={t('onboarding.namePlaceholder')}
             placeholderTextColor="rgba(255,255,255,0.4)"
@@ -664,10 +679,10 @@ export default function OnboardingScreen() {
           <Pressable
             style={[
               styles.assessBtn,
-              !userName.trim() && styles.assessBtnDisabled,
+              (!userName.trim() || profileUpdate.isPending) && styles.assessBtnDisabled,
             ]}
             onPress={handleNameNext}
-            disabled={!userName.trim()}
+            disabled={!userName.trim() || profileUpdate.isPending}
           >
             <LinearGradient
               colors={['#2E3192', '#92278F', '#F37021']}
@@ -675,7 +690,7 @@ export default function OnboardingScreen() {
               end={{ x: 1, y: 0 }}
               style={styles.assessBtnGrad}
             >
-              <Text style={styles.assessBtnText}>{t('onboarding.continue')}</Text>
+              <Text style={styles.assessBtnText}>{profileUpdate.isPending ? t('common.loading') : t('onboarding.continue')}</Text>
             </LinearGradient>
           </Pressable>
         </Animated.View>

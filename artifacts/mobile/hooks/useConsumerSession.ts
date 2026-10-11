@@ -5,7 +5,7 @@ import {
   useGetCurrentConsumer,
   type ConsumerTokens,
 } from "@workspace/api-client-react";
-import { useAuthStore } from "@/stores/authStore";
+import { saveConsumerProfile, useAuthStore } from "@/stores/authStore";
 import "@/utils/identityTransport";
 
 export const IDENTITY_QUERY_ROOT = ["identity", "consumer"] as const;
@@ -23,6 +23,7 @@ export function consumerQueryOptions(tokens: ConsumerTokens | null) {
         if (!tokens || !profile || typeof profile.id !== "string" || profile.id !== tokens.userId) {
           throw new Error("INVALID_PROFILE");
         }
+        await saveConsumerProfile(profile);
         return profile;
       },
     },

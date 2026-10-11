@@ -22,6 +22,8 @@ import { ensureAuthHydrated } from '@/stores/authStore';
 import { useConsumerSession } from '@/hooks/useConsumerSession';
 import { useColors } from '@/hooks/useColors';
 import { authErrorMessage } from '@/utils/authErrors';
+import { Provider as ReduxProvider } from 'react-redux';
+import { identityStore } from '@/stores/authStore';
 
 SplashScreen.preventAutoHideAsync();
 setBaseUrl(`https://${process.env.EXPO_PUBLIC_DOMAIN}`);
@@ -110,6 +112,7 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
+      <ReduxProvider store={identityStore}>
       <QueryClientProvider client={queryClient}>
       <LocalizationProvider>
         <ErrorBoundary>
@@ -123,6 +126,7 @@ export default function RootLayout() {
         </ErrorBoundary>
       </LocalizationProvider>
       </QueryClientProvider>
+      </ReduxProvider>
     </SafeAreaProvider>
   );
 }

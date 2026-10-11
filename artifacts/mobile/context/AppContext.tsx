@@ -1,4 +1,7 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { encryptedStorage as AsyncStorage } from '@/storage/encryptedStorage';
+import { useAuthStore } from '@/stores/authStore';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
+import { useLocalization } from '@/localization';
 import React, {
   createContext,
   useCallback,
@@ -242,12 +245,21 @@ async function registerAccount(email: string) {
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [state, setState] = useState<AppState>(defaultState);
   const [loaded, setLoaded] = useState(false);
+  const [loadError, setLoadError] = useState(false);
+  const consumer = useAuthStore((identity) => identity.profile);
+  const { language } = useLocalization();
+  const displayProfile = {
+    ...state.profile,
+    name: consumer?.name?.trim() || (language === 'ar' ? 'عضو بصيرة' : 'Bassera member'),
+    email: consumer?.email || '',
+  };
 
   useEffect(() => {
     loadState();
   }, []);
 
   const loadState = async () => {
+    setLoadError(false);
     try {
       const raw = await AsyncStorage.getItem(STORAGE_KEY);
       if (raw) {
@@ -260,9 +272,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           paymentMethods: Array.isArray(saved.paymentMethods) ? saved.paymentMethods : [],
         }));
       }
-    } catch {
-    } finally {
       setLoaded(true);
+    } catch {
+      // Do not overwrite saved data with defaults when reads/decryption fail.
+      setLoadError(true);
     }
   };
 
@@ -408,12 +421,24 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }));
   }, []);
 
-  if (!loaded) return null;
+  if (!loaded) return (
+    <View style={{ flex: 1, backgroundColor: '#0B1026', alignItems: 'center', justifyContent: 'center', padding: 28, gap: 20 }}>
+      {loadError ? <>
+        <Text accessibilityRole="alert" style={{ color: '#FFFFFF', textAlign: 'center' }}>
+          {language === 'ar' ? 'تعذر فتح البيانات المحفوظة. لم يتم حذف بياناتك.' : 'Unable to unlock saved data. Your data has not been deleted.'}
+        </Text>
+        <Pressable accessibilityRole="button" onPress={() => void loadState()}>
+          <Text style={{ color: '#FFFFFF' }}>{language === 'ar' ? 'حاول مرة أخرى' : 'Try again'}</Text>
+        </Pressable>
+      </> : <ActivityIndicator color="#FFFFFF" />}
+    </View>
+  );
 
   return (
     <AppContext.Provider
       value={{
         ...state,
+        profile: displayProfile,
         completeOnboarding,
         checkAccountExists,
         signIn,

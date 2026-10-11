@@ -21,19 +21,32 @@ import { useApp } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
 import { showProfilePhotoOptions } from '@/utils/profilePhoto';
+import { useConsumerProfileUpdate } from '@/hooks/useConsumerProfileUpdate';
+import { useConsumerSession } from '@/hooks/useConsumerSession';
+import { authErrorMessage } from '@/utils/authErrors';
+import { getCountryOptions } from '@/utils/countries';
+import { useAuthStore } from '@/stores/authStore';
 
 export default function PersonalInfoScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const { profile, updateProfile } = useApp();
-  const { t, isRTL } = useLocalization();
+  const { t, isRTL, language } = useLocalization();
+  const { data: consumer } = useConsumerSession();
+  const profileUpdate = useConsumerProfileUpdate();
+  const [saving, setSaving] = useState(false);
 
   const [name, setName] = useState(profile.name);
-  const [email, setEmail] = useState(profile.email ?? '');
-  const [phone, setPhone] = useState('');
-  const [country, setCountry] = useState('Egypt');
-  const [currency, setCurrency] = useState('EGP');
+  const email = consumer?.email ?? '';
+  const phone = useAuthStore((identity) => identity.phone) ?? '';
+  const countryCode = consumer?.demographics?.countryCode;
+  const country = getCountryOptions(language).find((option) => option.country === countryCode)?.name ?? '';
+  let currency = '';
+  try {
+    const preferences = JSON.parse(consumer?.preferences || '{}');
+    if (typeof preferences.currency === 'string') currency = preferences.currency;
+  } catch { /* An unavailable API preference is shown empty, never fabricated. */ }
   const [changed, setChanged] = useState(false);
 
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
@@ -49,7 +62,16 @@ export default function PersonalInfoScreen() {
       Alert.alert(t('personal.nameRequired'), t('personal.nameRequiredMessage'));
       return;
     }
-    await updateProfile({ name: name.trim(), email: email.trim() });
+    if (saving) return;
+    setSaving(true);
+    try {
+      await profileUpdate.update({ name: name.trim() });
+    } catch (error) {
+      const message = authErrorMessage(error, language);
+      if (Platform.OS === 'web') window.alert(message);
+      else Alert.alert(t('personal.title'), message);
+      return;
+    } finally { setSaving(false); }
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setChanged(false);
     if (Platform.OS === 'web') {
@@ -124,6 +146,7 @@ export default function PersonalInfoScreen() {
             {t('personal.fullName')}
           </Text>
           <TextInput
+            testID="personal-name"
             style={[
               styles.input,
               { color: colors.foreground, borderBottomColor: colors.border },
@@ -148,7 +171,7 @@ export default function PersonalInfoScreen() {
               { color: colors.foreground, borderBottomColor: colors.border },
             ]}
             value={email}
-            onChangeText={handleChange(setEmail)}
+            editable={false}
             placeholder={t('personal.emailPlaceholder')}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="email-address"
@@ -169,7 +192,7 @@ export default function PersonalInfoScreen() {
               { color: colors.foreground, borderBottomColor: colors.border },
             ]}
             value={phone}
-            onChangeText={handleChange(setPhone)}
+            editable={false}
             placeholder={t('personal.phonePlaceholder')}
             placeholderTextColor={colors.mutedForeground}
             keyboardType="phone-pad"
@@ -189,13 +212,7 @@ export default function PersonalInfoScreen() {
               styles.picker,
               { borderBottomColor: colors.border },
             ]}
-            onPress={() =>
-              Alert.alert(
-                t('personal.country'),
-                t('Egypt\nSaudi Arabia\nUAE\nKuwait\nQatar\nBahrain'),
-                [{ text: t('common.ok') }],
-              )
-            }
+            disabled
           >
             <Text style={[styles.pickerText, { color: colors.foreground }]}>
               {country}
@@ -240,9 +257,10 @@ export default function PersonalInfoScreen() {
         </View>
 
         <Pressable
-          style={[styles.saveBtn, !changed && { opacity: 0.45 }]}
+            testID="personal-save"
+            style={[styles.saveBtn, (!changed || saving) && { opacity: 0.45 }]}
           onPress={handleSave}
-          disabled={!changed}
+            disabled={!changed || saving}
         >
           <LinearGradient
             colors={['#2E3192', '#92278F', '#F37021']}
@@ -250,7 +268,7 @@ export default function PersonalInfoScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.saveBtnGrad}
           >
-            <Text style={styles.saveBtnText}>{t('personal.save')}</Text>
+            <Text style={styles.saveBtnText}>{saving ? t('common.loading') : t('personal.save')}</Text>
           </LinearGradient>
         </Pressable>
       </ScrollView>

@@ -3,6 +3,11 @@ import type { Language } from "@/localization/preferences";
 
 const errors = {
   en: {
+    EMAIL_OTP_UNAVAILABLE: "Email OTP endpoints have not been supplied. Please use mobile sign-in for now.",
+    INVALID_REFRESH_TOKEN: "Your session has expired. Please sign in again.",
+    ACCOUNT_NOT_ACTIVE: "This account is not active. Please contact the account administrator.",
+    IDENTITY_HTTPS_REQUIRED: "This HTTP server is for development only. Configure an HTTPS identity server for production.",
+    IDENTITY_UNAVAILABLE: "The development identity server is unavailable. Please try again.",
     INVALID_EMAIL: "Enter a valid email address and password.",
     PASSWORD_TOO_SHORT: "Use at least 8 characters for your new password.",
     INVALID_CREDENTIALS: "The email or password is incorrect.",
@@ -27,6 +32,11 @@ const errors = {
     UNKNOWN: "Unable to complete this request. Please try again.",
   },
   ar: {
+    EMAIL_OTP_UNAVAILABLE: "لم يتم توفير واجهات رمز التحقق للبريد الإلكتروني. استخدم تسجيل الدخول بالجوال حالياً.",
+    INVALID_REFRESH_TOKEN: "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
+    ACCOUNT_NOT_ACTIVE: "هذا الحساب غير نشط. يرجى التواصل مع مسؤول الحساب.",
+    IDENTITY_HTTPS_REQUIRED: "هذا الخادم غير المشفر للتطوير فقط. قم بإعداد خادم هوية HTTPS للإنتاج.",
+    IDENTITY_UNAVAILABLE: "خادم الهوية للتطوير غير متاح. حاول مرة أخرى.",
     INVALID_EMAIL: "أدخل عنوان بريد إلكتروني وكلمة مرور صالحين.",
     PASSWORD_TOO_SHORT: "استخدم 8 أحرف على الأقل لكلمة المرور الجديدة.",
     INVALID_CREDENTIALS: "البريد الإلكتروني أو كلمة المرور غير صحيحين.",
