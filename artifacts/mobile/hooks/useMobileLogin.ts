@@ -4,6 +4,7 @@ import axios from "axios";
 import { useQueryClient } from "@tanstack/react-query";
 import {
   useValidateConsumerPhone, useRequestConsumerOtp, useVerifyConsumerOtp,
+  useRequestConsumerEmailOtp,
   useLoginConsumer, useRegisterConsumer, useVerifyConsumerRegistrationOtp,
   useChallengeConsumerMfa, useRecoverConsumerMfa,
   type ConsumerTokens, type OtpRequestResult, type OtpVerificationResult,
@@ -16,7 +17,7 @@ import { consumerQueryOptions, IDENTITY_QUERY_ROOT, logoutSession, useConsumerSe
 import { authErrorMessage, getAuthErrorCode } from "@/utils/authErrors";
 import { isCallingCode, normalizeDigits, splitInternationalInput, type CountryCode } from "@/utils/countries";
 
-const BUSINESS_CODE = process.env.EXPO_PUBLIC_IDENTITY_BUSINESS_CODE || "NW-EG";
+const BUSINESS_CODE = process.env.EXPO_PUBLIC_IDENTITY_BUSINESS_CODE || "neurowealth";
 
 export function useMobileLogin() {
   const { language } = useLocalization();
@@ -25,7 +26,8 @@ export function useMobileLogin() {
   const session = useConsumerSession();
   const validate = useValidateConsumerPhone({ mutation: { retry: false } });
   const request = useRequestConsumerOtp({ mutation: { retry: false } });
-  const verifyPhone = useVerifyConsumerOtp({ mutation: { retry: false, gcTime: 0 } });
+  const requestEmail = useRequestConsumerEmailOtp({ mutation: { retry: false } });
+  const verifyOtp = useVerifyConsumerOtp({ mutation: { retry: false, gcTime: 0 } });
   const emailLogin = useLoginConsumer({ mutation: { retry: false, gcTime: 0 } });
   const register = useRegisterConsumer({ mutation: { retry: false, gcTime: 0 } });
   const verifyRegistration = useVerifyConsumerRegistrationOtp({ mutation: { retry: false, gcTime: 0 } });
@@ -41,6 +43,7 @@ export function useMobileLogin() {
   const [useRecoveryCode, setUseRecoveryCodeState] = useState(false);
   const [recoveryCode, setRecoveryCode] = useState("");
   const [verifiedPhone, setVerifiedPhone] = useState<string | null>(null);
+  const [verifiedEmail, setVerifiedEmail] = useState<string | null>(null);
   const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [mfaId, setMfaId] = useState<string | null>(null);
   const [expiresAt, setExpiresAt] = useState(0);
@@ -48,6 +51,11 @@ export function useMobileLogin() {
   const [now, setNow] = useState(Date.now());
   const [working, setWorking] = useState(false);
   const [localError, setLocalError] = useState<string | null>(null);
+  const [verifiedPhoneInput, setVerifiedPhoneInput] = useState<{
+    businessCode: string;
+    phone: string;
+    language: "ar" | "en";
+  } | null>(null);
   const busy = useRef(false);
   const isEmail = identifier.includes("@");
   const isPhone = !isEmail && (phoneMode || /^[+\d٠-٩۰-۹]/.test(identifier.trim()));
@@ -55,7 +63,7 @@ export function useMobileLogin() {
   const phoneReady = isPhone && /^\+[1-9]\d{0,3}$/.test(countryCode) &&
     isCallingCode(countryCode) && /^\d{6,15}$/.test(localPhone);
   const emailReady = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier.trim());
-  const stage = session.tokens ? "profile" : mfaId ? "mfa" : registrationId ? "registrationCode" : verifiedPhone ? "phoneCode" : "identifier";
+  const stage = session.tokens ? "profile" : mfaId ? "mfa" : registrationId ? "registrationCode" : verifiedEmail ? "emailCode" : verifiedPhone ? "phoneCode" : "identifier";
   const resendIn = Math.max(0, Math.ceil((resendAt - now) / 1000));
   const expiresIn = Math.max(0, Math.ceil((expiresAt - now) / 1000));
 
@@ -66,7 +74,7 @@ export function useMobileLogin() {
   }, [expiresAt, resendAt]);
 
   const resetSensitiveMutations = () => {
-    emailLogin.reset(); register.reset(); verifyPhone.reset();
+    emailLogin.reset(); register.reset(); verifyOtp.reset(); requestEmail.reset();
     verifyRegistration.reset(); mfa.reset(); recovery.reset();
   };
   const run = async (action: () => Promise<void>) => {
@@ -97,11 +105,11 @@ export function useMobileLogin() {
     }
   };
 
-  const startCode = (result: OtpRequestResult, phone: string) => {
+  const startCode = (result: OtpRequestResult, phone: string, phoneInput: { businessCode: string; phone: string; language: "ar" | "en" }) => {
     if (!Number.isFinite(result?.expiresIn) || result.expiresIn <= 0 ||
       !Number.isFinite(result?.resendAfter) || result.resendAfter < 0) throw new Error("INVALID_API_RESPONSE");
     const timestamp = Date.now();
-    setVerifiedPhone(phone); setOtpState("");
+    setVerifiedPhone(phone); setVerifiedPhoneInput(phoneInput); setOtpState("");
     setExpiresAt(timestamp + result.expiresIn * 1000);
     setResendAt(timestamp + result.resendAfter * 1000);
     setNow(timestamp);
@@ -110,15 +118,16 @@ export function useMobileLogin() {
     const tokens = useAuthStore.getState().tokens;
     if (!tokens) throw new Error("INVALID_SESSION");
     await queryClient.fetchQuery(consumerQueryOptions(tokens));
-    router.replace("/(tabs)");
+    // The auth guard also redirects once the profile loads; Home re-checks surveyPending.
+    router.replace(useAuthStore.getState().surveyPending ? "/onboarding" : "/(tabs)");
   };
-  const finishSession = async (raw: ConsumerTokens, expectedId?: string) => {
+  const finishSession = async (raw: ConsumerTokens, expectedId?: string, newUser = false) => {
     const tokens = validateSession(raw);
     if (expectedId && tokens.userId !== expectedId) throw new Error("INVALID_SESSION");
     setPassword(""); setOtpState(""); setRecoveryCode("");
     await queryClient.cancelQueries({ queryKey: IDENTITY_QUERY_ROOT });
     queryClient.removeQueries({ queryKey: IDENTITY_QUERY_ROOT });
-    await useAuthStore.getState().saveSession(tokens, verifiedPhone ?? undefined);
+    await useAuthStore.getState().saveSession(tokens, verifiedPhone ?? undefined, newUser);
     await loadProfile();
   };
   const acceptLogin = async (result: OtpVerificationResult) => {
@@ -128,11 +137,11 @@ export function useMobileLogin() {
       return;
     }
     if (result?.mfaRequired !== false || !result.tokens) throw new Error("INVALID_SESSION");
-    await finishSession(result.tokens);
+    await finishSession(result.tokens, undefined, result.newUser === true);
   };
   const changeIdentifier = () => {
     if (busy.current) return;
-    setVerifiedPhone(null); setRegistrationId(null); setMfaId(null);
+    setVerifiedPhone(null); setVerifiedPhoneInput(null); setVerifiedEmail(null); setRegistrationId(null); setMfaId(null);
     setOtpState(""); setPassword(""); setRecoveryCode(""); setLocalError(null);
   };
 
@@ -174,31 +183,53 @@ export function useMobileLogin() {
     normalizedPhone: verifiedPhone ?? (phoneReady ? `${countryCode}${localPhone}` : null),
     canContinue: !working && (isEmail ? emailReady : phoneReady && resendIn === 0),
     isPending: working || (stage === "profile" && session.isFetching),
-    error: localError ?? (stage === "identifier" && isEmail
-      ? authErrorMessage(new Error("EMAIL_OTP_UNAVAILABLE"), language)
-      : session.error ? authErrorMessage(session.error, language) : null),
+    error: localError ?? (session.error ? authErrorMessage(session.error, language) : null),
     resendIn, expiresIn,
     continueAuth: () => run(async () => {
       if (isEmail) {
-        // The owner selected email OTP, not password login. No email-OTP
-        // contract exists in the supplied APIs; never put an email into "phone".
-        throw new Error("EMAIL_OTP_UNAVAILABLE");
+        if (!emailReady) throw new Error("INVALID_EMAIL");
+        const email = identifier.trim().toLowerCase();
+        const result = await requestEmail.mutateAsync({ data: { businessCode: BUSINESS_CODE, email } });
+        if (!Number.isFinite(result?.expiresIn) || result.expiresIn <= 0 ||
+          !Number.isFinite(result?.resendAfter) || result.resendAfter < 0) throw new Error("INVALID_API_RESPONSE");
+        const timestamp = Date.now();
+        setVerifiedPhone(null); setVerifiedPhoneInput(null); setVerifiedEmail(email); setOtpState("");
+        setExpiresAt(timestamp + result.expiresIn * 1000);
+        setResendAt(timestamp + result.resendAfter * 1000);
+        setNow(timestamp);
+        return;
       }
       if (!phoneReady) throw new Error("INVALID_PHONE");
       if (Date.now() < resendAt) throw new Error("RATE_LIMITED");
       const validated = await validate.mutateAsync({ data: { countryCode, phone: localPhone } });
       if (!validated.valid) throw new Error("INVALID_PHONE");
       if (typeof validated.e164 !== "string" || !/^\+[1-9]\d{6,14}$/.test(validated.e164)) throw new Error("INVALID_API_RESPONSE");
-      const result = await request.mutateAsync({ data: {
-        businessCode: BUSINESS_CODE, phone: validated.e164, language: await getRequestLanguage(),
-      } });
-      startCode(result, validated.e164);
+      const phoneInput = {
+        businessCode: BUSINESS_CODE,
+        phone: validated.e164,
+        language: await getRequestLanguage(),
+      };
+      const result = await request.mutateAsync({ data: phoneInput });
+      startCode(result, validated.e164, phoneInput);
     }),
     resendCode: () => run(async () => {
-      if (!verifiedPhone || Date.now() < resendAt) return;
-      startCode(await request.mutateAsync({ data: {
-        businessCode: BUSINESS_CODE, phone: verifiedPhone, language: await getRequestLanguage(),
-      } }), verifiedPhone);
+      if (verifiedEmail && Date.now() >= resendAt) {
+        const result = await requestEmail.mutateAsync({ data: { businessCode: BUSINESS_CODE, email: verifiedEmail } });
+        if (!Number.isFinite(result?.expiresIn) || result.expiresIn <= 0 ||
+          !Number.isFinite(result?.resendAfter) || result.resendAfter < 0) throw new Error("INVALID_API_RESPONSE");
+        const timestamp = Date.now();
+        setOtpState("");
+        setExpiresAt(timestamp + result.expiresIn * 1000);
+        setResendAt(timestamp + result.resendAfter * 1000);
+        setNow(timestamp);
+        return;
+      }
+      if (!verifiedPhone || !verifiedPhoneInput || Date.now() < resendAt) return;
+      const phoneInput = {
+        ...verifiedPhoneInput,
+        language: await getRequestLanguage(),
+      };
+      startCode(await request.mutateAsync({ data: phoneInput }), verifiedPhone, phoneInput);
     }),
     verifyCode: () => run(async () => {
       if (mfaId) {
@@ -212,17 +243,23 @@ export function useMobileLogin() {
       } else if (registrationId) {
         if (!/^\d{6}$/.test(otp)) throw new Error("INVALID_OTP");
         await finishSession(await verifyRegistration.mutateAsync({ data: { userId: registrationId, otp } }), registrationId);
+      } else if (verifiedEmail) {
+        if (!/^\d{6}$/.test(otp)) throw new Error("INVALID_OTP");
+        if (Date.now() >= expiresAt) throw new Error("OTP_EXPIRED");
+        await acceptLogin(await verifyOtp.mutateAsync({
+          data: { businessCode: BUSINESS_CODE, email: verifiedEmail, otp },
+        }));
       } else {
         if (!verifiedPhone || !/^\d{6}$/.test(otp)) throw new Error("INVALID_OTP");
         if (Date.now() >= expiresAt) throw new Error("OTP_EXPIRED");
-        await acceptLogin(await verifyPhone.mutateAsync({ data: { businessCode: BUSINESS_CODE, phone: verifiedPhone, otp } }));
+        await acceptLogin(await verifyOtp.mutateAsync({ data: { businessCode: BUSINESS_CODE, phone: verifiedPhone, otp } }));
       }
     }),
     changeIdentifier,
     retryProfile: () => run(loadProfile),
     cancelSession: () => run(async () => {
       await logoutSession(queryClient);
-      setVerifiedPhone(null); setRegistrationId(null); setMfaId(null);
+      setVerifiedPhone(null); setVerifiedPhoneInput(null); setRegistrationId(null); setMfaId(null);
       setIdentifierState(""); setPassword(""); setOtpState(""); setRecoveryCode("");
       router.replace("/login");
     }),

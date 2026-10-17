@@ -65,6 +65,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const { profile, clearData, updateProfile } = useApp();
   const { language, setLanguage, t, isRTL } = useLocalization();
+  const textAlign = isRTL ? "right" : "left";
   const { data: consumer } = useConsumerSession();
   const logout = useSessionLogout();
   const displayName = consumer?.name?.trim() || (language === "ar" ? "عضو بصيرة" : "Bassera member");
@@ -318,10 +319,10 @@ export default function ProfileScreen() {
           accessibilityLabel={t("personal.editName")}
           onPress={() => router.push("/personal-info")}
         >
-          <Text style={styles.profileName}>{displayName}</Text>
+          <Text style={[styles.profileName, { textAlign: "center" }]}>{displayName}</Text>
           <Feather name="edit-2" size={15} color="rgba(255,255,255,0.75)" />
         </Pressable>
-        {consumer?.email ? <Text style={styles.profileEmail}>{consumer.email}</Text> : null}
+        {consumer?.email ? <Text style={[styles.profileEmail, { textAlign: "center" }]}>{consumer.email}</Text> : null}
         <View style={styles.headerBadges}>
           <View
             style={[
@@ -337,7 +338,7 @@ export default function ProfileScreen() {
               {subInfo.label}
             </Text>
           </View>
-        <Text style={styles.joinText}>{t("profile.memberSince", { date: t(({ "Jan 2025": "data.jan2025" } as Record<string, string>)[profile.joinDate] ?? profile.joinDate) })}</Text>
+        <Text style={[styles.joinText, { textAlign: "center" }]}>{t("profile.memberSince", { date: t(({ "Jan 2025": "data.jan2025" } as Record<string, string>)[profile.joinDate] ?? profile.joinDate) })}</Text>
         </View>
       </LinearGradient>
 
@@ -358,12 +359,12 @@ export default function ProfileScreen() {
               <Text
                 style={[
                   styles.personalityLabel,
-                  { color: colors.mutedForeground },
+                  { color: colors.mutedForeground, textAlign },
                 ]}
               >
                 {t("profile.moneyPersonality")}
               </Text>
-              <Text style={[styles.personalityName, { color: pColor }]}>
+              <Text style={[styles.personalityName, { color: pColor, textAlign }]}>
                 {t(profile.personalityType)}
               </Text>
             </View>
@@ -398,10 +399,10 @@ export default function ProfileScreen() {
         >
           <View style={styles.subHeader}>
             <View>
-              <Text style={[styles.subTitle, { color: colors.foreground }]}>
+              <Text style={[styles.subTitle, { color: colors.foreground, textAlign }]}>
                 {t("profile.yourPlan")}
               </Text>
-              <Text style={[styles.subCurrent, { color: subInfo.color }]}>
+              <Text style={[styles.subCurrent, { color: subInfo.color, textAlign }]}>
                 {subInfo.label}
               </Text>
             </View>
@@ -434,7 +435,7 @@ export default function ProfileScreen() {
                     color={subInfo.color}
                   />
                   <Text
-                    style={[styles.featureText, { color: colors.foreground }]}
+                    style={[styles.featureText, { color: colors.foreground, textAlign }]}
                   >
                     {t(f)}
                   </Text>
@@ -447,17 +448,17 @@ export default function ProfileScreen() {
             <View style={styles.premiumPriceRow}>
               <View style={styles.priceCard}>
                 <Text
-                  style={[styles.priceLabel, { color: colors.mutedForeground }]}
+                  style={[styles.priceLabel, { color: colors.mutedForeground, textAlign }]}
                 >
                    {t("profile.premium")}
                 </Text>
-                <Text style={[styles.priceValue, { color: "#F37021" }]}>
+                <Text style={[styles.priceValue, { color: "#F37021", textAlign: "center" }]}>
                   150 EGP
                 </Text>
                 <Text
                   style={[
                     styles.pricePeriod,
-                    { color: colors.mutedForeground },
+                    { color: colors.mutedForeground, textAlign: "center" },
                   ]}
                 >
                   {t("profile.perMonth")}
@@ -465,17 +466,17 @@ export default function ProfileScreen() {
               </View>
               <View style={styles.priceCard}>
                 <Text
-                  style={[styles.priceLabel, { color: colors.mutedForeground }]}
+                  style={[styles.priceLabel, { color: colors.mutedForeground, textAlign }]}
                 >
                    {t("profile.premiumPlus")}
                 </Text>
-                <Text style={[styles.priceValue, { color: "#92278F" }]}>
+                <Text style={[styles.priceValue, { color: "#92278F", textAlign: "center" }]}>
                   400 EGP
                 </Text>
                 <Text
                   style={[
                     styles.pricePeriod,
-                    { color: colors.mutedForeground },
+                    { color: colors.mutedForeground, textAlign: "center" },
                   ]}
                 >
                   {t("profile.perMonth")}
@@ -490,7 +491,7 @@ export default function ProfileScreen() {
             <Text
               style={[
                 styles.settingsSectionTitle,
-                { color: colors.mutedForeground },
+                { color: colors.mutedForeground, textAlign },
               ]}
             >
               {section.title.toUpperCase()}
@@ -522,7 +523,7 @@ export default function ProfileScreen() {
                     <Text
                       style={[
                         styles.settingsLabel,
-                        { color: colors.foreground },
+                        { color: colors.foreground, textAlign },
                       ]}
                     >
                       {item.label}
@@ -538,7 +539,7 @@ export default function ProfileScreen() {
                       <Text
                         style={[
                           styles.settingsValue,
-                          { color: colors.mutedForeground },
+                          { color: colors.mutedForeground, textAlign },
                         ]}
                       >
                         {item.value}

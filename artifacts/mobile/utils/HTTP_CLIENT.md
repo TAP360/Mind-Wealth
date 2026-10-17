@@ -3,10 +3,11 @@
 The mobile app uses the existing Axios client in `utils/httpClient.ts` for
 the external consumer identity service. Its owner-supplied test base URL is
 `http://72.61.108.231:8080/`, explicitly approved for development despite
-unencrypted transport. Override it with `EXPO_PUBLIC_IDENTITY_API_URL`
-when connecting an HTTPS backend. `EXPO_PUBLIC_IDENTITY_BUSINESS_CODE` defaults
-to the documented `NW-EG`. Restart/rebuild Expo after changing these values.
-These settings are public configuration, not credentials.
+unencrypted transport. The API base URL is fixed to this service. The business
+code defaults to `neurowealth` and can be overridden with
+`EXPO_PUBLIC_IDENTITY_BUSINESS_CODE`; these values are public configuration,
+not credentials. Phone validation sends `{ countryCode, phone }`; the phone
+OTP request sends `{ businessCode, phone, language }`.
 
 ## Flow
 
@@ -24,12 +25,12 @@ list includes all calling-code regions from libphonenumber metadata, with
 English and Arabic country names. Shared calling codes remain selectable by
 country; server-side phone validation remains authoritative.
 
-The owner now selected email OTP rather than email/password. Its request and
-verification contracts have not been supplied. The UI hides the password,
-shows an explicit email-OTP-unavailable message, and never sends an email in
-the phone field or silently falls back to password login. The previously
-supplied register/login contracts remain in the generated client, but are not
-invoked by this new email-OTP selection.
+Email OTP uses the supplied email request contract and the shared OTP
+verification endpoint. Email is sent only to the email-specific request
+endpoint; it is never sent in the phone field. Phone and email OTP both use
+the same expiry, resend, session persistence, profile loading, and navigation
+behavior. The legacy password register/login operations are not used by this
+OTP flow.
 
 Phone OTP verification returns **nested** tokens, or
 `mfaRequired: true` plus userId. MFA is completed using POST
@@ -50,7 +51,9 @@ Phone flow:
 
 1. POST `/v1/identity/consumer/auth/phone/validate` with `{ countryCode, phone }`.
    Only a `valid: true` response with a canonical `e164` number continues.
-2. POST `/v1/identity/consumer/auth/otp/request` with `{ businessCode, phone, language }`.
+2. POST `/v1/identity/consumer/auth/otp/request` with
+   `{ businessCode, phone, language }`, where `phone` is the validated E.164
+   number. Language is also sent in the `Accept-Language` header.
    Resend uses this same endpoint. The UI honors server `expiresIn` and
    `resendAfter`, and never pre-fills or generates an OTP.
 3. POST `/v1/identity/consumer/auth/otp/verify` with `{ businessCode, phone, otp }`.
@@ -63,6 +66,23 @@ Phone flow:
     in the encrypted Redux snapshot, validated against the authenticated userId.
 6. Protected routes open only after the profile loads successfully. Restoring
    a persisted session fetches `/me` again; a failure offers retry/sign-out.
+7. When verification returns `newUser: true` (first sign-in by phone or email),
+   an encrypted, persisted `surveyPending` flag is saved with the session and
+   the user is routed to `/onboarding` (name step, then money-attitude survey).
+   Home also redirects there while the flag is set, so the auth guard's
+   automatic redirect or an app restart cannot skip the survey. Finishing the
+   survey clears the flag. Returning users (`newUser: false`) go straight Home.
+
+Email flow:
+
+1. POST `/v1/identity/consumer/auth/otp/email/request` with
+   `{ businessCode, email }`. The `Accept-Language` header carries the current
+   language. Resend uses the same endpoint.
+2. POST `/v1/identity/consumer/auth/otp/verify` with
+   `{ businessCode, email, otp }`. The response follows the same nested-token
+   or MFA contract as phone verification.
+3. On successful verification, both tokens are durably saved, `/me` is loaded,
+   and the user is routed to the authenticated app.
 
 PUT `/v1/identity/consumer/me` accepts a partial `{ name, language, halalMode }`
 update and returns the updated full profile. Personal Information and the

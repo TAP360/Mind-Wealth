@@ -24,6 +24,7 @@ import { useLocalization } from '@/localization';
 import { IdentityAuthForm } from '@/components/IdentityAuthForm';
 import { useMobileLogin } from '@/hooks/useMobileLogin';
 import { useConsumerSession } from '@/hooks/useConsumerSession';
+import { markSurveyComplete } from '@/stores/authStore';
 import { useConsumerProfileUpdate } from '@/hooks/useConsumerProfileUpdate';
 import { authErrorMessage } from '@/utils/authErrors';
 
@@ -433,6 +434,7 @@ export default function OnboardingScreen() {
       userName.trim() || undefined,
       consumer?.email || (auth.isEmail ? auth.identifier.trim() : undefined),
     );
+    await markSurveyComplete();
     router.replace('/');
   };
 
@@ -665,7 +667,13 @@ export default function OnboardingScreen() {
             {t('Bassera will personalize your experience based on your name.')}
           </Text>
           <TextInput
-            style={styles.nameInput}
+            style={[
+              styles.nameInput,
+              {
+                textAlign: language === 'ar' ? 'right' : 'left',
+                writingDirection: language === 'ar' ? 'rtl' : 'ltr',
+              },
+            ]}
             value={userName}
             testID="onboarding-name"
             editable={!profileUpdate.isPending}

@@ -15,6 +15,7 @@ export default function PaymentMethodsScreen() {
   const colors = useColors();
   const { paymentMethods, linkedAccounts, removePaymentMethod } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
@@ -44,10 +45,10 @@ export default function PaymentMethodsScreen() {
       const account = linkedAccounts.find((item) => item.id === method.accountId);
       return (
         <>
-          <Text style={[styles.methodName, { color: colors.foreground }]} numberOfLines={1}>
+          <Text style={[styles.methodName, { color: colors.foreground, textAlign }]} numberOfLines={1}>
             {account?.label ?? method.label}
           </Text>
-          <Text style={[styles.methodMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+          <Text style={[styles.methodMeta, { color: colors.mutedForeground, textAlign }]} numberOfLines={1}>
             {account?.institution ?? method.provider}
             {(account?.last4 ?? method.last4) ? ` · ${t('payments.endingIn', { last4: account?.last4 ?? method.last4 ?? '' })}` : ''}
           </Text>
@@ -56,10 +57,10 @@ export default function PaymentMethodsScreen() {
     }
     return (
       <>
-        <Text style={[styles.methodName, { color: colors.foreground }]} numberOfLines={1}>
+        <Text style={[styles.methodName, { color: colors.foreground, textAlign }]} numberOfLines={1}>
           {method.label}
         </Text>
-        <Text style={[styles.methodMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+        <Text style={[styles.methodMeta, { color: colors.mutedForeground, textAlign }]} numberOfLines={1}>
           {method.provider}
           {method.kind === 'card' && method.last4
             ? ` · ${t('payments.endingIn', { last4: method.last4 })}`
@@ -75,7 +76,7 @@ export default function PaymentMethodsScreen() {
         colors={[colors.darkBg, colors.indigo, colors.purple]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={[styles.header, { paddingTop: topPad + 12 }]}
+        style={[styles.header, { paddingTop: topPad + 12, flexDirection: isRTL ? 'row-reverse' : 'row' }]}
       >
         <Pressable
           style={styles.backButton}
@@ -87,8 +88,8 @@ export default function PaymentMethodsScreen() {
           <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={21} color="#FFFFFF" />
         </Pressable>
         <View style={styles.headerCopy}>
-          <Text style={styles.headerTitle}>{t('payments.title')}</Text>
-          <Text style={styles.headerSubtitle}>{t('payments.subtitle')}</Text>
+          <Text style={[styles.headerTitle, { textAlign }]}>{t('payments.title')}</Text>
+          <Text style={[styles.headerSubtitle, { textAlign }]}>{t('payments.subtitle')}</Text>
         </View>
         <Pressable
           style={styles.headerAdd}
@@ -111,8 +112,8 @@ export default function PaymentMethodsScreen() {
             <Feather name="info" size={17} color={colors.primary} />
           </View>
           <View style={styles.noticeCopy}>
-            <Text style={[styles.noticeTitle, { color: colors.foreground }]}>{t('payments.localTitle')}</Text>
-            <Text style={[styles.noticeText, { color: colors.mutedForeground }]}>{t('payments.localNotice')}</Text>
+            <Text style={[styles.noticeTitle, { color: colors.foreground, textAlign }]}>{t('payments.localTitle')}</Text>
+            <Text style={[styles.noticeText, { color: colors.mutedForeground, textAlign }]}>{t('payments.localNotice')}</Text>
           </View>
         </View>
 
@@ -121,8 +122,8 @@ export default function PaymentMethodsScreen() {
             <View style={[styles.emptyIcon, { backgroundColor: colors.secondary }]}>
               <Feather name="credit-card" size={27} color={colors.primary} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t('payments.emptyTitle')}</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t('payments.emptyMessage')}</Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground, textAlign: 'center' }]}>{t('payments.emptyTitle')}</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground, textAlign: 'center' }]}>{t('payments.emptyMessage')}</Text>
             <Pressable
               style={styles.primaryButton}
               onPress={() => router.push('/add-payment-method')}
@@ -150,7 +151,7 @@ export default function PaymentMethodsScreen() {
                   <View style={[styles.groupIcon, { backgroundColor: colors.card, borderColor: colors.border }]}>
                     <Feather name={group.icon} size={16} color={colors.primary} />
                   </View>
-                  <Text style={[styles.groupTitle, { color: colors.foreground }]}>{group.title}</Text>
+                  <Text style={[styles.groupTitle, { color: colors.foreground, textAlign }]}>{group.title}</Text>
                   <Text style={[styles.groupCount, { color: colors.mutedForeground }]}>{entries.length}</Text>
                 </View>
                 <View style={[styles.methodList, { backgroundColor: colors.card, borderColor: colors.border }]}>

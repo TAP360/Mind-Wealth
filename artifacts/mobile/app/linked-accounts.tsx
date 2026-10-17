@@ -31,6 +31,7 @@ export default function LinkedAccountsScreen() {
   const colors = useColors();
   const { linkedAccounts, paymentMethods, removeLinkedAccount } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
   const bottomPad = Platform.OS === 'web' ? 34 : insets.bottom;
 
@@ -58,7 +59,7 @@ export default function LinkedAccountsScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }]}>
-      <View style={[styles.header, { backgroundColor: colors.darkBg, paddingTop: topPad + 12 }]}>
+      <View style={[styles.header, { backgroundColor: colors.darkBg, paddingTop: topPad + 12, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <Pressable
           style={styles.backButton}
           onPress={() => router.back()}
@@ -68,7 +69,7 @@ export default function LinkedAccountsScreen() {
         >
           <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={21} color={colors.primaryForeground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.primaryForeground }]}>{t('accounts.title')}</Text>
+        <Text style={[styles.headerTitle, { color: colors.primaryForeground, textAlign: 'center' }]}>{t('accounts.title')}</Text>
         <Pressable
           style={styles.headerAdd}
           onPress={() => router.push('/add-linked-account')}
@@ -86,8 +87,8 @@ export default function LinkedAccountsScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.intro}>
-          <Text style={[styles.heading, { color: colors.foreground }]}>{t('accounts.heading')}</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{t('accounts.subtitle')}</Text>
+          <Text style={[styles.heading, { color: colors.foreground, textAlign }]}>{t('accounts.heading')}</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground, textAlign }]}>{t('accounts.subtitle')}</Text>
         </View>
 
         {linkedAccounts.length === 0 ? (
@@ -95,8 +96,8 @@ export default function LinkedAccountsScreen() {
             <View style={[styles.emptyIcon, { backgroundColor: colors.secondary }]}>
               <Feather name="layers" size={25} color={colors.primary} />
             </View>
-            <Text style={[styles.emptyTitle, { color: colors.foreground }]}>{t('accounts.emptyTitle')}</Text>
-            <Text style={[styles.emptyText, { color: colors.mutedForeground }]}>{t('accounts.emptyMessage')}</Text>
+            <Text style={[styles.emptyTitle, { color: colors.foreground, textAlign: 'center' }]}>{t('accounts.emptyTitle')}</Text>
+            <Text style={[styles.emptyText, { color: colors.mutedForeground, textAlign: 'center' }]}>{t('accounts.emptyMessage')}</Text>
             <Pressable
               style={[styles.primaryButton, { backgroundColor: colors.primary }]}
               onPress={() => router.push('/add-linked-account')}
@@ -109,7 +110,7 @@ export default function LinkedAccountsScreen() {
           </View>
         ) : (
           <View style={styles.accountList}>
-            <Text style={[styles.listCaption, { color: colors.mutedForeground }]}>
+            <Text style={[styles.listCaption, { color: colors.mutedForeground, textAlign }]}>
               {t('accounts.linkedCount', { count: linkedAccounts.length })}
             </Text>
             {linkedAccounts.map((account) => (
@@ -122,10 +123,10 @@ export default function LinkedAccountsScreen() {
                     <Feather name={KIND_ICONS[account.kind]} size={20} color={colors.primary} />
                   </View>
                   <View style={styles.accountInfo}>
-                    <Text style={[styles.accountInstitution, { color: colors.foreground }]} numberOfLines={1}>
+                    <Text style={[styles.accountInstitution, { color: colors.foreground, textAlign }]} numberOfLines={1}>
                       {account.institution}
                     </Text>
-                    <Text style={[styles.accountLabel, { color: colors.mutedForeground }]} numberOfLines={1}>
+                    <Text style={[styles.accountLabel, { color: colors.mutedForeground, textAlign }]} numberOfLines={1}>
                       {account.label}
                     </Text>
                   </View>
@@ -167,7 +168,7 @@ export default function LinkedAccountsScreen() {
 
         <View style={[styles.privacyNote, { backgroundColor: colors.secondary }]}>
           <Feather name="shield" size={16} color={colors.primary} />
-          <Text style={[styles.privacyText, { color: colors.secondaryForeground }]}>{t('accounts.privacyNote')}</Text>
+          <Text style={[styles.privacyText, { color: colors.secondaryForeground, textAlign }]}>{t('accounts.privacyNote')}</Text>
         </View>
       </ScrollView>
     </View>

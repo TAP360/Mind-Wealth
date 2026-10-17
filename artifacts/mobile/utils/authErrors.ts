@@ -3,7 +3,6 @@ import type { Language } from "@/localization/preferences";
 
 const errors = {
   en: {
-    EMAIL_OTP_UNAVAILABLE: "Email OTP endpoints have not been supplied. Please use mobile sign-in for now.",
     INVALID_REFRESH_TOKEN: "Your session has expired. Please sign in again.",
     ACCOUNT_NOT_ACTIVE: "This account is not active. Please contact the account administrator.",
     IDENTITY_HTTPS_REQUIRED: "This HTTP server is for development only. Configure an HTTPS identity server for production.",
@@ -32,7 +31,6 @@ const errors = {
     UNKNOWN: "Unable to complete this request. Please try again.",
   },
   ar: {
-    EMAIL_OTP_UNAVAILABLE: "لم يتم توفير واجهات رمز التحقق للبريد الإلكتروني. استخدم تسجيل الدخول بالجوال حالياً.",
     INVALID_REFRESH_TOKEN: "انتهت جلستك. يرجى تسجيل الدخول مرة أخرى.",
     ACCOUNT_NOT_ACTIVE: "هذا الحساب غير نشط. يرجى التواصل مع مسؤول الحساب.",
     IDENTITY_HTTPS_REQUIRED: "هذا الخادم غير المشفر للتطوير فقط. قم بإعداد خادم هوية HTTPS للإنتاج.",

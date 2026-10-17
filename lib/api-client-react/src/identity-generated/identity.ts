@@ -29,6 +29,7 @@ import type {
   ConsumerRegistrationResult,
   ConsumerRegistrationVerificationInput,
   ConsumerTokens,
+  EmailOtpRequestInput,
   OtpRequestInput,
   OtpRequestResult,
   OtpVerificationInput,
@@ -530,7 +531,71 @@ export const useRequestConsumerOtp = <TError = ErrorType<unknown>,
     }
 
 /**
- * @summary Verify an OTP and return a session or an MFA requirement
+ * @summary Request or resend an email OTP; the same endpoint handles login and signup
+ */
+export const requestConsumerEmailOtp = (
+    emailOtpRequestInput: BodyType<EmailOtpRequestInput>,
+ options?: SecondParameter<typeof identityRequest>,signal?: AbortSignal
+) => {
+
+
+      return identityRequest<OtpRequestResult>(
+      {url: `/v1/identity/consumer/auth/otp/email/request`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: emailOtpRequestInput, signal
+    },
+      options);
+    }
+
+
+
+export const getRequestConsumerEmailOtpMutationOptions = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestConsumerEmailOtp>>, TError,{data: BodyType<EmailOtpRequestInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+): UseMutationOptions<Awaited<ReturnType<typeof requestConsumerEmailOtp>>, TError,{data: BodyType<EmailOtpRequestInput>}, TContext> => {
+
+const mutationKey = ['requestConsumerEmailOtp'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof requestConsumerEmailOtp>>, {data: BodyType<EmailOtpRequestInput>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  requestConsumerEmailOtp(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RequestConsumerEmailOtpMutationResult = NonNullable<Awaited<ReturnType<typeof requestConsumerEmailOtp>>>
+    export type RequestConsumerEmailOtpMutationBody = BodyType<EmailOtpRequestInput>
+    export type RequestConsumerEmailOtpMutationError = ErrorType<unknown>
+
+    /**
+ * @summary Request or resend an email OTP; the same endpoint handles login and signup
+ */
+export const useRequestConsumerEmailOtp = <TError = ErrorType<unknown>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof requestConsumerEmailOtp>>, TError,{data: BodyType<EmailOtpRequestInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}
+ ): UseMutationResult<
+        Awaited<ReturnType<typeof requestConsumerEmailOtp>>,
+        TError,
+        {data: BodyType<EmailOtpRequestInput>},
+        TContext
+      > => {
+      return useMutation(getRequestConsumerEmailOtpMutationOptions(options));
+    }
+
+/**
+ * @summary Verify a phone or email OTP and return a session or an MFA requirement
  */
 export const verifyConsumerOtp = (
     otpVerificationInput: BodyType<OtpVerificationInput>,
@@ -580,7 +645,7 @@ const {mutation: mutationOptions, request: requestOptions} = options ?
     export type VerifyConsumerOtpMutationError = ErrorType<unknown>
 
     /**
- * @summary Verify an OTP and return a session or an MFA requirement
+ * @summary Verify a phone or email OTP and return a session or an MFA requirement
  */
 export const useVerifyConsumerOtp = <TError = ErrorType<unknown>,
     TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof verifyConsumerOtp>>, TError,{data: BodyType<OtpVerificationInput>}, TContext>, request?: SecondParameter<typeof identityRequest>}

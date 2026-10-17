@@ -45,7 +45,7 @@ export function IdentityAuthForm({ auth }: Props) {
   const ErrorLine = () =>
     auth.error ? <Text accessibilityRole="alert" accessibilityLiveRegion="polite" style={[styles.error, align]}>{auth.error}</Text> : null;
 
-  if (stage === 'phoneCode' || stage === 'registrationCode' || stage === 'mfa') {
+  if (stage === 'phoneCode' || stage === 'emailCode' || stage === 'registrationCode' || stage === 'mfa') {
     const mfa = stage === 'mfa';
     const recovery = mfa && auth.useRecoveryCode;
     const title = mfa ? tx('Two-step verification', 'التحقق بخطوتين') : tx('Enter your code', 'أدخل الرمز');
@@ -53,10 +53,10 @@ export function IdentityAuthForm({ auth }: Props) {
       ? recovery
         ? tx('Enter one of your saved recovery codes.', 'أدخل أحد رموز الاسترداد المحفوظة لديك.')
         : tx('Enter the 6-digit code from your authenticator app, or use a recovery code instead.', 'أدخل الرمز المكون من 6 أرقام من تطبيق المصادقة، أو استخدم رمز الاسترداد.')
-      : tx(`Verification code requested for ${auth.normalizedPhone ?? auth.identifier}.`, `تم طلب رمز تحقق لـ ${auth.normalizedPhone ?? auth.identifier}.`);
+      : tx(`Verification code requested for ${stage === 'emailCode' ? auth.identifier : auth.normalizedPhone ?? auth.identifier}.`, `تم طلب رمز تحقق لـ ${stage === 'emailCode' ? auth.identifier : auth.normalizedPhone ?? auth.identifier}.`);
     const value = recovery ? auth.recoveryCode : auth.otp;
     const ready = (recovery ? value.trim().length > 0 : auth.otp.length === 6) &&
-      (stage !== 'phoneCode' || auth.expiresIn > 0);
+      (!['phoneCode', 'emailCode'].includes(stage) || auth.expiresIn > 0);
     return (
       <KeyboardAwareScrollViewCompat
         style={styles.fill}
@@ -97,7 +97,7 @@ export function IdentityAuthForm({ auth }: Props) {
             onPress={() => auth.setUseRecoveryCode(!recovery)}
           />
         ) : null}
-        {stage === 'phoneCode' ? (
+        {stage === 'phoneCode' || stage === 'emailCode' ? (
           auth.resendIn > 0 ? (
             <Text style={styles.hint}>
               {tx(`Resend available in ${auth.resendIn}s`, `يمكنك إعادة الإرسال بعد ${auth.resendIn} ث`)}
@@ -106,12 +106,12 @@ export function IdentityAuthForm({ auth }: Props) {
             <Link id="auth-resend" label={tx('Resend code', 'إعادة إرسال الرمز')} onPress={() => auth.resendCode()} />
           )
         ) : null}
-        {stage === 'phoneCode' && auth.expiresIn > 0 ? (
+        {(stage === 'phoneCode' || stage === 'emailCode') && auth.expiresIn > 0 ? (
           <Text style={styles.hint}>
             {tx(`Code expires in ${Math.floor(auth.expiresIn / 60)}:${String(auth.expiresIn % 60).padStart(2, '0')}`, `ينتهي الرمز خلال ${Math.floor(auth.expiresIn / 60)}:${String(auth.expiresIn % 60).padStart(2, '0')}`)}
           </Text>
         ) : null}
-        {stage === 'phoneCode' && auth.expiresIn === 0 ? (
+        {(stage === 'phoneCode' || stage === 'emailCode') && auth.expiresIn === 0 ? (
           <Text style={styles.hint}>{tx('Code expired. Request a new code.', 'انتهت صلاحية الرمز. اطلب رمزاً جديداً.')}</Text>
         ) : null}
         <Link
@@ -197,7 +197,7 @@ export function IdentityAuthForm({ auth }: Props) {
         ref={identifierRef}
         key="identifier"
         testID="auth-identifier"
-        style={[styles.identifierInput, align]}
+        style={[styles.identifierInput, { textAlign: 'left', writingDirection: 'ltr' }]}
         value={auth.identifier}
         editable={!auth.isPending}
         onChangeText={auth.setIdentifier}

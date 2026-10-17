@@ -80,6 +80,7 @@ export default function CoachScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? "right" : "left";
   const goalPlan = useCreateGoalPlan();
   const [messages, setMessages] = useState<Message[]>([
     {
@@ -213,8 +214,8 @@ export default function CoachScreen() {
             <View style={styles.onlineDot} />
           </View>
           <View style={styles.coachInfo}>
-            <Text style={styles.coachName}>Bassera AI Coach</Text>
-            <Text style={styles.coachStatus}>
+            <Text style={[styles.coachName, { textAlign }]}>Bassera AI Coach</Text>
+            <Text style={[styles.coachStatus, { textAlign }]}>
               {t("coach.online")} · {t("Personalized for you")}
             </Text>
           </View>
@@ -262,7 +263,7 @@ export default function CoachScreen() {
                   colors={["#2E3192", "#92278F"]}
                   style={[styles.bubble, styles.userBubble]}
                 >
-                  <Text style={styles.userText}>{item.text}</Text>
+                  <Text style={[styles.userText, { textAlign }]}>{item.text}</Text>
                 </LinearGradient>
               </View>
             ) : (
@@ -274,7 +275,7 @@ export default function CoachScreen() {
                     { backgroundColor: colors.card },
                   ]}
                 >
-                  <Text style={[styles.aiText, { color: colors.foreground }]}>
+                  <Text style={[styles.aiText, { color: colors.foreground, textAlign }]}>
                     {item.text}
                   </Text>
                 </View>
@@ -303,7 +304,7 @@ export default function CoachScreen() {
               disabled={isTyping}
             >
               <Feather name={goalStep !== null ? "x" : "target"} size={18} color={goalStep !== null ? colors.foreground : colors.primaryForeground} />
-              <Text style={[styles.goalEntryText, { color: goalStep !== null ? colors.foreground : colors.primaryForeground }]}>
+              <Text style={[styles.goalEntryText, { color: goalStep !== null ? colors.foreground : colors.primaryForeground, textAlign }]}>
                 {goalStep !== null ? t("coach.goalCancel") : t("coach.goalPrompt")}
               </Text>
             </Pressable>
@@ -323,7 +324,7 @@ export default function CoachScreen() {
                 onPress={() => sendMessage(s)}
               >
                 <Text
-                  style={[styles.suggestedText, { color: colors.foreground }]}
+                  style={[styles.suggestedText, { color: colors.foreground, textAlign }]}
                 >
                   {t(({ "Why do I overspend?": "coach.whyOverspend", "Help me save for a car": "coach.saveCar", "Analyze my spending": "coach.analyzeSpending", "How to reduce debt?": "coach.reduceDebt", "What is my money personality?": "coach.personality", "Build an emergency fund": "coach.emergencyFund" } as Record<string, string>)[s] ?? s)}
                 </Text>
@@ -346,7 +347,12 @@ export default function CoachScreen() {
           <TextInput
             style={[
               styles.input,
-              { color: colors.foreground, backgroundColor: colors.secondary },
+              {
+                color: colors.foreground,
+                backgroundColor: colors.secondary,
+                textAlign,
+                writingDirection: isRTL ? "rtl" : "ltr",
+              },
             ]}
             value={input}
             onChangeText={setInput}

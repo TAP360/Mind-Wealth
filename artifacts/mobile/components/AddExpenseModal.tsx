@@ -38,6 +38,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
   const insets = useSafeAreaInsets();
   const { addTransaction } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? "right" : "left";
 
   const [type, setType] = useState<"expense" | "income">(initialType);
   const [step, setStep] = useState<"amount" | "details" | "feedback">("amount");
@@ -171,7 +172,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 </Text>
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("Category")}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t("Category")}</Text>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -285,9 +286,9 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 )}
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("Title (optional)")}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t("Title (optional)")}</Text>
               <TextInput
-                style={[styles.textField, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                style={[styles.textField, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border, textAlign, writingDirection: isRTL ? "rtl" : "ltr" }]}
                 value={title}
                 onChangeText={setTitle}
                 placeholder={`${t("e.g.")} ${t(selectedCategory?.label ?? "Transaction")}`}
@@ -295,7 +296,7 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 returnKeyType="done"
               />
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("How did this feel?")}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t("How did this feel?")}</Text>
               <View style={styles.emotionGrid}>
                 {EMOTION_TAGS.map((e) => (
                   <Pressable
@@ -322,9 +323,9 @@ export function AddExpenseModal({ visible, onClose, initialType = "expense" }: P
                 ))}
               </View>
 
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t("Note (optional)")}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t("Note (optional)")}</Text>
               <TextInput
-                style={[styles.textField, styles.noteField, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border }]}
+                style={[styles.textField, styles.noteField, { color: colors.foreground, backgroundColor: colors.secondary, borderColor: colors.border, textAlign, writingDirection: isRTL ? "rtl" : "ltr" }]}
                 value={note}
                 onChangeText={setNote}
                 placeholder={t("Add a note...")}

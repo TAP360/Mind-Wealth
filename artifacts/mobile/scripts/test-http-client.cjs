@@ -14,7 +14,9 @@ function loadSource(relativePath, mocks) {
     },
   }).outputText;
   const module = { exports: {} };
-  const mockedRequire = (name) => name in mocks ? mocks[name] : require(name);
+  const mockedRequire = (name) => name === "@/utils/reactotron"
+    ? { reportApiRequest() {} }
+    : name in mocks ? mocks[name] : require(name);
   new Function("require", "module", "exports", source)(mockedRequire, module, module.exports);
   return module.exports;
 }
@@ -148,9 +150,7 @@ async function main() {
     },
     "@/storage/authToken": tokenStore,
   });
-  const selectedIdentity = process.env.EXPO_PUBLIC_IDENTITY_API_URL || "http://72.61.108.231:8080/";
-  assert.equal(HTTP_BASE_URL, selectedIdentity.replace(/\/+$/, "") === "http://72.61.108.231:8080" && process.env.EXPO_PUBLIC_DOMAIN
-    ? `https://${process.env.EXPO_PUBLIC_DOMAIN}/api/identity-dev` : selectedIdentity);
+  assert.equal(HTTP_BASE_URL, "http://72.61.108.231:8080");
   const oldDomain = process.env.EXPO_PUBLIC_DOMAIN;
   const oldIdentityUrl = process.env.EXPO_PUBLIC_IDENTITY_API_URL;
   try {
@@ -163,7 +163,7 @@ async function main() {
         "@/localization/preferences": { getRequestLanguage: async () => "en" },
         "react-native": { Platform: { OS: os } },
       });
-      assert.equal(relay.HTTP_BASE_URL, "https://development-bridge.test/api/identity-dev", `${os} must use the HTTPS development bridge`);
+      assert.equal(relay.HTTP_BASE_URL, "http://72.61.108.231:8080", `${os} must use the supplied identity API`);
       assert.equal(relay.refreshClient.defaults.baseURL, relay.HTTP_BASE_URL);
     }
     process.env.EXPO_PUBLIC_IDENTITY_API_URL = "https://custom-identity.test";
@@ -171,7 +171,7 @@ async function main() {
       "@/stores/authStore": storeModule, "@/storage/authToken": tokenStore,
       "@/localization/preferences": { getRequestLanguage: async () => "en" },
     });
-    assert.equal(custom.HTTP_BASE_URL, "https://custom-identity.test");
+    assert.equal(custom.HTTP_BASE_URL, "http://72.61.108.231:8080");
   } finally {
     if (oldDomain === undefined) delete process.env.EXPO_PUBLIC_DOMAIN; else process.env.EXPO_PUBLIC_DOMAIN = oldDomain;
     if (oldIdentityUrl === undefined) delete process.env.EXPO_PUBLIC_IDENTITY_API_URL; else process.env.EXPO_PUBLIC_IDENTITY_API_URL = oldIdentityUrl;
@@ -243,9 +243,11 @@ async function main() {
     return { data, status: config.url.endsWith("/otp/request") ? 202 : 200, statusText: "OK", headers: {}, config };
   };
   const validated = await api.validateConsumerPhone({ countryCode: "+20", phone: "01012345678" });
-  const requested = await api.requestConsumerOtp({ businessCode: "NW-EG", phone: validated.e164, language: "en" });
+  const requested = await api.requestConsumerOtp({
+    businessCode: "neurowealth", phone: validated.e164, language: "en",
+  });
   assert.equal(requested.resendAfter, 60);
-  const verified = await api.verifyConsumerOtp({ businessCode: "NW-EG", phone: validated.e164, otp: "123456" });
+  const verified = await api.verifyConsumerOtp({ businessCode: "neurowealth", phone: validated.e164, otp: "123456" });
   await tokenStore.setAuthTokens(verified.tokens);
   const { QueryClient } = require("@tanstack/react-query");
   const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity } } });
@@ -260,8 +262,10 @@ async function main() {
   assert.notDeepEqual(session.consumerQueryKey("test-consumer"), session.consumerQueryKey("another-consumer"));
   assert.deepEqual(calls.map((c) => c.method), ["post", "post", "post", "get"]);
   assert.deepEqual(JSON.parse(calls[0].data), { countryCode: "+20", phone: "01012345678" });
-  assert.deepEqual(JSON.parse(calls[1].data), { businessCode: "NW-EG", phone: "+201012345678", language: "en" });
-  assert.deepEqual(JSON.parse(calls[2].data), { businessCode: "NW-EG", phone: "+201012345678", otp: "123456" });
+  assert.deepEqual(JSON.parse(calls[1].data), {
+    businessCode: "neurowealth", phone: "+201012345678", language: "en",
+  });
+  assert.deepEqual(JSON.parse(calls[2].data), { businessCode: "neurowealth", phone: "+201012345678", otp: "123456" });
   for (const call of calls.slice(0, 3)) assert.equal(call.headers.has("Authorization"), false);
   assert.equal(calls[3].headers.get("Authorization"), "Bearer verified-token");
   await assert.rejects(cache.fetchQuery(session.consumerQueryOptions({ ...tokens(), userId: "wrong-consumer" })), /INVALID_PROFILE/);
@@ -270,6 +274,51 @@ async function main() {
   assert.equal(JSON.parse(JSON.parse(await secureStorage.encryptedStorage.getItem(storeModule.AUTH_STORAGE_KEY)).tokens), null);
   assert.equal(cache.getQueryData(session.consumerQueryKey("test-consumer")), undefined);
   cache.clear();
+  const emailOtpCalls = [];
+  httpClient.defaults.adapter = async (config) => {
+    emailOtpCalls.push(config);
+    const data = config.url.endsWith("/otp/email/request")
+      ? { expiresIn: 300, resendAfter: 60 }
+      : { newUser: true, mfaRequired: false, tokens: tokens("email-verified-token") };
+    return {
+      data,
+      status: config.url.endsWith("/otp/email/request") ? 202 : 200,
+      statusText: "OK",
+      headers: {},
+      config,
+    };
+  };
+  const emailRequested = await api.requestConsumerEmailOtp({
+    businessCode: "neurowealth", email: "person@example.invalid",
+  });
+  assert.equal(emailRequested.expiresIn, 300);
+  const emailVerified = await api.verifyConsumerOtp({
+    businessCode: "neurowealth", email: "person@example.invalid", otp: "123456",
+  });
+  assert.equal(emailVerified.newUser, true);
+  assert.equal(emailVerified.tokens.accessToken, "email-verified-token");
+  assert.deepEqual(emailOtpCalls.map((config) => config.url), [
+    "/v1/identity/consumer/auth/otp/email/request",
+    "/v1/identity/consumer/auth/otp/verify",
+  ]);
+  assert.deepEqual(JSON.parse(emailOtpCalls[0].data), {
+    businessCode: "neurowealth", email: "person@example.invalid",
+  });
+  assert.deepEqual(JSON.parse(emailOtpCalls[1].data), {
+    businessCode: "neurowealth", email: "person@example.invalid", otp: "123456",
+  });
+  for (const config of emailOtpCalls) {
+    assert.equal(config.headers.has("Authorization"), false);
+    assert.equal(config.headers.get("Accept-Language"), "en");
+  }
+  await storeModule.useAuthStore.getState().saveSession(tokens("new-user-token"), undefined, true);
+  assert.equal(storeModule.useAuthStore.getState().surveyPending, true, "First-time users must be routed to the survey");
+  assert.equal(JSON.parse(JSON.parse(await secureStorage.encryptedStorage.getItem(storeModule.AUTH_STORAGE_KEY)).surveyPending), true);
+  await storeModule.markSurveyComplete();
+  assert.equal(storeModule.useAuthStore.getState().surveyPending, false);
+  await storeModule.useAuthStore.getState().saveSession(tokens("returning-token"));
+  assert.equal(storeModule.useAuthStore.getState().surveyPending, false, "Returning users go straight Home");
+  await tokenStore.clearAuthToken();
   const emailCalls = [];
   httpClient.defaults.adapter = async (config) => {
     emailCalls.push(config);

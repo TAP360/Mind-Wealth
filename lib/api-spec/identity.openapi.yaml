@@ -141,10 +141,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/OtpRequestResult"
+  /v1/identity/consumer/auth/otp/email/request:
+    post:
+      operationId: requestConsumerEmailOtp
+      summary: Request or resend an email OTP; the same endpoint handles login and signup
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/EmailOtpRequestInput"
+      responses:
+        "202":
+          description: Code requested; delivery depends on the identity service.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OtpRequestResult"
   /v1/identity/consumer/auth/otp/verify:
     post:
       operationId: verifyConsumerOtp
-      summary: Verify an OTP and return a session or an MFA requirement
+      summary: Verify a phone or email OTP and return a session or an MFA requirement
       requestBody:
         required: true
         content:
@@ -300,7 +317,15 @@ components:
           type: integer
         resendAfter:
           type: integer
-    OtpVerificationInput:
+    EmailOtpRequestInput:
+      type: object
+      required: [businessCode, email]
+      properties:
+        businessCode:
+          type: string
+        email:
+          type: string
+    PhoneOtpVerificationInput:
       type: object
       required: [businessCode, phone, otp]
       properties:
@@ -310,6 +335,20 @@ components:
           type: string
         otp:
           type: string
+    EmailOtpVerificationInput:
+      type: object
+      required: [businessCode, email, otp]
+      properties:
+        businessCode:
+          type: string
+        email:
+          type: string
+        otp:
+          type: string
+    OtpVerificationInput:
+      oneOf:
+        - $ref: "#/components/schemas/PhoneOtpVerificationInput"
+        - $ref: "#/components/schemas/EmailOtpVerificationInput"
     ConsumerTokens:
       type: object
       required: [accessToken, refreshToken, userId, userType, expiresIn]

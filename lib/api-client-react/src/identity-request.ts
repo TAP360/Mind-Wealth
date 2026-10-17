@@ -1,4 +1,4 @@
-import type { AxiosError, AxiosRequestConfig } from "axios";
+import type { AxiosError, AxiosRequestConfig } from 'axios';
 
 // External identity endpoints use an injected transport, independently of the
 // existing /api AI service. The mobile app injects its configured Axios client.
@@ -14,7 +14,9 @@ export function identityRequest<T>(
   options?: AxiosRequestConfig,
 ): Promise<T> {
   if (!transport) {
-    return Promise.reject(new Error("The identity API transport is not configured."));
+    return Promise.reject(
+      new Error('The identity API transport is not configured.'),
+    );
   }
   return transport<T>({ ...config, ...options });
 }

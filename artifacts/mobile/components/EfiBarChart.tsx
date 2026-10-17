@@ -2,6 +2,7 @@ import React from "react";
 import { StyleSheet, Text, View } from "react-native";
 
 import { useColors } from "@/hooks/useColors";
+import { useLocalization } from "@/localization";
 
 interface EfiDimension {
   label: string;
@@ -21,12 +22,14 @@ function safeScore(value: number) {
 
 export function EfiBarChart({ dimensions, title, outOfLabel }: EfiBarChartProps) {
   const colors = useColors();
+  const { isRTL } = useLocalization();
+  const textAlign = isRTL ? "right" : "left";
 
   return (
-    <View style={styles.chart}>
+    <View style={[styles.chart, { direction: isRTL ? "rtl" : "ltr" }]}>
       <View style={styles.heading}>
-        <Text style={[styles.title, { color: colors.foreground }]}>{title}</Text>
-        <Text style={[styles.unit, { color: colors.mutedForeground }]}>{outOfLabel}</Text>
+        <Text style={[styles.title, { color: colors.foreground, textAlign }]}>{title}</Text>
+        <Text style={[styles.unit, { color: colors.mutedForeground, textAlign }]}>{outOfLabel}</Text>
       </View>
       {dimensions.map((dimension, index) => {
         const value = safeScore(dimension.value);
@@ -40,10 +43,10 @@ export function EfiBarChart({ dimensions, title, outOfLabel }: EfiBarChartProps)
           >
             <View style={styles.labelRow}>
               <View style={[styles.marker, { backgroundColor: dimension.color }]} />
-              <Text style={[styles.label, { color: colors.foreground }]}>
+              <Text style={[styles.label, { color: colors.foreground, textAlign }]}>
                 {dimension.label}
               </Text>
-              <Text style={[styles.value, { color: colors.foreground }]}>
+              <Text style={[styles.value, { color: colors.foreground, textAlign }]}>
                 {Math.round(value)}
               </Text>
             </View>
@@ -86,7 +89,6 @@ const styles = StyleSheet.create({
     fontFamily: "Inter_700Bold",
     fontVariant: ["tabular-nums"],
     minWidth: 28,
-    textAlign: "right",
   },
   track: { height: 12, borderRadius: 8, overflow: "hidden" },
   fill: { height: "100%", borderRadius: 8 },

@@ -14,9 +14,12 @@ interface IdentityState {
   expiresAt: number;
   profileFetchedAt: number;
   sessionReady: boolean;
+  /** First-time user who has not finished the onboarding survey yet. */
+  surveyPending: boolean;
 }
 const initialState: IdentityState = {
   tokens: null, profile: null, phone: null, expiresAt: 0, profileFetchedAt: 0, sessionReady: false,
+  surveyPending: false,
 };
 let persistenceError: unknown;
 let hydrationError: unknown;
@@ -24,9 +27,10 @@ const slice = createSlice({
   name: "identity",
   initialState,
   reducers: {
-    session(state, action: PayloadAction<{ tokens: ConsumerTokens; phone?: string | null }>) {
+    session(state, action: PayloadAction<{ tokens: ConsumerTokens; phone?: string | null; newUser?: boolean }>) {
       state.tokens = action.payload.tokens; state.profile = null; state.profileFetchedAt = 0;
       state.phone = action.payload.phone ?? null;
+      state.surveyPending = action.payload.newUser === true;
       state.expiresAt = Date.now() + action.payload.tokens.expiresIn * 1000; state.sessionReady = false;
     },
     profile(state, action: PayloadAction<ConsumerProfile>) {
@@ -37,6 +41,7 @@ const slice = createSlice({
       state.expiresAt = Date.now() + action.payload.expiresIn * 1000;
     },
     ready(state, action: PayloadAction<boolean>) { state.sessionReady = action.payload; },
+    surveyDone(state) { state.surveyPending = false; },
     clear: () => ({ ...initialState }),
   },
 });
@@ -53,7 +58,7 @@ const reducer = persistReducer({
       catch (error) { hydrationError = error; throw error; }
     },
   },
-  whitelist: ["tokens", "profile", "phone", "expiresAt", "profileFetchedAt"],
+  whitelist: ["tokens", "profile", "phone", "expiresAt", "profileFetchedAt", "surveyPending"],
   writeFailHandler: (error: unknown) => { persistenceError = error; },
 }, slice.reducer);
 export const identityStore = configureStore({
@@ -102,7 +107,7 @@ export function ensureAuthHydrated(): Promise<void> {
         const raw = await encryptedStorage.getItem(AUTH_STORAGE_KEY);
         const serialized = raw ? JSON.parse(raw) : {};
         const payload: Partial<IdentityState> = {};
-        for (const key of ["tokens", "profile", "phone", "expiresAt", "profileFetchedAt"] as const) {
+        for (const key of ["tokens", "profile", "phone", "expiresAt", "profileFetchedAt", "surveyPending"] as const) {
           if (serialized[key] !== undefined) (payload as Record<string, unknown>)[key] = JSON.parse(serialized[key]);
         }
         if (payload.tokens) validateSession(payload.tokens);
@@ -154,12 +159,12 @@ function serialize(action: () => Promise<void>): Promise<void> {
   void operation.catch(() => undefined);
   return operation;
 }
-async function saveSession(raw: ConsumerTokens, phone?: string): Promise<void> {
+async function saveSession(raw: ConsumerTokens, phone?: string, newUser = false): Promise<void> {
   await ensureAuthHydrated();
   const tokens = validateSession(raw);
   return serialize(async () => {
     persistenceError = undefined;
-    identityStore.dispatch(slice.actions.session({ tokens, phone }));
+    identityStore.dispatch(slice.actions.session({ tokens, phone, newUser }));
     try {
       await flush();
       identityStore.dispatch(slice.actions.ready(true));
@@ -176,6 +181,15 @@ export async function saveConsumerProfile(profile: ConsumerProfile): Promise<voi
     if (!profile || profile.id !== identityStore.getState().tokens?.userId) throw new Error("INVALID_PROFILE");
     persistenceError = undefined;
     identityStore.dispatch(slice.actions.profile(profile));
+    await flush();
+  });
+}
+export async function markSurveyComplete(): Promise<void> {
+  await ensureAuthHydrated();
+  return serialize(async () => {
+    if (!identityStore.getState().surveyPending) return;
+    persistenceError = undefined;
+    identityStore.dispatch(slice.actions.surveyDone());
     await flush();
   });
 }
@@ -207,7 +221,7 @@ async function clearSession(): Promise<void> {
     catch {
       // Retain the previous in-memory session if durable logout failed.
       if (previous.tokens) {
-        identityStore.dispatch(slice.actions.session({ tokens: previous.tokens, phone: previous.phone }));
+        identityStore.dispatch(slice.actions.session({ tokens: previous.tokens, phone: previous.phone, newUser: previous.surveyPending }));
         if (previous.profile) identityStore.dispatch(slice.actions.profile(previous.profile));
         identityStore.dispatch(slice.actions.ready(previous.sessionReady));
       }

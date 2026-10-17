@@ -12,6 +12,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
 
+export const unstable_settings = {
+  initialRouteName: 'index',
+};
+
 function AICoachIcon({ color }: { color: ColorValue }) {
   return (
     <Svg width={24} height={24} viewBox="0 0 24 24" fill="none">
@@ -50,29 +54,24 @@ function AICoachIcon({ color }: { color: ColorValue }) {
 }
 
 function NativeTabLayout() {
-  const { t } = useLocalization();
+  const { t, isRTL } = useLocalization();
+  const tabs = [
+    { name: 'index', label: t('tabs.home'), icon: { default: 'house', selected: 'house.fill' } },
+    { name: 'coach', label: t('tabs.coach'), icon: { default: 'sparkles', selected: 'sparkles' } },
+    { name: 'insights', label: t('tabs.insights'), icon: { default: 'chart.bar', selected: 'chart.bar.fill' } },
+    { name: 'goals', label: t('tabs.goals'), icon: { default: 'target', selected: 'target' } },
+    { name: 'profile', label: t('tabs.profile'), icon: { default: 'person', selected: 'person.fill' } },
+  ] as const;
+  const orderedTabs = isRTL ? [...tabs].reverse() : tabs;
+
   return (
     <NativeTabs>
-      <NativeTabs.Trigger name="index">
-        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.home')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="coach">
-        <NativeTabs.Trigger.Icon sf={{ default: 'sparkles', selected: 'sparkles' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.coach')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="insights">
-        <NativeTabs.Trigger.Icon sf={{ default: 'chart.bar', selected: 'chart.bar.fill' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.insights')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="goals">
-        <NativeTabs.Trigger.Icon sf={{ default: 'target', selected: 'target' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.goals')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
-      <NativeTabs.Trigger name="profile">
-        <NativeTabs.Trigger.Icon sf={{ default: 'person', selected: 'person.fill' }} />
-        <NativeTabs.Trigger.Label>{t('tabs.profile')}</NativeTabs.Trigger.Label>
-      </NativeTabs.Trigger>
+      {orderedTabs.map((tab) => (
+        <NativeTabs.Trigger key={tab.name} name={tab.name}>
+          <NativeTabs.Trigger.Icon sf={tab.icon} />
+          <NativeTabs.Trigger.Label>{tab.label}</NativeTabs.Trigger.Label>
+        </NativeTabs.Trigger>
+      ))}
     </NativeTabs>
   );
 }
@@ -84,7 +83,16 @@ function ClassicTabLayout() {
   const isDark = colorScheme === 'dark';
   const isIOS = Platform.OS === 'ios';
   const isWeb = Platform.OS === 'web';
-  const { t } = useLocalization();
+  const { t, isRTL } = useLocalization();
+  const tabNames = ['index', 'coach', 'insights', 'goals', 'profile'] as const;
+  const orderedTabNames = isRTL ? [...tabNames].reverse() : tabNames;
+  const titles = {
+    index: t('tabs.home'),
+    coach: t('tabs.coach'),
+    insights: t('tabs.insights'),
+    goals: t('tabs.goals'),
+    profile: t('tabs.profile'),
+  };
 
   return (
     <Tabs
@@ -118,66 +126,50 @@ function ClassicTabLayout() {
           ) : null,
       }}
     >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: t('tabs.home'),
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="house" tintColor={color} size={24} />
-            ) : (
-              <Feather name="home" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="coach"
-        options={{
-          title: t('tabs.coach'),
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="sparkles" tintColor={color} size={24} />
-            ) : (
-              <AICoachIcon color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="insights"
-        options={{
-          title: t('tabs.insights'),
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="chart.bar" tintColor={color} size={24} />
-            ) : (
-              <Feather name="bar-chart-2" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="goals"
-        options={{
-          title: t('tabs.goals'),
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="target" tintColor={color} size={24} />
-            ) : (
-              <Feather name="target" size={22} color={color} />
-            ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: t('tabs.profile'),
-          tabBarIcon: ({ color }) =>
-            isIOS ? (
-              <SymbolView name="person" tintColor={color} size={24} />
-            ) : (
-              <Feather name="user" size={22} color={color} />
-            ),
-        }}
-      />
+      {orderedTabNames.map((name) => (
+        <Tabs.Screen
+          key={name}
+          name={name}
+          options={{
+            title: titles[name],
+            tabBarIcon: ({ color }) => {
+              if (name === 'index') {
+                return isIOS ? (
+                  <SymbolView name="house" tintColor={color} size={24} />
+                ) : (
+                  <Feather name="home" size={22} color={color} />
+                );
+              }
+              if (name === 'coach') {
+                return isIOS ? (
+                  <SymbolView name="sparkles" tintColor={color} size={24} />
+                ) : (
+                  <AICoachIcon color={color} />
+                );
+              }
+              if (name === 'insights') {
+                return isIOS ? (
+                  <SymbolView name="chart.bar" tintColor={color} size={24} />
+                ) : (
+                  <Feather name="bar-chart-2" size={22} color={color} />
+                );
+              }
+              if (name === 'goals') {
+                return isIOS ? (
+                  <SymbolView name="target" tintColor={color} size={24} />
+                ) : (
+                  <Feather name="target" size={22} color={color} />
+                );
+              }
+              return isIOS ? (
+                <SymbolView name="person" tintColor={color} size={24} />
+              ) : (
+                <Feather name="user" size={22} color={color} />
+              );
+            },
+          }}
+        />
+      ))}
     </Tabs>
   );
 }

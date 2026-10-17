@@ -8,9 +8,11 @@
     "scheme": "mobile",
     "userInterfaceStyle": "automatic",
     "ios": {
+      "bundleIdentifier": "com.bassera.ai",
       "supportsTablet": false
     },
     "android": {
+      "package": "com.bassera.ai",
       "backgroundColor": "#0B1026"
     },
     "web": {

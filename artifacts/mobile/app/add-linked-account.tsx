@@ -28,6 +28,7 @@ export default function AddLinkedAccountScreen() {
   const colors = useColors();
   const { addLinkedAccount } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const [mode, setMode] = useState<AddMode>('manual');
   const [institution, setInstitution] = useState('');
   const [label, setLabel] = useState('');
@@ -75,7 +76,7 @@ export default function AddLinkedAccountScreen() {
       style={[styles.screen, { backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <View style={[styles.header, { backgroundColor: colors.darkBg, paddingTop: topPad + 12 }]}>
+      <View style={[styles.header, { backgroundColor: colors.darkBg, paddingTop: topPad + 12, flexDirection: isRTL ? 'row-reverse' : 'row' }]}>
         <Pressable
           style={styles.backButton}
           onPress={() => router.back()}
@@ -85,7 +86,7 @@ export default function AddLinkedAccountScreen() {
         >
           <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={21} color={colors.primaryForeground} />
         </Pressable>
-        <Text style={[styles.headerTitle, { color: colors.primaryForeground }]}>{t('accounts.addTitle')}</Text>
+        <Text style={[styles.headerTitle, { color: colors.primaryForeground, textAlign: 'center' }]}>{t('accounts.addTitle')}</Text>
         <View style={styles.headerSpacer} />
       </View>
 
@@ -95,8 +96,8 @@ export default function AddLinkedAccountScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.heading, { color: colors.foreground }]}>{t('accounts.addHeading')}</Text>
-        <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{t('accounts.addSubtitle')}</Text>
+        <Text style={[styles.heading, { color: colors.foreground, textAlign }]}>{t('accounts.addHeading')}</Text>
+        <Text style={[styles.subtitle, { color: colors.mutedForeground, textAlign }]}>{t('accounts.addSubtitle')}</Text>
 
         <View style={[styles.modeSwitch, { backgroundColor: colors.secondary }]}>
           <Pressable
@@ -129,9 +130,9 @@ export default function AddLinkedAccountScreen() {
           <>
             <View style={[styles.formCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
               <View style={styles.field}>
-                <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t('accounts.institution')}</Text>
+                <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign }]}>{t('accounts.institution')}</Text>
                 <TextInput
-                  style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                  style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background, textAlign, writingDirection: isRTL ? 'rtl' : 'ltr' }]}
                   value={institution}
                   onChangeText={setInstitution}
                   placeholder={t('accounts.institutionPlaceholder')}
@@ -143,9 +144,9 @@ export default function AddLinkedAccountScreen() {
                 />
               </View>
               <View style={styles.field}>
-                <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t('accounts.accountLabel')}</Text>
+                <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign }]}>{t('accounts.accountLabel')}</Text>
                 <TextInput
-                  style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                  style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background, textAlign, writingDirection: isRTL ? 'rtl' : 'ltr' }]}
                   value={label}
                   onChangeText={setLabel}
                   placeholder={t('accounts.accountLabelPlaceholder')}
@@ -158,7 +159,7 @@ export default function AddLinkedAccountScreen() {
               </View>
 
               <View style={styles.field}>
-                <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t('accounts.accountKind')}</Text>
+                <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign }]}>{t('accounts.accountKind')}</Text>
                 <View style={styles.kindGrid}>
                   {ACCOUNT_KINDS.map((option) => {
                     const selected = kind === option;
@@ -174,7 +175,7 @@ export default function AddLinkedAccountScreen() {
                         accessibilityState={{ selected }}
                         testID={`linked-account-kind-${option}`}
                       >
-                        <Text style={[styles.kindOptionText, { color: selected ? colors.primary : colors.foreground }]}>
+                        <Text style={[styles.kindOptionText, { color: selected ? colors.primary : colors.foreground, textAlign }]}>
                           {t(`accounts.kind.${option}`)}
                         </Text>
                         {selected ? <Feather name="check" size={15} color={colors.primary} /> : null}
@@ -185,9 +186,9 @@ export default function AddLinkedAccountScreen() {
               </View>
 
               <View style={styles.field}>
-                <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{t('accounts.last4')}</Text>
+                <Text style={[styles.fieldLabel, { color: colors.foreground, textAlign }]}>{t('accounts.last4')}</Text>
                 <TextInput
-                  style={[styles.input, styles.last4Input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+                  style={[styles.input, styles.last4Input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background, writingDirection: 'ltr' }]}
                   value={last4}
                   onChangeText={handleLast4}
                   placeholder="••••"
@@ -197,12 +198,12 @@ export default function AddLinkedAccountScreen() {
                   accessibilityLabel={t('accounts.last4')}
                   testID="linked-account-last4"
                 />
-                <Text style={[styles.helperText, { color: colors.mutedForeground }]}>{t('accounts.last4Help')}</Text>
+                <Text style={[styles.helperText, { color: colors.mutedForeground, textAlign }]}>{t('accounts.last4Help')}</Text>
               </View>
             </View>
             <View style={[styles.safetyNote, { backgroundColor: colors.secondary }]}>
               <Feather name="lock" size={16} color={colors.primary} />
-              <Text style={[styles.safetyText, { color: colors.secondaryForeground }]}>{t('accounts.manualSafety')}</Text>
+              <Text style={[styles.safetyText, { color: colors.secondaryForeground, textAlign }]}>{t('accounts.manualSafety')}</Text>
             </View>
             <Pressable
               style={[styles.saveButton, { backgroundColor: colors.primary }, saving && styles.disabled]}
@@ -222,8 +223,8 @@ export default function AddLinkedAccountScreen() {
                 <Feather name="clock" size={18} color={colors.primary} />
               </View>
               <View style={styles.bannerCopy}>
-                <Text style={[styles.bannerTitle, { color: colors.foreground }]}>{t('accounts.openBankingUnavailableTitle')}</Text>
-                <Text style={[styles.bannerBody, { color: colors.mutedForeground }]}>{t('accounts.openBankingUnavailable')}</Text>
+                <Text style={[styles.bannerTitle, { color: colors.foreground, textAlign }]}>{t('accounts.openBankingUnavailableTitle')}</Text>
+                <Text style={[styles.bannerBody, { color: colors.mutedForeground, textAlign }]}>{t('accounts.openBankingUnavailable')}</Text>
               </View>
             </View>
             <Text style={[styles.sectionTitle, { color: colors.foreground }]}>{t('accounts.openBankingStepsTitle')}</Text>

@@ -153,6 +153,7 @@ export default function InsightsScreen() {
   const insets = useSafeAreaInsets();
   const { profile } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const [activeTab, setActiveTab] = useState<TabKey>(
     section === 'forecast' || section === 'nudges' || section === 'anomalies' ? section : 'efi',
   );
@@ -232,7 +233,7 @@ export default function InsightsScreen() {
   ];
 
   return (
-    <View style={{ flex: 1, backgroundColor: colors.background }}>
+    <View style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}>
     <ScrollView
       style={{ flex: 1, backgroundColor: colors.background, direction: isRTL ? 'rtl' : 'ltr' }}
       showsVerticalScrollIndicator={false}
@@ -242,8 +243,8 @@ export default function InsightsScreen() {
         colors={['#0B1026', '#1A1040', '#2E3192']}
         style={[styles.header, { paddingTop: topPad + 16 }]}
       >
-        <Text style={styles.headerTitle}>{t('insights.title')}</Text>
-        <Text style={styles.headerSub}>{t('insights.subtitle')}</Text>
+        <Text style={[styles.headerTitle, { textAlign }]}>{t('insights.title')}</Text>
+        <Text style={[styles.headerSub, { textAlign }]}>{t('insights.subtitle')}</Text>
 
         <View style={styles.scoreRow}>
           <View style={styles.headerScoreCard}>
@@ -309,10 +310,10 @@ export default function InsightsScreen() {
         {activeTab === 'efi' && (
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground, textAlign }]}>
                 {t('insights.emotionalIntelligence')}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                 {t('insights.dimensionsGlance')}
               </Text>
               <EfiBarChart
@@ -327,7 +328,7 @@ export default function InsightsScreen() {
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground, textAlign }]}>
                 {t('Risk Indicators')}
               </Text>
               {[
@@ -356,20 +357,20 @@ export default function InsightsScreen() {
                 >
                   <View style={{ flex: 1 }}>
                     <Text
-                      style={[styles.riskLabel, { color: colors.foreground }]}
+                      style={[styles.riskLabel, { color: colors.foreground, textAlign }]}
                     >
                       {t(r.label)}
                     </Text>
                     <Text
                       style={[
                         styles.riskDesc,
-                        { color: colors.mutedForeground },
+                        { color: colors.mutedForeground, textAlign },
                       ]}
                     >
                       {t(r.desc)}
                     </Text>
                   </View>
-                  <Text style={[styles.riskValue, { color: r.color }]}>
+                  <Text style={[styles.riskValue, { color: r.color, textAlign }]}>
                     {r.value}
                   </Text>
                 </View>
@@ -381,13 +382,13 @@ export default function InsightsScreen() {
         {activeTab === 'forecast' && (
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground, textAlign }]}>
                 {t('insights.monthlyOverview')}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                 {t('insights.savingsVsSpending')}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                 {t('insights.forecastSampleNote')}
               </Text>
               <View style={styles.chartRow}>
@@ -403,7 +404,7 @@ export default function InsightsScreen() {
                   <Text
                     style={[
                       styles.legendText,
-                      { color: colors.mutedForeground },
+                      { color: colors.mutedForeground, textAlign },
                     ]}
                   >
                     {t('insights.savings')}
@@ -419,7 +420,7 @@ export default function InsightsScreen() {
                   <Text
                     style={[
                       styles.legendText,
-                      { color: colors.mutedForeground },
+                      { color: colors.mutedForeground, textAlign },
                     ]}
                   >
                     {t('insights.spending')}
@@ -429,10 +430,10 @@ export default function InsightsScreen() {
             </View>
 
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground, textAlign }]}>
                 {t('insights.exampleEstimates')}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                 {t('insights.estimateNote')}
               </Text>
               {[
@@ -470,11 +471,11 @@ export default function InsightsScreen() {
                   >
                     <Feather name={p.icon as any} size={16} color={p.color} />
                   </View>
-                  <Text style={[styles.predCat, { color: colors.foreground }]}>
+                  <Text style={[styles.predCat, { color: colors.foreground, textAlign }]}>
                     {t(p.cat)}
                   </Text>
                   <Text
-                    style={[styles.predVal, { color: colors.mutedForeground }]}
+                    style={[styles.predVal, { color: colors.mutedForeground, textAlign }]}
                   >
                     {p.predicted.toLocaleString()} EGP
                   </Text>
@@ -492,8 +493,8 @@ export default function InsightsScreen() {
                 color="rgba(255,255,255,0.8)"
                 style={{ marginBottom: 8 }}
               />
-              <Text style={styles.savingOpTitle}>{t('insights.savingsOpportunity')}</Text>
-              <Text style={styles.savingOpText}>
+              <Text style={[styles.savingOpTitle, { textAlign }]}>{t('insights.savingsOpportunity')}</Text>
+              <Text style={[styles.savingOpText, { textAlign }]}>
                 {t('insights.forecastTip')}
               </Text>
             </LinearGradient>
@@ -503,10 +504,10 @@ export default function InsightsScreen() {
         {activeTab === 'nudges' && (
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground, textAlign }]}>
                 {t('profile.smartNudges')}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                 {t('insights.exampleNudgesNotice')}
               </Text>
             </View>
@@ -528,14 +529,14 @@ export default function InsightsScreen() {
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
-                    style={[styles.nudgeTitle, { color: colors.foreground }]}
+                    style={[styles.nudgeTitle, { color: colors.foreground, textAlign }]}
                   >
                     {t(n.title)}
                   </Text>
                   <Text
                     style={[
                       styles.nudgeText,
-                      { color: colors.mutedForeground },
+                      { color: colors.mutedForeground, textAlign },
                     ]}
                   >
                     {t(n.textKey)}
@@ -555,14 +556,14 @@ export default function InsightsScreen() {
         {activeTab === 'anomalies' && (
           <>
             <View style={[styles.card, { backgroundColor: colors.card }]}>
-              <Text style={[styles.cardTitle, { color: colors.foreground }]}>
+              <Text style={[styles.cardTitle, { color: colors.foreground, textAlign }]}>
                 {t('insights.anomalies')}
               </Text>
-              <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+              <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                 {t('insights.exampleAnomaliesNotice')}
               </Text>
               {trustError ? (
-                <Text style={[styles.cardSub, { color: colors.destructive }]}>
+                <Text style={[styles.cardSub, { color: colors.destructive, textAlign }]}>
                   {t('insights.trustStorageError')}
                 </Text>
               ) : null}
@@ -595,7 +596,7 @@ export default function InsightsScreen() {
                     <Text
                       style={[
                         styles.anomalyTitle,
-                        { color: colors.foreground },
+                        { color: colors.foreground, textAlign },
                       ]}
                     >
                       {t(a.title)}
@@ -603,7 +604,7 @@ export default function InsightsScreen() {
                     <Text
                       style={[
                         styles.anomalyDesc,
-                        { color: colors.mutedForeground },
+                        { color: colors.mutedForeground, textAlign },
                       ]}
                     >
                         {t(a.descKey)}
@@ -618,7 +619,7 @@ export default function InsightsScreen() {
                 />
                 <View style={styles.anomalyFooter}>
                   {pendingTrustedIds.includes(a.id) ? (
-                    <Text style={[styles.pendingText, { color: colors.mutedForeground }]}>
+                    <Text style={[styles.pendingText, { color: colors.mutedForeground, textAlign }]}>
                       {t('insights.hidingSoon')}
                     </Text>
                   ) : <View style={{ flex: 1 }} />}
@@ -640,7 +641,7 @@ export default function InsightsScreen() {
                       size={14}
                       color={colors.primary}
                     />
-                    <Text style={[styles.anomalyBtnText, { color: colors.primary }]}>
+                    <Text style={[styles.anomalyBtnText, { color: colors.primary, textAlign }]}>
                       {pendingTrustedIds.includes(a.id) ? t('insights.undo') : t('insights.trustThis')}
                     </Text>
                   </Pressable>
@@ -651,7 +652,7 @@ export default function InsightsScreen() {
               trustedIds.includes(a.id) && !pendingTrustedIds.includes(a.id),
             ) ? (
               <View style={[styles.card, { backgroundColor: colors.card }]}>
-                <Text style={[styles.cardSub, { color: colors.mutedForeground }]}>
+                <Text style={[styles.cardSub, { color: colors.mutedForeground, textAlign }]}>
                   {t('insights.noExampleAnomalies')}
                 </Text>
               </View>

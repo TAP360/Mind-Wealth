@@ -125,6 +125,7 @@ export default function GoalsScreen() {
   const insets = useSafeAreaInsets();
   const { goals, streak, profile, addGoal } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const [showAdd, setShowAdd] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState('');
   const [newGoalTarget, setNewGoalTarget] = useState('');
@@ -147,8 +148,8 @@ export default function GoalsScreen() {
           colors={['#0B1026', '#1A1040', '#2E3192']}
           style={[styles.header, { paddingTop: topPad + 16 }]}
         >
-          <Text style={styles.headerTitle}>{t('goals.title')}</Text>
-          <Text style={styles.headerSub}>
+          <Text style={[styles.headerTitle, { textAlign }]}>{t('goals.title')}</Text>
+          <Text style={[styles.headerSub, { textAlign }]}>
             {t('Build your financial future, one goal at a time')}
           </Text>
 
@@ -173,14 +174,14 @@ export default function GoalsScreen() {
             <View style={styles.summaryRow}>
               <View>
                 <Text
-                  style={[styles.summaryAmount, { color: colors.foreground }]}
+                  style={[styles.summaryAmount, { color: colors.foreground, textAlign }]}
                 >
                   {totalSaved.toLocaleString()} EGP
                 </Text>
                 <Text
                   style={[
                     styles.summaryLabel,
-                    { color: colors.mutedForeground },
+                    { color: colors.mutedForeground, textAlign },
                   ]}
                 >
                   {t('goals.savedOfTotal', { amount: `${totalTarget.toLocaleString()} EGP` })}
@@ -199,7 +200,7 @@ export default function GoalsScreen() {
             </View>
           </View>
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
             {t('goals.active')}
           </Text>
 
@@ -224,14 +225,14 @@ export default function GoalsScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text
-                      style={[styles.goalTitle, { color: colors.foreground }]}
+                      style={[styles.goalTitle, { color: colors.foreground, textAlign }]}
                     >
                       {t(({ '1': 'data.emergencyFund', '2': 'data.newCar', '3': 'data.travelFund', '4': 'data.education' } as Record<string, string>)[g.id] ?? g.title)}
                     </Text>
                     <Text
                       style={[
                         styles.goalDeadline,
-                        { color: colors.mutedForeground },
+                        { color: colors.mutedForeground, textAlign },
                       ]}
                     >
                       {t('goals.target', { date: t(({ 'Dec 2025': 'data.dec2025', 'Jun 2026': 'data.jun2026', 'Mar 2026': 'data.mar2026', 'Sep 2026': 'data.sep2026' } as Record<string, string>)[g.deadline] ?? g.deadline) })}
@@ -256,13 +257,13 @@ export default function GoalsScreen() {
                   />
                 </View>
                 <View style={styles.goalAmtRow}>
-                  <Text style={[styles.goalAmt, { color: colors.foreground }]}>
+                  <Text style={[styles.goalAmt, { color: colors.foreground, textAlign }]}>
                     {g.current.toLocaleString()} EGP
                   </Text>
                   <Text
                     style={[
                       styles.goalRemaining,
-                      { color: colors.mutedForeground },
+                      { color: colors.mutedForeground, textAlign },
                     ]}
                   >
                     {remaining.toLocaleString()} EGP {t('remaining to go')}
@@ -272,7 +273,7 @@ export default function GoalsScreen() {
             );
           })}
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
             {t('Achievements')}
           </Text>
           <View style={styles.achievementsGrid}>
@@ -298,14 +299,14 @@ export default function GoalsScreen() {
                   />
                 </View>
                 <Text
-                  style={[styles.achieveLabel, { color: colors.foreground }]}
+                  style={[styles.achieveLabel, { color: colors.foreground, textAlign }]}
                 >
                   {t(a.label)}
                 </Text>
                 <Text
                   style={[
                     styles.achieveDesc,
-                    { color: colors.mutedForeground },
+                    { color: colors.mutedForeground, textAlign },
                   ]}
                 >
                   {t(a.desc)}
@@ -330,8 +331,8 @@ export default function GoalsScreen() {
             <View style={styles.challengeRow}>
               <Feather name="flag" size={22} color="rgba(255,255,255,0.8)" />
               <View style={{ flex: 1 }}>
-                <Text style={styles.challengeTitle}>{t("This Week's Challenge")}</Text>
-                <Text style={styles.challengeText}>
+                <Text style={[styles.challengeTitle, { textAlign }]}>{t("This Week's Challenge")}</Text>
+                <Text style={[styles.challengeText, { textAlign }]}>
                   {t('Skip 3 impulse purchases and add the savings to your Emergency Fund.')}
                 </Text>
                 <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
@@ -378,7 +379,7 @@ export default function GoalsScreen() {
           setShowAdd(false);
         }}
       >
-        <View style={{ flex: 1 }}>
+        <View style={{ flex: 1, direction: isRTL ? 'rtl' : 'ltr' }}>
           <Pressable
             style={[
               StyleSheet.absoluteFill,
@@ -397,7 +398,7 @@ export default function GoalsScreen() {
               <View
                 style={[styles.handle, { backgroundColor: colors.border }]}
               />
-              <Text style={[styles.modalTitle, { color: colors.foreground }]}>
+              <Text style={[styles.modalTitle, { color: colors.foreground, textAlign }]}>
                 {t('goals.new')}
               </Text>
 
@@ -435,6 +436,7 @@ export default function GoalsScreen() {
                             i === selectedPreset
                               ? p.color
                               : colors.mutedForeground,
+                          textAlign,
                         },
                       ]}
                     >
@@ -451,6 +453,8 @@ export default function GoalsScreen() {
                     color: colors.foreground,
                     backgroundColor: colors.secondary,
                     borderColor: colors.border,
+                    textAlign,
+                    writingDirection: isRTL ? 'rtl' : 'ltr',
                   },
                 ]}
                 placeholder={t('goals.goalName')}
@@ -466,6 +470,8 @@ export default function GoalsScreen() {
                     color: colors.foreground,
                     backgroundColor: colors.secondary,
                     borderColor: colors.border,
+                    textAlign: 'left',
+                    writingDirection: 'ltr',
                   },
                 ]}
                 placeholder={t('goals.targetAmount')}

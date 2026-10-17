@@ -19,6 +19,7 @@ export default function AddPaymentMethodScreen() {
   const colors = useColors();
   const { linkedAccounts, addPaymentMethod } = useApp();
   const { t, isRTL } = useLocalization();
+  const textAlign: 'right' | 'left' = isRTL ? 'right' : 'left';
   const [kind, setKind] = useState<PaymentMethodKind>('account');
   const [selectedAccountId, setSelectedAccountId] = useState('');
   const [label, setLabel] = useState('');
@@ -72,7 +73,7 @@ export default function AddPaymentMethodScreen() {
     router.back();
   };
 
-  const inputStyle = [styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card }];
+  const inputStyle = [styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.card, textAlign, writingDirection: isRTL ? 'rtl' as const : 'ltr' as const }];
   const kindLabels: Record<PaymentMethodKind, string> = {
     account: t('payments.accounts'),
     card: t('payments.cards'),
@@ -97,8 +98,8 @@ export default function AddPaymentMethodScreen() {
           <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={21} color="#FFFFFF" />
         </Pressable>
         <View style={styles.headerCopy}>
-          <Text style={styles.headerTitle}>{t('payments.addTitle')}</Text>
-          <Text style={styles.headerSubtitle}>{t('payments.addSubtitle')}</Text>
+          <Text style={[styles.headerTitle, { textAlign }]}>{t('payments.addTitle')}</Text>
+          <Text style={[styles.headerSubtitle, { textAlign }]}>{t('payments.addSubtitle')}</Text>
         </View>
         <View style={{ width: 40 }} />
       </LinearGradient>
@@ -110,7 +111,7 @@ export default function AddPaymentMethodScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t('payments.methodType')}</Text>
+        <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t('payments.methodType')}</Text>
         <View style={[styles.segmented, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
           {methodKinds.map((item) => {
             const active = kind === item;
@@ -139,8 +140,8 @@ export default function AddPaymentMethodScreen() {
         {kind === 'account' ? (
           <View style={styles.formGroup}>
             <View style={styles.labelRow}>
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t('payments.chooseAccount')}</Text>
-              <Text style={[styles.optional, { color: colors.mutedForeground }]}>{t('payments.manuallySaved')}</Text>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t('payments.chooseAccount')}</Text>
+              <Text style={[styles.optional, { color: colors.mutedForeground, textAlign }]}>{t('payments.manuallySaved')}</Text>
             </View>
             {linkedAccounts.length ? (
               <View style={[styles.accountList, { backgroundColor: colors.card, borderColor: colors.border }]}>
@@ -165,8 +166,8 @@ export default function AddPaymentMethodScreen() {
                         <Feather name="briefcase" size={17} color={colors.primary} />
                       </View>
                       <View style={styles.accountCopy}>
-                        <Text style={[styles.accountName, { color: colors.foreground }]} numberOfLines={1}>{account.label}</Text>
-                        <Text style={[styles.accountMeta, { color: colors.mutedForeground }]} numberOfLines={1}>
+                        <Text style={[styles.accountName, { color: colors.foreground, textAlign }]} numberOfLines={1}>{account.label}</Text>
+                        <Text style={[styles.accountMeta, { color: colors.mutedForeground, textAlign }]} numberOfLines={1}>
                           {account.institution}{account.last4 ? ` · ${t('payments.endingIn', { last4: account.last4 })}` : ''}
                         </Text>
                       </View>
@@ -200,7 +201,7 @@ export default function AddPaymentMethodScreen() {
         ) : (
           <View style={styles.formGroup}>
             <View style={styles.fieldGroup}>
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>
                 {kind === 'card' ? t('payments.cardNickname') : t('payments.walletNickname')}
               </Text>
               <TextInput
@@ -217,7 +218,7 @@ export default function AddPaymentMethodScreen() {
               />
             </View>
             <View style={styles.fieldGroup}>
-              <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>
+              <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>
                 {kind === 'card' ? t('payments.issuer') : t('payments.walletProvider')}
               </Text>
               <TextInput
@@ -236,11 +237,11 @@ export default function AddPaymentMethodScreen() {
             {kind === 'card' && (
               <View style={styles.fieldGroup}>
                 <View style={styles.labelRow}>
-                  <Text style={[styles.sectionLabel, { color: colors.mutedForeground }]}>{t('payments.last4Label')}</Text>
-                  <Text style={[styles.optional, { color: colors.mutedForeground }]}>{t('payments.optional')}</Text>
+                  <Text style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign }]}>{t('payments.last4Label')}</Text>
+                  <Text style={[styles.optional, { color: colors.mutedForeground, textAlign }]}>{t('payments.optional')}</Text>
                 </View>
                 <TextInput
-                  style={inputStyle}
+                  style={[inputStyle, { textAlign: 'center', writingDirection: 'ltr' }]}
                   value={last4}
                   onChangeText={(value) => { setLast4(value.replace(/\D/g, '').slice(0, 4)); setError(''); }}
                   placeholder="••••"
@@ -255,7 +256,7 @@ export default function AddPaymentMethodScreen() {
             )}
             <View style={[styles.safetyNote, { backgroundColor: colors.secondary, borderColor: colors.border }]}>
               <Feather name="shield" size={17} color={colors.primary} />
-              <Text style={[styles.safetyText, { color: colors.mutedForeground }]}>
+              <Text style={[styles.safetyText, { color: colors.mutedForeground, textAlign }]}>
                 {kind === 'card' ? t('payments.cardSafety') : t('payments.walletSafety')}
               </Text>
             </View>
@@ -265,13 +266,13 @@ export default function AddPaymentMethodScreen() {
         {error ? (
           <View style={[styles.errorBox, { backgroundColor: colors.destructive + '12' }]}>
             <Feather name="alert-circle" size={16} color={colors.destructive} />
-            <Text style={[styles.errorText, { color: colors.destructive }]}>{error}</Text>
+            <Text style={[styles.errorText, { color: colors.destructive, textAlign }]}>{error}</Text>
           </View>
         ) : null}
 
         <View style={[styles.disclaimer, { borderColor: colors.border }]}>
           <Feather name="info" size={15} color={colors.mutedForeground} />
-          <Text style={[styles.disclaimerText, { color: colors.mutedForeground }]}>{t('payments.referenceDisclaimer')}</Text>
+          <Text style={[styles.disclaimerText, { color: colors.mutedForeground, textAlign }]}>{t('payments.referenceDisclaimer')}</Text>
         </View>
 
         <Pressable

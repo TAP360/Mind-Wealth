@@ -5,9 +5,7 @@
  * External consumer mobile login API supplied by the project owner.
  * OpenAPI spec version: 1.0.0
  */
+import type { EmailOtpVerificationInput } from './emailOtpVerificationInput';
+import type { PhoneOtpVerificationInput } from './phoneOtpVerificationInput';
 
-export interface OtpVerificationInput {
-  businessCode: string;
-  phone: string;
-  otp: string;
-}
+export type OtpVerificationInput = PhoneOtpVerificationInput | EmailOtpVerificationInput;

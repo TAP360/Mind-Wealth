@@ -21,6 +21,8 @@ import { AddReceiptModal } from '@/components/AddReceiptModal';
 import { useApp, MoodType } from '@/context/AppContext';
 import { useColors } from '@/hooks/useColors';
 import { useLocalization } from '@/localization';
+import { useConsumerSession } from '@/hooks/useConsumerSession';
+import { useAuthStore } from '@/stores/authStore';
 
 const MOODS: { type: MoodType; icon: string; label: string }[] = [
   { type: 'great', icon: '😄', label: 'Great' },
@@ -59,13 +61,16 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile, mood, setMood, transactions, hasOnboarded } = useApp();
+  const { isAuthenticated } = useConsumerSession();
+  const surveyPending = useAuthStore((state) => state.surveyPending);
   const { t, isRTL } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [showAddExpense, setShowAddExpense] = useState(false);
   const [showAddReceipt, setShowAddReceipt] = useState(false);
 
   useEffect(() => {
-    if (!hasOnboarded) {
+    if ((!hasOnboarded && !isAuthenticated) || (isAuthenticated && surveyPending)) {
       router.replace('/onboarding');
       return;
     }
@@ -74,7 +79,7 @@ export default function HomeScreen() {
       duration: 500,
       useNativeDriver: true,
     }).start();
-  }, [hasOnboarded]);
+  }, [hasOnboarded, isAuthenticated, surveyPending]);
 
   const topPad = Platform.OS === 'web' ? insets.top + 67 : insets.top;
 
@@ -132,8 +137,8 @@ export default function HomeScreen() {
               accessibilityLabel={t('personal.title')}
               onPress={() => router.push('/personal-info')}
             >
-              <Text style={styles.greetingSmall}>{greeting},</Text>
-              <Text style={styles.greetingName}>{profile.name} 👋</Text>
+              <Text style={[styles.greetingSmall, { textAlign }]}>{greeting},</Text>
+              <Text style={[styles.greetingName, { textAlign }]}>{profile.name} 👋</Text>
             </Pressable>
             <View style={styles.headerRight}>
               <Pressable style={styles.iconBtn} onPress={() => {}}>
@@ -161,7 +166,7 @@ export default function HomeScreen() {
           </View>
 
           <View style={styles.moodRow}>
-              <Text style={styles.moodLabel}>{t('home.feeling')}</Text>
+              <Text style={[styles.moodLabel, { textAlign }]}>{t('home.feeling')}</Text>
             <ScrollView
               horizontal
               showsHorizontalScrollIndicator={false}
@@ -195,7 +200,7 @@ export default function HomeScreen() {
         </LinearGradient>
 
         <View style={styles.body}>
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
             {t('Your Wellness Overview')}
           </Text>
 
@@ -206,7 +211,7 @@ export default function HomeScreen() {
               end={{ x: 1, y: 1 }}
               style={styles.mainCardHeader}
             >
-              <Text style={styles.mainCardTitle}>{t('home.wellnessScore')}</Text>
+              <Text style={[styles.mainCardTitle, { textAlign }]}>{t('home.wellnessScore')}</Text>
               <View style={styles.trendBadge}>
                 <Feather name="trending-up" size={12} color="#22C55E" />
                 <Text style={styles.trendText}>{t('home.thisMonth')}</Text>
@@ -223,30 +228,30 @@ export default function HomeScreen() {
               />
               <View style={styles.wellnessDetails}>
                 <Text
-                  style={[styles.detailItem, { color: colors.mutedForeground }]}
+                  style={[styles.detailItem, { color: colors.mutedForeground, textAlign }]}
                 >
                   <Text
-                    style={[styles.detailBold, { color: colors.foreground }]}
+                    style={[styles.detailBold, { color: colors.foreground, textAlign }]}
                   >
                     {t('Savings Rate')}{' '}
                   </Text>
                   18%
                 </Text>
                 <Text
-                  style={[styles.detailItem, { color: colors.mutedForeground }]}
+                  style={[styles.detailItem, { color: colors.mutedForeground, textAlign }]}
                 >
                   <Text
-                    style={[styles.detailBold, { color: colors.foreground }]}
+                    style={[styles.detailBold, { color: colors.foreground, textAlign }]}
                   >
                     {t('Debt Ratio')}{' '}
                   </Text>
                   Low
                 </Text>
                 <Text
-                  style={[styles.detailItem, { color: colors.mutedForeground }]}
+                  style={[styles.detailItem, { color: colors.mutedForeground, textAlign }]}
                 >
                   <Text
-                    style={[styles.detailBold, { color: colors.foreground }]}
+                    style={[styles.detailBold, { color: colors.foreground, textAlign }]}
                   >
                     {t('Habit Score')}{' '}
                   </Text>
@@ -305,9 +310,9 @@ export default function HomeScreen() {
             style={styles.insightCard}
           >
             <View style={styles.insightCardInner}>
-              <View>
-              <Text style={styles.insightCardTitle}>{t('home.todaysInsight')}</Text>
-                <Text style={styles.insightCardText}>
+              <View style={{ flex: 1 }}>
+              <Text style={[styles.insightCardTitle, { textAlign }]}>{t('home.todaysInsight')}</Text>
+                <Text style={[styles.insightCardText, { textAlign }]}>
                   {t('You saved 12% more this week. Reducing coffee spending by 20% could add 300 EGP to your Emergency Fund.')}
                 </Text>
               </View>
@@ -315,7 +320,7 @@ export default function HomeScreen() {
             </View>
           </LinearGradient>
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
             {t('Quick Actions')}
           </Text>
           <View style={styles.actionsRow}>
@@ -349,7 +354,7 @@ export default function HomeScreen() {
             ))}
           </View>
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
             {t('Smart Nudges')}
           </Text>
           {NUDGES.map((n) => (
@@ -362,13 +367,13 @@ export default function HomeScreen() {
               >
                 <Feather name={n.icon as any} size={18} color={n.color} />
               </View>
-              <Text style={[styles.nudgeText, { color: colors.foreground }]}>
+              <Text style={[styles.nudgeText, { color: colors.foreground, textAlign }]}>
                 {t(n.text)}
               </Text>
             </View>
           ))}
 
-          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground, textAlign }]}>
             {t('home.recentTransactions')}
           </Text>
           {transactions.slice(0, 4).map((tx) => (
@@ -394,11 +399,11 @@ export default function HomeScreen() {
                 />
               </View>
               <View style={styles.txInfo}>
-                <Text style={[styles.txTitle, { color: colors.foreground }]}>
+                <Text style={[styles.txTitle, { color: colors.foreground, textAlign }]}>
                   {t(({ '1': 'data.morningCoffee', '2': 'data.salaryDeposit', '3': 'data.onlineShopping', '4': 'data.gymMembership', '5': 'data.freelancePayment' } as Record<string, string>)[tx.id] ?? tx.title)}
                 </Text>
                 <Text
-                  style={[styles.txCategory, { color: colors.mutedForeground }]}
+                  style={[styles.txCategory, { color: colors.mutedForeground, textAlign }]}
                 >
                   {t(({ 'Food & Drink': 'data.foodDrink', Income: 'data.income', Shopping: 'data.shopping', Health: 'data.health' } as Record<string, string>)[tx.category] ?? tx.category)}
                   {tx.emotionTag ? ` · ${tx.emotionTag}` : ''}
@@ -408,14 +413,14 @@ export default function HomeScreen() {
                 <Text
                   style={[
                     styles.txAmount,
-                    { color: tx.type === 'income' ? '#22C55E' : '#F37021' },
+                    { color: tx.type === 'income' ? '#22C55E' : '#F37021', textAlign },
                   ]}
                 >
                   {tx.type === 'income' ? '+' : ''}
                   {tx.amount.toLocaleString()} EGP
                 </Text>
                 <Text
-                  style={[styles.txDate, { color: colors.mutedForeground }]}
+                  style={[styles.txDate, { color: colors.mutedForeground, textAlign }]}
                 >
                   {t(({ Today: 'data.today', Yesterday: 'data.yesterday', '2 days ago': 'data.twoDaysAgo', '3 days ago': 'data.threeDaysAgo', '4 days ago': 'data.fourDaysAgo', 'Just now': 'data.justNow' } as Record<string, string>)[tx.date] ?? tx.date)}
                 </Text>

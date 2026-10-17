@@ -33,6 +33,7 @@ export default function PersonalInfoScreen() {
   const colors = useColors();
   const { profile, updateProfile } = useApp();
   const { t, isRTL, language } = useLocalization();
+  const textAlign = isRTL ? 'right' : 'left';
   const { data: consumer } = useConsumerSession();
   const profileUpdate = useConsumerProfileUpdate();
   const [saving, setSaving] = useState(false);
@@ -94,12 +95,18 @@ export default function PersonalInfoScreen() {
     >
       <LinearGradient
         colors={['#0B1026', '#1A1040']}
-        style={[styles.header, { paddingTop: topPad + 12 }]}
+        style={[
+          styles.header,
+          {
+            paddingTop: topPad + 12,
+            flexDirection: isRTL ? 'row-reverse' : 'row',
+          },
+        ]}
       >
         <Pressable style={styles.backBtn} onPress={() => router.back()}>
           <Feather name={isRTL ? 'arrow-right' : 'arrow-left'} size={22} color="#FFFFFF" />
         </Pressable>
-        <Text style={styles.headerTitle}>{t('personal.title')}</Text>
+        <Text style={[styles.headerTitle, { textAlign: 'center' }]}>{t('personal.title')}</Text>
         <View style={{ width: 40 }} />
       </LinearGradient>
 
@@ -141,7 +148,7 @@ export default function PersonalInfoScreen() {
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text
-            style={[styles.sectionLabel, { color: colors.mutedForeground }]}
+            style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign, letterSpacing: isRTL ? 0 : 0.8 }]}
           >
             {t('personal.fullName')}
           </Text>
@@ -149,7 +156,7 @@ export default function PersonalInfoScreen() {
             testID="personal-name"
             style={[
               styles.input,
-              { color: colors.foreground, borderBottomColor: colors.border },
+              { color: colors.foreground, borderBottomColor: colors.border, textAlign, writingDirection: isRTL ? 'rtl' : 'ltr' },
             ]}
             value={name}
             onChangeText={handleChange(setName)}
@@ -161,14 +168,14 @@ export default function PersonalInfoScreen() {
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text
-            style={[styles.sectionLabel, { color: colors.mutedForeground }]}
+            style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign, letterSpacing: isRTL ? 0 : 0.8 }]}
           >
             {t('personal.email')}
           </Text>
           <TextInput
             style={[
               styles.input,
-              { color: colors.foreground, borderBottomColor: colors.border },
+              { color: colors.foreground, borderBottomColor: colors.border, textAlign: 'left', writingDirection: 'ltr' },
             ]}
             value={email}
             editable={false}
@@ -182,14 +189,14 @@ export default function PersonalInfoScreen() {
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text
-            style={[styles.sectionLabel, { color: colors.mutedForeground }]}
+            style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign, letterSpacing: isRTL ? 0 : 0.8 }]}
           >
             {t('personal.phone')}
           </Text>
           <TextInput
             style={[
               styles.input,
-              { color: colors.foreground, borderBottomColor: colors.border },
+              { color: colors.foreground, borderBottomColor: colors.border, textAlign: 'left', writingDirection: 'ltr' },
             ]}
             value={phone}
             editable={false}
@@ -210,11 +217,14 @@ export default function PersonalInfoScreen() {
             style={[
               styles.input,
               styles.picker,
-              { borderBottomColor: colors.border },
+              {
+                borderBottomColor: colors.border,
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+              },
             ]}
             disabled
           >
-            <Text style={[styles.pickerText, { color: colors.foreground }]}>
+            <Text style={[styles.pickerText, { color: colors.foreground, textAlign, flex: 1 }]}>
               {country}
             </Text>
             <Feather
@@ -227,7 +237,7 @@ export default function PersonalInfoScreen() {
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <Text
-            style={[styles.sectionLabel, { color: colors.mutedForeground }]}
+            style={[styles.sectionLabel, { color: colors.mutedForeground, textAlign, letterSpacing: isRTL ? 0 : 0.8 }]}
           >
             {t('personal.currency')}
           </Text>
@@ -235,7 +245,10 @@ export default function PersonalInfoScreen() {
             style={[
               styles.input,
               styles.picker,
-              { borderBottomColor: colors.border },
+              {
+                borderBottomColor: colors.border,
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+              },
             ]}
             onPress={() =>
               Alert.alert(
@@ -245,7 +258,7 @@ export default function PersonalInfoScreen() {
               )
             }
           >
-            <Text style={[styles.pickerText, { color: colors.foreground }]}>
+            <Text style={[styles.pickerText, { color: colors.foreground, textAlign, flex: 1 }]}>
               {currency}
             </Text>
             <Feather
